@@ -196,13 +196,13 @@ No data migration is required.
 
 #### Automated
 
-- [ ] 1.1 Type-aware lint passes after contract changes
-- [ ] 1.2 Production build passes after contract changes
+- [x] 1.1 Type-aware lint passes after contract changes
+- [x] 1.2 Production build passes after contract changes
 
 #### Manual
 
-- [ ] 1.3 Existing movement and collection behavior still works
-- [ ] 1.4 HUD shows an active level status without win/loss UI
+- [x] 1.3 Existing movement and collection behavior still works
+- [x] 1.4 HUD shows an active level status without win/loss UI
 
 ### Phase 2: Hazard and Completion Rules
 

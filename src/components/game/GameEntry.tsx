@@ -15,6 +15,7 @@ const LEVEL_ROWS = [
 ] as const;
 
 type Tile = "." | "#" | "g" | "p" | "r" | "e";
+type LevelStatus = "active" | "lost" | "won";
 interface Coordinate {
   row: number;
   col: number;
@@ -30,6 +31,7 @@ interface GameState {
   playerPosition: Coordinate;
   moveCount: number;
   collectedGemKeys: string[];
+  status: LevelStatus;
 }
 
 interface MoveResult {
@@ -145,6 +147,7 @@ export default function GameEntry() {
     playerPosition: PLAYER_START,
     moveCount: 0,
     collectedGemKeys: [],
+    status: "active",
   });
   const countedAttemptRef = useRef(false);
 
@@ -218,7 +221,13 @@ export default function GameEntry() {
                     className={cn("aspect-square min-h-0 rounded-[2px]", TILE_STYLES[tile])}
                     data-col={cell.col}
                     data-row={cell.row}
-                    data-testid={hasPlayer ? GAME_GUARDRAIL_TEST_IDS.player : undefined}
+                    data-testid={
+                      hasPlayer
+                        ? GAME_GUARDRAIL_TEST_IDS.player
+                        : cell.tile === "e"
+                          ? GAME_GUARDRAIL_TEST_IDS.exit
+                          : undefined
+                    }
                     key={`${cell.row}-${cell.col}`}
                   />
                 );
@@ -259,10 +268,16 @@ export default function GameEntry() {
                 {gameState.moveCount}:{gameState.playerPosition.row},{gameState.playerPosition.col}
               </p>
             </div>
+            <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
+              <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Status</p>
+              <p className="text-2xl font-black text-[#f3b63f]" data-testid={GAME_GUARDRAIL_TEST_IDS.levelStatus}>
+                {gameState.status.toUpperCase()}
+              </p>
+            </div>
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
               {INITIAL_GEM_COUNT - gameState.collectedGemKeys.length} gems remaining. Score{" "}
-              {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}.
+              {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}. Status {gameState.status}.
             </p>
           </aside>
         </div>

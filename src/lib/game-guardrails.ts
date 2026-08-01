@@ -14,6 +14,9 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   gemsRemaining: "game-gems-remaining",
   score: "game-score",
   collectedGems: "game-collected-gems",
+  levelStatus: "game-level-status",
+  hazard: "game-hazard",
+  exit: "game-exit",
 } as const;
 
 export const GAME_ATTEMPT_SESSION_KEY = "boulder-game:attempt-count";
