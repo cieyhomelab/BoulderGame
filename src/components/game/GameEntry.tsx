@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { RotateCcw } from "lucide-react";
 
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { cn } from "@/lib/utils";
@@ -149,14 +150,18 @@ const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
 const PLAYER_START = findPlayerStart(LEVEL_BOARD);
 const INITIAL_GEM_COUNT = countGems(LEVEL_BOARD);
 
-export default function GameEntry() {
-  const [attemptCount, setAttemptCount] = useState<number | null>(null);
-  const [gameState, setGameState] = useState<GameState>({
+function createInitialGameState(): GameState {
+  return {
     playerPosition: PLAYER_START,
     moveCount: 0,
     collectedGemKeys: [],
     status: "active",
-  });
+  };
+}
+
+export default function GameEntry() {
+  const [attemptCount, setAttemptCount] = useState<number | null>(null);
+  const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const countedAttemptRef = useRef(false);
 
   useEffect(() => {
@@ -187,6 +192,19 @@ export default function GameEntry() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  function handleReplayClick(): void {
+    setGameState(createInitialGameState());
+    setAttemptCount(incrementGameAttemptCount());
+  }
+
+  const isTerminalState = gameState.status !== "active";
+  const outcomeMessage =
+    gameState.status === "won"
+      ? "Level complete. Play again?"
+      : gameState.status === "lost"
+        ? "Cave-in. Play again?"
+        : null;
 
   return (
     <main
@@ -297,6 +315,23 @@ export default function GameEntry() {
                 {gameState.status.toUpperCase()}
               </p>
             </div>
+            {isTerminalState && (
+              <div
+                className="border-4 border-[#3f3124] bg-[#191d17] p-3 shadow-[6px_6px_0_#070806]"
+                data-testid={GAME_GUARDRAIL_TEST_IDS.outcomeMessage}
+              >
+                <p className="mb-3 text-sm leading-snug font-bold text-[#f5e7c8]">{outcomeMessage}</p>
+                <button
+                  className="inline-flex w-full items-center justify-center gap-2 border-4 border-[#79eada] bg-[#142621] px-3 py-2 font-mono text-sm font-black text-[#79eada] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f3b63f]"
+                  data-testid={GAME_GUARDRAIL_TEST_IDS.replayButton}
+                  onClick={handleReplayClick}
+                  type="button"
+                >
+                  <RotateCcw aria-hidden="true" className="size-4" />
+                  Play again
+                </button>
+              </div>
+            )}
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
               {INITIAL_GEM_COUNT - gameState.collectedGemKeys.length} gems remaining. Score{" "}

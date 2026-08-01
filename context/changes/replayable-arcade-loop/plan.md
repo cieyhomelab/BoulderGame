@@ -196,28 +196,28 @@ No data migration is required.
 
 #### Automated
 
-- [x] 1.1 Type-aware lint passes after replay selector contract
-- [x] 1.2 Production build passes after replay selector contract
+- [x] 1.1 Type-aware lint passes after replay selector contract — 7b72fdd
+- [x] 1.2 Production build passes after replay selector contract — 7b72fdd
 
 #### Manual
 
-- [x] 1.3 Existing replay target remains skipped until the UI exists
-- [x] 1.4 Existing movement, collection, loss, and win tests still pass
+- [x] 1.3 Existing replay target remains skipped until the UI exists — 7b72fdd
+- [x] 1.4 Existing movement, collection, loss, and win tests still pass — 7b72fdd
 
 ### Phase 2: Replay UI and Reset Behavior
 
 #### Automated
 
-- [ ] 2.1 Type-aware lint passes after replay UI
-- [ ] 2.2 Production build passes after replay UI
-- [ ] 2.3 Local Playwright verifies replay after loss and win
+- [x] 2.1 Type-aware lint passes after replay UI
+- [x] 2.2 Production build passes after replay UI
+- [x] 2.3 Local Playwright verifies replay after loss and win
 
 #### Manual
 
-- [ ] 2.4 Losing then selecting `Play again` returns the board to the initial active state
-- [ ] 2.5 Winning then selecting `Play again` returns the board to the initial active state
-- [ ] 2.6 Attempt count increments on every replay and remains session-scoped
-- [ ] 2.7 Replay is not visible during active play
+- [x] 2.4 Losing then selecting `Play again` returns the board to the initial active state
+- [x] 2.5 Winning then selecting `Play again` returns the board to the initial active state
+- [x] 2.6 Attempt count increments on every replay and remains session-scoped
+- [x] 2.7 Replay is not visible during active play
 
 ### Phase 3: Repeat-Play Signal and Docs
 

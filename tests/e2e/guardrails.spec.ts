@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  activateReplay,
   expectAttemptCounter,
   expectAttemptCounterAtTarget,
   expectCollectedGems,
@@ -12,8 +13,11 @@ import {
   expectInputResponseMarker,
   expectInputResponseText,
   expectLevelStatus,
+  expectOutcomeMessage,
   expectPlayerAt,
   expectPlayerRemainsAtAfterInput,
+  expectReplayButtonHidden,
+  expectReplayButtonVisible,
   expectScore,
   expectSessionAttemptCount,
   pressAndExpectInputResponse,
@@ -32,6 +36,7 @@ test("root route starts the anonymous BoulderGame level", async ({ page }) => {
   await expectAttemptCounter(page, 1);
   await expectSessionAttemptCount(page, 1);
   await expectLevelStatus(page, "active");
+  await expectReplayButtonHidden(page);
   await expect(page.getByRole("link", { name: /sign in|sign up/i })).toHaveCount(0);
   await expect(page.getByText("Supabase nie jest skonfigurowany")).toHaveCount(0);
 });
@@ -72,7 +77,8 @@ test("player collects a gem and updates the HUD", async ({ page }) => {
   await expectGemsRemaining(page, 2);
   await expectScore(page, 100);
   await expectCollectedGems(page, 1);
-  await expect(page.getByText(/won|lost|play again/i)).toHaveCount(0);
+  await expectReplayButtonHidden(page);
+  await expect(page.getByText(/won|lost/i)).toHaveCount(0);
 });
 
 test("player loses on a hazard and movement freezes", async ({ page }) => {
@@ -86,6 +92,19 @@ test("player loses on a hazard and movement freezes", async ({ page }) => {
 
   await expectPlayerRemainsAtAfterInput(page, "ArrowRight", 3, 2);
   await expectInputResponseText(page, "1:3,2");
+  await expectOutcomeMessage(page, /cave-in/i);
+  await expectReplayButtonVisible(page);
+
+  await activateReplay(page);
+  await expectAttemptCounter(page, 2);
+  await expectSessionAttemptCount(page, 2);
+  await expectLevelStatus(page, "active");
+  await expectPlayerAt(page, 3, 3);
+  await expectInputResponseText(page, "0:3,3");
+  await expectGemsRemaining(page, 3);
+  await expectScore(page, 0);
+  await expectCollectedGems(page, 0);
+  await expectReplayButtonHidden(page);
 });
 
 test("player completes the level after collecting all gems and entering the exit", async ({ page }) => {
@@ -130,7 +149,19 @@ test("player completes the level after collecting all gems and entering the exit
 
   await expectPlayerRemainsAtAfterInput(page, "ArrowLeft", 5, 9);
   await expectLevelStatus(page, "won");
-  await expect(page.getByText(/play again/i)).toHaveCount(0);
+  await expectOutcomeMessage(page, /level complete/i);
+  await expectReplayButtonVisible(page);
+
+  await activateReplay(page);
+  await expectAttemptCounter(page, 2);
+  await expectSessionAttemptCount(page, 2);
+  await expectLevelStatus(page, "active");
+  await expectPlayerAt(page, 3, 3);
+  await expectInputResponseText(page, "0:3,3");
+  await expectGemsRemaining(page, 3);
+  await expectScore(page, 0);
+  await expectCollectedGems(page, 0);
+  await expectReplayButtonHidden(page);
 });
 
 test.skip("future replay target marker reaches the repeat-play threshold", async ({ page }) => {
