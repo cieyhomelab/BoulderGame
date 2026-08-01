@@ -37,7 +37,7 @@ Use `tests/e2e/*.spec.ts` for Playwright smoke tests. For now, validate most cha
 
 ## Commit & Pull Request Guidelines
 
-This repo has no commits yet, so no commit-message convention is established. Use short imperative subjects until a convention is introduced. PRs should describe the user-visible change, list validation commands run, link issues when available, and include screenshots for UI changes.
+Use Conventional Commit-style subjects already present in history, for example `feat(scope): short imperative summary` or `test(scope): short imperative summary`. PRs should describe the user-visible change, list validation commands run, link issues when available, and include screenshots for UI changes.
 
 ## Security & Configuration Tips
 

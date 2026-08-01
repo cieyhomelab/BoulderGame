@@ -25,15 +25,6 @@ const TILE_STYLES: Record<Tile, string> = {
   e: "bg-[#6d3ab7] shadow-[inset_0_0_0_2px_rgba(245,231,200,0.18),0_0_16px_rgba(170,102,255,0.35)]",
 };
 
-const TILE_LABELS: Record<Tile, string> = {
-  ".": "cave floor",
-  "#": "stone wall",
-  g: "gem",
-  p: "player",
-  r: "rock",
-  e: "exit",
-};
-
 function flattenLevel(): Tile[] {
   return LEVEL_ROWS.flatMap((row) => row.split("") as Tile[]);
 }
@@ -77,13 +68,16 @@ export default function GameEntry() {
 
         <div className="grid flex-1 items-center gap-5 py-5 lg:grid-cols-[1fr_18rem]">
           <div className="border-4 border-[#3f3124] bg-[#171a15] p-3 shadow-[10px_10px_0_#070806] sm:p-5">
-            <div className="grid grid-cols-12 gap-1 border-4 border-[#5c4a36] bg-[#0b0e0a] p-2">
+            <div
+              aria-label="Static BoulderGame level preview with a player, gems, rocks, and an open exit."
+              className="grid grid-cols-12 gap-1 border-4 border-[#5c4a36] bg-[#0b0e0a] p-2"
+              role="img"
+            >
               {LEVEL_TILES.map((tile, index) => (
                 <div
-                  aria-label={TILE_LABELS[tile]}
+                  aria-hidden="true"
                   className={cn("aspect-square min-h-0 rounded-[2px]", TILE_STYLES[tile])}
                   key={`${tile}-${index}`}
-                  role="img"
                 />
               ))}
             </div>
