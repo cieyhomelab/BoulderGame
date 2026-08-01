@@ -243,27 +243,27 @@ No data migration is required. This plan intentionally avoids Supabase, auth sta
 
 #### Automated
 
-- [x] 1.1 Type-aware lint passes with the new guardrail module
-- [x] 1.2 Production build passes with the new guardrail module
+- [x] 1.1 Type-aware lint passes with the new guardrail module — 569a184
+- [x] 1.2 Production build passes with the new guardrail module — 569a184
 
 #### Manual
 
-- [x] 1.3 Guardrail constants match PRD thresholds
-- [x] 1.4 Guardrail module has no dependency on Supabase, auth routes, server-only env, or database state
+- [x] 1.3 Guardrail constants match PRD thresholds — 569a184
+- [x] 1.4 Guardrail module has no dependency on Supabase, auth routes, server-only env, or database state — 569a184
 
 ### Phase 2: Playwright Smoke Harness
 
 #### Automated
 
-- [ ] 2.1 Playwright browsers/dependencies install successfully for local use
-- [ ] 2.2 Local browser smoke tests pass
-- [ ] 2.3 Type-aware lint still passes
-- [ ] 2.4 Production build still passes
+- [x] 2.1 Playwright browsers/dependencies install successfully for local use
+- [x] 2.2 Local browser smoke tests pass
+- [x] 2.3 Type-aware lint still passes
+- [x] 2.4 Production build still passes
 
 #### Manual
 
-- [ ] 2.5 Developer can run `npm run test:e2e` from a clean checkout after dependency installation
-- [ ] 2.6 Smoke report or failure output explains page load, auth blocking, or guardrail contract failure clearly
+- [x] 2.5 Developer can run `npm run test:e2e` from a clean checkout after dependency installation
+- [x] 2.6 Smoke report or failure output explains page load, auth blocking, or guardrail contract failure clearly
 
 ### Phase 3: Attempt Signal and Verification Documentation
 
