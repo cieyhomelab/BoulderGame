@@ -264,14 +264,14 @@ No data migration is required. The existing auth/dashboard scaffold stays in pla
 
 #### Automated
 
-- [x] 3.1 Formatting check passes for changed docs/tests/config files
-- [x] 3.2 Type-aware lint passes
-- [x] 3.3 Production build passes
-- [x] 3.4 Local Playwright game-entry smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/config files — f8bb2c3
+- [x] 3.2 Type-aware lint passes — f8bb2c3
+- [x] 3.3 Production build passes — f8bb2c3
+- [x] 3.4 Local Playwright game-entry smoke passes — f8bb2c3
 
 #### Manual
 
-- [x] 3.5 Fresh browser session to `/` starts the first level without login, instructions, or a separate start button
-- [x] 3.6 `/` shows no Supabase missing-config banner while auth scaffold pages can still show configuration warnings
-- [x] 3.7 A new browser session resets the session-local attempt count
-- [x] 3.8 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session to `/` starts the first level without login, instructions, or a separate start button — f8bb2c3
+- [x] 3.6 `/` shows no Supabase missing-config banner while auth scaffold pages can still show configuration warnings — f8bb2c3
+- [x] 3.7 A new browser session resets the session-local attempt count — f8bb2c3
+- [x] 3.8 No CI production deploy or Playwright CI workflow is introduced — f8bb2c3
