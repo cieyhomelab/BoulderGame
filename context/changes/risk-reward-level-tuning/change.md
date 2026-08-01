@@ -1,6 +1,6 @@
 ---
 change_id: risk-reward-level-tuning
-status: implementing
+status: implemented
 created: 2026-08-01
 updated: 2026-08-01
 roadmap_id: S-05
