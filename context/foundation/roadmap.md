@@ -25,24 +25,24 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 
 ## At a glance
 
-| ID | Change ID | Outcome (user can ...) | Prerequisites | PRD refs | Status |
-| --- | --- | --- | --- | --- | --- |
-| F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | - | NFR guardrails, Success Criteria Primary | ready |
-| F-02 | public-playtest-deploy-path | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow | - | NFR first session, tech-stack.md, infrastructure.md | ready |
-| S-01 | immediate-browser-game-entry | gracz moze otworzyc gre w browserze i zaczac poziom bez konta | F-01 | US-01, FR-001, FR-002 | proposed |
-| S-02 | controllable-board-collection | gracz moze poruszac postacia po planszy i zbierac elementy | S-01 | US-01, FR-003, FR-004 | proposed |
-| S-03 | level-end-states | gracz moze przegrac na zagrozeniu albo ukonczyc poziom | S-02 | US-01, FR-005, FR-006 | proposed |
-| S-04 | replayable-arcade-loop | gracz moze zakonczyc probe i natychmiast zagrac ponownie | S-03, F-02 | US-01, FR-007, Success Criteria Primary | proposed |
-| S-05 | risk-reward-level-tuning | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik | S-04 | US-01, FR-004, FR-005, FR-006, Business Logic | proposed |
+| ID   | Change ID                          | Outcome (user can ...)                                                                                          | Prerequisites | PRD refs                                            | Status        |
+| ---- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------- | ------------- |
+| F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | impl_reviewed |
+| F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | impl_reviewed |
+| S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | proposed      |
+| S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | proposed      |
+| S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | proposed      |
+| S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | proposed      |
+| S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | proposed      |
 
 ## Streams
 
 Navigation aid - groups items that share a Prerequisites chain. Canonical ordering still lives in the dependency graph below; this table is the proposed reading order across parallel tracks.
 
-| Stream | Theme | Chain | Note |
-| --- | --- | --- | --- |
-| A | Petla gry | `F-01` -> `S-01` -> `S-02` -> `S-03` -> `S-04` -> `S-05` | Glowna sciezka pod sygnal od gracza: najpierw dzialajaca petla, potem mocniejsza decyzja ryzyko-nagroda. |
-| B | Publiczny playtest | `F-02` | Dolacza do Stream A przy `S-04`, bo replay loop powinien byc gotowy do pokazania realnemu graczowi. |
+| Stream | Theme              | Chain                                                    | Note                                                                                                     |
+| ------ | ------------------ | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| A      | Petla gry          | `F-01` -> `S-01` -> `S-02` -> `S-03` -> `S-04` -> `S-05` | Glowna sciezka pod sygnal od gracza: najpierw dzialajaca petla, potem mocniejsza decyzja ryzyko-nagroda. |
+| B      | Publiczny playtest | `F-02`                                                   | Dolacza do Stream A przy `S-04`, bo replay loop powinien byc gotowy do pokazania realnemu graczowi.      |
 
 ## Baseline
 
@@ -68,7 +68,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Blockers:** -
 - **Unknowns:** -
 - **Risk:** Bez tej minimalnej weryfikacji latwo zbudowac gre, ktora dziala, ale nie spelnia warunkow szybkiego startu i responsywnego sterowania.
-- **Status:** ready
+- **Status:** impl_reviewed
 
 ### F-02: Public playtest deploy path
 
@@ -81,7 +81,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Blockers:** Cloudflare account access for first real deployment
 - **Unknowns:** -
 - **Risk:** Jesli deploy zostanie odlozony do samego konca, problem z nazwa projektu, konfiguracja hostingu albo logami moze opoznic zebranie sygnalu od gracza.
-- **Status:** ready
+- **Status:** impl_reviewed
 
 ## Slices
 
@@ -152,15 +152,15 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID | Suggested issue title | Ready for `/10x-plan` | Notes |
-| --- | --- | --- | --- | --- |
-| F-01 | performance-play-signal-guardrails | Add MVP performance and play-signal guardrails | yes | Run `/10x-plan performance-play-signal-guardrails` |
-| F-02 | public-playtest-deploy-path | Prepare public playtest deployment path | yes | Can run in parallel after F-01 starts |
-| S-01 | immediate-browser-game-entry | Let the player start the game immediately in browser | no | Requires F-01 |
-| S-02 | controllable-board-collection | Let the player move on the board and collect items | no | Requires S-01 |
-| S-03 | level-end-states | Let the player lose or complete the level | no | Requires S-02 |
-| S-04 | replayable-arcade-loop | Let the player immediately replay after a level ends | no | Requires S-03 and F-02 |
-| S-05 | risk-reward-level-tuning | Tune one level around visible risk-reward choices | no | Requires S-04 |
+| Roadmap ID | Change ID                          | Suggested issue title                                | Ready for `/10x-plan` | Notes                                              |
+| ---------- | ---------------------------------- | ---------------------------------------------------- | --------------------- | -------------------------------------------------- |
+| F-01       | performance-play-signal-guardrails | Add MVP performance and play-signal guardrails       | yes                   | Run `/10x-plan performance-play-signal-guardrails` |
+| F-02       | public-playtest-deploy-path        | Prepare public playtest deployment path              | yes                   | Can run in parallel after F-01 starts              |
+| S-01       | immediate-browser-game-entry       | Let the player start the game immediately in browser | yes                   | Requires F-01                                      |
+| S-02       | controllable-board-collection      | Let the player move on the board and collect items   | no                    | Requires S-01                                      |
+| S-03       | level-end-states                   | Let the player lose or complete the level            | no                    | Requires S-02                                      |
+| S-04       | replayable-arcade-loop             | Let the player immediately replay after a level ends | no                    | Requires S-03 and F-02                             |
+| S-05       | risk-reward-level-tuning           | Tune one level around visible risk-reward choices    | no                    | Requires S-04                                      |
 
 ## Open Roadmap Questions
 
@@ -176,4 +176,3 @@ None currently identified.
 - **Game database and saved profiles** - Why parked: PRD Access Control says single user session with no account; Supabase scaffold is not a product requirement for MVP.
 
 ## Done
-
