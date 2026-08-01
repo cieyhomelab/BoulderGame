@@ -1,12 +1,12 @@
-# 10x Astro Starter
+# BoulderGame
 
 ![](./public/template.png)
 
-A modern, opinionated starter template for building fast, accessible web applications.
+A web arcade game MVP in the spirit of Boulder Dash, built for fast public playtests and retro replayability.
 
 ## Tech Stack
 
-- [Astro](https://astro.build/) v6 - Modern web framework with server-first rendering
+- [Astro](https://astro.build/) v7 - Modern web framework with server-first rendering
 - [React](https://react.dev/) v19 - UI library for interactive components
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) v4 - Utility-first CSS framework
@@ -23,8 +23,8 @@ A modern, opinionated starter template for building fast, accessible web applica
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+git clone <repository-url>
+cd BoulderGame
 ```
 
 2. Install dependencies:
@@ -33,7 +33,7 @@ cd 10x-astro-starter
 npm install
 ```
 
-3. Set up Supabase and configure environment variables — see [Supabase Configuration](#supabase-configuration) below.
+3. Configure optional Supabase scaffold variables only if you work on the starter auth routes — see [Supabase Configuration](#supabase-configuration) below.
 
 4. Create a `.dev.vars` file for local Cloudflare dev secrets:
 
@@ -57,6 +57,12 @@ npm run dev
 - `npm run format` - Run Prettier
 - `npm run test:e2e` - Run local Playwright smoke checks
 - `npm run test:e2e:ui` - Run Playwright in UI mode for local debugging
+- `npm run deploy:dry-run` - Compile the Cloudflare Worker upload without publishing
+- `npm run deploy` - Deploy `boulder-game` to Cloudflare Workers after human approval
+- `npm run deploy:tail` - Tail live Worker logs for `boulder-game`
+- `npm run deploy:list` - List recent Cloudflare Worker deployments
+- `npm run deploy:status` - Show current Cloudflare Worker deployment status
+- `npm run deploy:rollback` - Roll back to a previous Worker deployment after human approval
 
 ## BoulderGame MVP Guardrails
 
@@ -94,7 +100,7 @@ These checks are intentionally local-only for now. Add them to CI after the firs
 
 ## Supabase Configuration
 
-This project uses [Supabase](https://supabase.com/) for authentication. Environment variables are declared via Astro's `astro:env` schema and are treated as **server-only secrets** — they are never exposed to the client.
+This starter still includes [Supabase](https://supabase.com/) authentication scaffolding, but the BoulderGame MVP is no-auth and does not require Supabase for the public playtest path. Environment variables are declared via Astro's `astro:env` schema as optional server-only secrets — they are never exposed to the client.
 
 ### First-time setup (local, no cloud project needed)
 
@@ -172,25 +178,55 @@ Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_
 
 ## Deployment
 
-This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/).
+This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) as `boulder-game`. The current public site metadata is `https://boulder-game.workers.dev`; replace it only after a custom domain is explicitly approved.
 
-1. Build the project:
+First production deployment, domain changes, paid plan changes, destructive data operations, and primary secret rotation require human approval.
+
+1. Run local verification:
 
 ```bash
+npm run lint
 npm run build
+npm run test:e2e
 ```
 
-2. Deploy with Wrangler:
+2. Compile the Worker upload without publishing:
 
 ```bash
-npx wrangler deploy
+npm run deploy:dry-run
 ```
 
-Set `SUPABASE_URL` and `SUPABASE_KEY` as secrets in your Cloudflare dashboard or via `npx wrangler secret put`.
+3. Authenticate Wrangler if needed:
+
+```bash
+npx wrangler login
+```
+
+4. Deploy with Wrangler after approval:
+
+```bash
+npm run deploy
+```
+
+5. Inspect runtime logs and deployment state:
+
+```bash
+npm run deploy:tail
+npm run deploy:list
+npm run deploy:status
+```
+
+6. If a deployed version must be reverted, use rollback after approval:
+
+```bash
+npm run deploy:rollback
+```
+
+Set `SUPABASE_URL` and `SUPABASE_KEY` as Cloudflare secrets only if the scaffold auth routes remain in use for a non-MVP path.
 
 ## CI
 
-GitHub Actions runs lint + build on every push and PR to `master`. Configure `SUPABASE_URL` and `SUPABASE_KEY` as repository secrets in GitHub for the build step.
+GitHub Actions runs lint + build on every push and PR to `main` and `master`. This repository does not deploy to production from CI yet.
 
 ## License
 

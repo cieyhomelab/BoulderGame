@@ -196,27 +196,27 @@ No data migration is required. Renaming the Worker before first deploy is safe; 
 
 #### Automated
 
-- [x] 1.1 Type-aware lint passes after identity changes
-- [x] 1.2 Production build passes without the prior sitemap missing-site warning
-- [x] 1.3 Local Playwright smoke still passes against the app shell
+- [x] 1.1 Type-aware lint passes after identity changes — 179ee81
+- [x] 1.2 Production build passes without the prior sitemap missing-site warning — 179ee81
+- [x] 1.3 Local Playwright smoke still passes against the app shell — 179ee81
 
 #### Manual
 
-- [x] 1.4 `wrangler.jsonc` and `package.json` no longer expose `10x-astro-starter` as the project/deploy identity
-- [x] 1.5 Configured public `site` value is clearly documented as the current playtest URL placeholder until a custom domain is approved
+- [x] 1.4 `wrangler.jsonc` and `package.json` no longer expose `10x-astro-starter` as the project/deploy identity — 179ee81
+- [x] 1.5 Configured public `site` value is clearly documented as the current playtest URL placeholder until a custom domain is approved — 179ee81
 
 ### Phase 2: Deploy Commands and Operator Documentation
 
 #### Automated
 
-- [ ] 2.1 Formatting check passes for changed docs/config files
-- [ ] 2.2 Type-aware lint still passes
-- [ ] 2.3 Production build still passes
-- [ ] 2.4 Local Playwright smoke still passes
-- [ ] 2.5 Wrangler deploy dry-run completes without publishing
+- [x] 2.1 Formatting check passes for changed docs/config files
+- [x] 2.2 Type-aware lint still passes
+- [x] 2.3 Production build still passes
+- [x] 2.4 Local Playwright smoke still passes
+- [x] 2.5 Wrangler deploy dry-run completes without publishing
 
 #### Manual
 
-- [ ] 2.6 README clearly shows the manual first-deploy, log tail, deployment listing/status, and rollback path
-- [ ] 2.7 AGENTS.md clearly states production deployment approval boundaries
-- [ ] 2.8 No GitHub Actions production deploy workflow is introduced in this change
+- [x] 2.6 README clearly shows the manual first-deploy, log tail, deployment listing/status, and rollback path
+- [x] 2.7 AGENTS.md clearly states production deployment approval boundaries
+- [x] 2.8 No GitHub Actions production deploy workflow is introduced in this change

@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-BoulderGame is an Astro 6 SSR web app scaffolded from `10x-astro-starter`, using React islands, TypeScript, Tailwind CSS, Supabase helpers, and Cloudflare Workers deployment. Treat `@CLAUDE.md` as the deeper tool-specific reference; keep this file as the quick cross-agent guide.
+BoulderGame is an Astro 7 SSR web app for a Boulder Dash-style arcade MVP, using React islands, TypeScript, Tailwind CSS, optional Supabase scaffold helpers, and Cloudflare Workers deployment. Treat `@CLAUDE.md` as the deeper tool-specific reference; keep this file as the quick cross-agent guide.
 
 ## Project Structure & Module Organization
 
@@ -21,6 +21,10 @@ BoulderGame is an Astro 6 SSR web app scaffolded from `10x-astro-starter`, using
 - `npm run format` runs Prettier with Astro and Tailwind plugins.
 - `npm run test:e2e` runs local Playwright smoke checks; do not add it to CI until the game-ready surface stabilizes.
 - `npm run test:e2e:ui` opens Playwright UI mode for local debugging.
+- `npm run deploy:dry-run` compiles the Cloudflare Worker upload without publishing.
+- `npm run deploy` deploys `boulder-game` to Cloudflare Workers; first production deploy requires human approval.
+- `npm run deploy:tail`, `npm run deploy:list`, and `npm run deploy:status` inspect runtime logs and deployment state.
+- `npm run deploy:rollback` rolls back a Worker deployment; use only after human approval.
 
 ## Coding Style & Naming Conventions
 
@@ -36,4 +40,4 @@ This repo has no commits yet, so no commit-message convention is established. Us
 
 ## Security & Configuration Tips
 
-Copy `.env.example` to `.env` or `.dev.vars`; never commit real secrets. Required variables are `SUPABASE_URL` and `SUPABASE_KEY`. GitHub Actions runs `npm ci`, `npx astro sync`, `npm run lint`, and `npm run build` on `master` pushes and PRs.
+Copy `.env.example` to `.env` or `.dev.vars`; never commit real secrets. `SUPABASE_URL` and `SUPABASE_KEY` are optional scaffold variables for the no-auth MVP path. GitHub Actions runs `npm ci`, `npx astro sync`, `npm run lint`, and `npm run build` on `main`/`master` pushes and PRs. Do not perform first production deploy, domain changes, paid plan changes, destructive data operations, or primary secret rotation without human approval.

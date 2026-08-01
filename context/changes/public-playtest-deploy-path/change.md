@@ -1,6 +1,6 @@
 ---
 change_id: public-playtest-deploy-path
-status: planned
+status: implementing
 created: 2026-08-01
 updated: 2026-08-01
 roadmap_id: F-02
