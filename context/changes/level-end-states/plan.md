@@ -222,14 +222,14 @@ No data migration is required.
 
 #### Automated
 
-- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files
-- [x] 3.2 Type-aware lint passes
-- [x] 3.3 Production build passes
-- [x] 3.4 Local Playwright end-state smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files — 69d3793
+- [x] 3.2 Type-aware lint passes — 69d3793
+- [x] 3.3 Production build passes — 69d3793
+- [x] 3.4 Local Playwright end-state smoke passes — 69d3793
 
 #### Manual
 
-- [x] 3.5 Fresh browser session can lose on the hazard
-- [x] 3.6 Fresh browser session can win after collecting all gems and entering the exit
-- [x] 3.7 Terminal states do not offer replay yet
-- [x] 3.8 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session can lose on the hazard — 69d3793
+- [x] 3.6 Fresh browser session can win after collecting all gems and entering the exit — 69d3793
+- [x] 3.7 Terminal states do not offer replay yet — 69d3793
+- [x] 3.8 No CI production deploy or Playwright CI workflow is introduced — 69d3793
