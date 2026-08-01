@@ -6,11 +6,13 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import cloudflare from "@astrojs/cloudflare";
 
+const publicSiteUrl = process.env.PUBLIC_SITE_URL;
+
 // https://astro.build/config
 export default defineConfig({
-  site: "https://boulder-game.workers.dev",
+  ...(publicSiteUrl ? { site: publicSiteUrl } : {}),
   output: "server",
-  integrations: [react(), sitemap()],
+  integrations: [react(), ...(publicSiteUrl ? [sitemap()] : [])],
   vite: {
     plugins: [tailwindcss()],
   },

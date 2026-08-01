@@ -57,8 +57,9 @@ npm run dev
 - `npm run format` - Run Prettier
 - `npm run test:e2e` - Run local Playwright smoke checks
 - `npm run test:e2e:ui` - Run Playwright in UI mode for local debugging
-- `npm run deploy:dry-run` - Compile the Cloudflare Worker upload without publishing
-- `npm run deploy` - Deploy `boulder-game` to Cloudflare Workers after human approval
+- `npm run deploy:site-check` - Validate `PUBLIC_SITE_URL` before production deploy
+- `npm run deploy:dry-run` - Build and compile the Cloudflare Worker upload without publishing
+- `npm run deploy` - Validate site metadata, build, and deploy `boulder-game` after human approval
 - `npm run deploy:tail` - Tail live Worker logs for `boulder-game`
 - `npm run deploy:list` - List recent Cloudflare Worker deployments
 - `npm run deploy:status` - Show current Cloudflare Worker deployment status
@@ -178,7 +179,7 @@ Route protection is handled in `src/middleware.ts`. Add paths to the `PROTECTED_
 
 ## Deployment
 
-This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) as `boulder-game`. The current public site metadata is `https://boulder-game.workers.dev`; replace it only after a custom domain is explicitly approved.
+This project deploys to [Cloudflare Workers](https://workers.cloudflare.com/) as `boulder-game`. Set `PUBLIC_SITE_URL` to the real Workers URL before release builds, for example `https://boulder-game.your-account.workers.dev`; replace it only after a custom domain is explicitly approved.
 
 First production deployment, domain changes, paid plan changes, destructive data operations, and primary secret rotation require human approval.
 
@@ -196,19 +197,28 @@ npm run test:e2e
 npm run deploy:dry-run
 ```
 
-3. Authenticate Wrangler if needed:
+3. Set the confirmed public URL before production deploy:
+
+```bash
+export PUBLIC_SITE_URL=https://boulder-game.your-account.workers.dev
+npm run deploy:site-check
+```
+
+4. Authenticate Wrangler if needed:
 
 ```bash
 npx wrangler login
 ```
 
-4. Deploy with Wrangler after approval:
+5. Deploy with Wrangler after approval:
 
 ```bash
 npm run deploy
 ```
 
-5. Inspect runtime logs and deployment state:
+Record the URL printed by Wrangler in the playtest notes or release issue.
+
+6. Inspect runtime logs and deployment state:
 
 ```bash
 npm run deploy:tail
@@ -216,7 +226,7 @@ npm run deploy:list
 npm run deploy:status
 ```
 
-6. If a deployed version must be reverted, use rollback after approval:
+7. If a deployed version must be reverted, use rollback after approval:
 
 ```bash
 npm run deploy:rollback

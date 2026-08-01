@@ -2,7 +2,7 @@
 
 ## Overview
 
-This plan prepares the smallest useful public playtest path for BoulderGame on Cloudflare Workers. It fixes starter deployment identity, removes the sitemap warning with a documented public URL, and makes build, deploy, log tailing, and rollback commands discoverable without performing the first production deployment automatically.
+This plan prepares the smallest useful public playtest path for BoulderGame on Cloudflare Workers. It fixes starter deployment identity, removes the sitemap warning without hardcoding an invalid Workers URL, and makes build, deploy, log tailing, and rollback commands discoverable without performing the first production deployment automatically.
 
 ## Current State Analysis
 
@@ -10,7 +10,7 @@ The app is already configured for Cloudflare Workers SSR through `@astrojs/cloud
 
 ## Desired End State
 
-After this change, a developer can identify the Cloudflare Worker as BoulderGame, build the project without a sitemap warning, inspect a dry-run deploy bundle, and know the exact manual commands for first public deploy, live logs, deployment listing, and rollback. The first production deployment remains a manual approval step because infrastructure guidance requires human approval for first production deployment and domain changes.
+After this change, a developer can identify the Cloudflare Worker as BoulderGame, build the project without a sitemap warning, inspect a dry-run deploy bundle, and know the exact manual commands for first public deploy, live logs, deployment listing, and rollback. Production deploy validates that `PUBLIC_SITE_URL` is set to the confirmed real Workers URL before publishing. The first production deployment remains a manual approval step because infrastructure guidance requires human approval for first production deployment and domain changes.
 
 ### Key Discoveries:
 
@@ -32,7 +32,7 @@ After this change, a developer can identify the Cloudflare Worker as BoulderGame
 
 ## Implementation Approach
 
-Make the local repo ready for a manual Cloudflare playtest deployment: rename project/deploy identity to `boulder-game`, set a conservative Workers URL as the current public `site`, add Wrangler scripts for deploy dry run, deploy, log tail, deployment status/listing, and rollback, then document the manual operating path in README and AGENTS. Verification stops at local build, lint, E2E, and Wrangler dry-run because production deployment requires approval.
+Make the local repo ready for a manual Cloudflare playtest deployment: rename project/deploy identity to `boulder-game`, make the public `site` metadata environment-driven through `PUBLIC_SITE_URL`, add Wrangler scripts for deploy dry run, deploy, log tail, deployment status/listing, and rollback, then document the manual operating path in README and AGENTS. Verification stops at local build, lint, E2E, and Wrangler dry-run because production deployment requires approval.
 
 ## Critical Implementation Details
 
@@ -68,9 +68,9 @@ Rename starter deployment identity to BoulderGame and make production metadata d
 
 **File**: `astro.config.mjs`
 
-**Intent**: Remove the sitemap warning and give public playtest builds stable absolute URLs until a custom domain is chosen.
+**Intent**: Remove the sitemap warning without baking in an invalid Workers URL; production release builds must use the confirmed Cloudflare URL until a custom domain is chosen.
 
-**Contract**: Add a top-level `site` value for the current Workers playtest identity. Do not add route/domain configuration or Cloudflare account-specific bindings.
+**Contract**: Configure `site` from `PUBLIC_SITE_URL` and enable sitemap generation only when that value is present. Do not add route/domain configuration or Cloudflare account-specific bindings.
 
 ### Success Criteria:
 
@@ -83,7 +83,7 @@ Rename starter deployment identity to BoulderGame and make production metadata d
 #### Manual Verification:
 
 - `wrangler.jsonc` and `package.json` no longer expose `10x-astro-starter` as the project/deploy identity.
-- The configured public `site` value is clearly documented as the current playtest URL placeholder until a custom domain is approved.
+- The `PUBLIC_SITE_URL` contract is clearly documented as the current playtest URL input until a custom domain is approved.
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
 
@@ -203,7 +203,7 @@ No data migration is required. Renaming the Worker before first deploy is safe; 
 #### Manual
 
 - [x] 1.4 `wrangler.jsonc` and `package.json` no longer expose `10x-astro-starter` as the project/deploy identity — 179ee81
-- [x] 1.5 Configured public `site` value is clearly documented as the current playtest URL placeholder until a custom domain is approved — 179ee81
+- [x] 1.5 `PUBLIC_SITE_URL` is clearly documented as the current playtest URL input until a custom domain is approved — 179ee81
 
 ### Phase 2: Deploy Commands and Operator Documentation
 

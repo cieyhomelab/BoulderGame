@@ -8,11 +8,11 @@ This change prepares BoulderGame for a first public Cloudflare playtest without 
 
 ## Starting Point
 
-The repo already builds for Cloudflare Workers SSR, but the Worker and package still use `10x-astro-starter`, the sitemap lacks a `site` URL, and deploy/log commands are not exposed through npm scripts. Infrastructure research chose Cloudflare Workers + Pages and called out the starter name and sitemap warning as pre-public-deploy risks.
+The repo already builds for Cloudflare Workers SSR, but the Worker and package still use `10x-astro-starter`, sitemap generation has no confirmed public `site` URL, and deploy/log commands are not exposed through npm scripts. Infrastructure research chose Cloudflare Workers + Pages and called out the starter name and sitemap warning as pre-public-deploy risks.
 
 ## Desired End State
 
-The project identifies as `boulder-game`, builds without the missing-site sitemap warning, and has an obvious manual playtest runbook. Developers can run local verification, Wrangler dry-run, production deploy with approval, live log tailing, deployment inspection, and rollback commands.
+The project identifies as `boulder-game`, builds without the missing-site sitemap warning, and has an obvious manual playtest runbook. Developers can run local verification, Wrangler dry-run, production deploy with approval and a confirmed `PUBLIC_SITE_URL`, live log tailing, deployment inspection, and rollback commands.
 
 ## Key Decisions Made
 
@@ -21,7 +21,7 @@ The project identifies as `boulder-game`, builds without the missing-site sitema
 | Platform     | Cloudflare Workers                | Matches the selected stack and existing adapter/config without a runtime migration.       |
 | First deploy | Manual with human approval        | Infrastructure guidance requires approval for first production deploy and domain changes. |
 | CI deploy    | Out of scope                      | F-02 needs a safe playtest path, not an automated production release pipeline.            |
-| Public URL   | Workers playtest URL placeholder  | Removes sitemap warning while keeping custom-domain work explicit and separate.           |
+| Public URL   | `PUBLIC_SITE_URL` release input   | Avoids hardcoding an invalid Workers URL while keeping custom-domain work separate.       |
 | Logs         | Wrangler tail plus dashboard logs | Matches the existing infrastructure operating story.                                      |
 
 ## Scope
@@ -29,7 +29,7 @@ The project identifies as `boulder-game`, builds without the missing-site sitema
 **In scope:**
 
 - Rename package and Worker identity to `boulder-game`.
-- Add public `site` metadata for playtest builds.
+- Add environment-driven public `site` metadata for playtest builds.
 - Add npm scripts for deploy dry-run, deploy, log tail, deployment list/status, and rollback.
 - Document manual first deploy, log inspection, rollback, and approval boundaries.
 
@@ -46,17 +46,17 @@ Keep the current Astro SSR + Cloudflare Workers architecture. F-02 only makes th
 
 ## Phases at a Glance
 
-| Phase                                         | What it delivers                                                    | Key risk                                                               |
-| --------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| 1. Deployment Identity and Build Metadata     | BoulderGame Worker/package identity and sitemap-ready site metadata | Choosing a placeholder URL that future custom-domain work must replace |
-| 2. Deploy Commands and Operator Documentation | npm Wrangler commands plus README/AGENTS runbook                    | Accidentally implying production deployment already happened           |
+| Phase                                         | What it delivers                                                    | Key risk                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1. Deployment Identity and Build Metadata     | BoulderGame Worker/package identity and sitemap-ready site metadata | Deploying before the real Workers URL is confirmed           |
+| 2. Deploy Commands and Operator Documentation | npm Wrangler commands plus README/AGENTS runbook                    | Accidentally implying production deployment already happened |
 
 **Prerequisites:** F-01 guardrail foundation complete; Cloudflare account access only needed for actual production deploy.  
 **Estimated effort:** Small foundation change across 2 phases.
 
 ## Open Risks & Assumptions
 
-- The current playtest URL uses the project identity until a real Workers subdomain or custom domain is confirmed.
+- The current playtest URL must be confirmed from Cloudflare before production deploy.
 - `npm run deploy:dry-run` may need Cloudflare/Wrangler network behavior even though it must not publish.
 - Existing Supabase/auth scaffold remains in the repo until S-01 removes or bypasses it from the game path.
 
