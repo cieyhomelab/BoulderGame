@@ -9,6 +9,7 @@ import {
   expectGemsRemaining,
   expectInputResponseMarker,
   expectInputResponseText,
+  expectLevelStatus,
   expectPlayerAt,
   expectScore,
   expectSessionAttemptCount,
@@ -27,6 +28,7 @@ test("root route starts the anonymous BoulderGame level", async ({ page }) => {
   await expectGameReadyFromNavigationStart(page, navigationStartedAtMs);
   await expectAttemptCounter(page, 1);
   await expectSessionAttemptCount(page, 1);
+  await expectLevelStatus(page, "active");
   await expect(page.getByRole("link", { name: /sign in|sign up/i })).toHaveCount(0);
   await expect(page.getByText("Supabase nie jest skonfigurowany")).toHaveCount(0);
 });
@@ -37,12 +39,15 @@ test("player moves on accepted input and stays put against blockers", async ({ p
   await expectInputResponseMarker(page);
   await expectPlayerAt(page, 3, 3);
 
-  await page.keyboard.press("ArrowUp");
-  await expectPlayerAt(page, 3, 3);
-  await expectInputResponseText(page, "0:3,3");
+  await pressAndExpectInputResponse(page, "ArrowDown", "1:4,3");
+  await expectPlayerAt(page, 4, 3);
 
-  await pressAndExpectInputResponse(page, "ArrowRight", "1:3,4");
-  await expectPlayerAt(page, 3, 4);
+  await page.keyboard.press("ArrowDown");
+  await expectPlayerAt(page, 4, 3);
+  await expectInputResponseText(page, "1:4,3");
+
+  await pressAndExpectInputResponse(page, "ArrowRight", "2:4,4");
+  await expectPlayerAt(page, 4, 4);
 });
 
 test("player collects a gem and updates the HUD", async ({ page }) => {
@@ -65,6 +70,64 @@ test("player collects a gem and updates the HUD", async ({ page }) => {
   await expectScore(page, 100);
   await expectCollectedGems(page, 1);
   await expect(page.getByText(/won|lost|play again/i)).toHaveCount(0);
+});
+
+test("player loses on a hazard and movement freezes", async ({ page }) => {
+  await page.goto("/");
+
+  await expectInputResponseMarker(page);
+  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
+  await expectPlayerAt(page, 3, 2);
+  await expectLevelStatus(page, "lost");
+
+  await page.keyboard.press("ArrowRight");
+  await expectPlayerAt(page, 3, 2);
+  await expectInputResponseText(page, "1:3,2");
+});
+
+test("player completes the level after collecting all gems and entering the exit", async ({ page }) => {
+  await page.goto("/");
+
+  await expectInputResponseMarker(page);
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expectCollectedGems(page, 1);
+
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
+  await expectPlayerAt(page, 1, 3);
+  await expectCollectedGems(page, 2);
+
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expectPlayerAt(page, 5, 7);
+  await expectCollectedGems(page, 3);
+  await expectGemsRemaining(page, 0);
+  await expectScore(page, 300);
+
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expectPlayerAt(page, 5, 9);
+  await expectLevelStatus(page, "won");
+
+  await page.keyboard.press("ArrowLeft");
+  await expectPlayerAt(page, 5, 9);
+  await expectLevelStatus(page, "won");
+  await expect(page.getByText(/play again/i)).toHaveCount(0);
 });
 
 test.skip("future replay target marker reaches the repeat-play threshold", async ({ page }) => {

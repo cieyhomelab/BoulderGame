@@ -196,27 +196,27 @@ No data migration is required.
 
 #### Automated
 
-- [x] 1.1 Type-aware lint passes after contract changes
-- [x] 1.2 Production build passes after contract changes
+- [x] 1.1 Type-aware lint passes after contract changes — 27eae55
+- [x] 1.2 Production build passes after contract changes — 27eae55
 
 #### Manual
 
-- [x] 1.3 Existing movement and collection behavior still works
-- [x] 1.4 HUD shows an active level status without win/loss UI
+- [x] 1.3 Existing movement and collection behavior still works — 27eae55
+- [x] 1.4 HUD shows an active level status without win/loss UI — 27eae55
 
 ### Phase 2: Hazard and Completion Rules
 
 #### Automated
 
-- [ ] 2.1 Type-aware lint passes after end-state rules
-- [ ] 2.2 Production build passes after end-state rules
-- [ ] 2.3 Local Playwright verifies loss and completion behavior
+- [x] 2.1 Type-aware lint passes after end-state rules
+- [x] 2.2 Production build passes after end-state rules
+- [x] 2.3 Local Playwright verifies loss and completion behavior
 
 #### Manual
 
-- [ ] 2.4 Stepping onto a hazard shows a loss state and stops further movement
-- [ ] 2.5 Collecting all gems then entering the exit shows a completion state and stops further movement
-- [ ] 2.6 No replay or play-again control appears
+- [x] 2.4 Stepping onto a hazard shows a loss state and stops further movement
+- [x] 2.5 Collecting all gems then entering the exit shows a completion state and stops further movement
+- [x] 2.6 No replay or play-again control appears
 
 ### Phase 3: End-State E2E and Docs
 

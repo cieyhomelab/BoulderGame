@@ -87,3 +87,7 @@ export async function expectScore(page: Page, expectedScore: number): Promise<vo
 export async function expectCollectedGems(page: Page, expectedCount: number): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.collectedGems)).toHaveText(String(expectedCount));
 }
+
+export async function expectLevelStatus(page: Page, expectedStatus: "active" | "lost" | "won"): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.levelStatus)).toHaveText(expectedStatus.toUpperCase());
+}

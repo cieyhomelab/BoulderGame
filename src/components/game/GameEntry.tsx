@@ -6,15 +6,15 @@ import { cn } from "@/lib/utils";
 const LEVEL_ROWS = [
   "############",
   "#..g....r..#",
-  "#.###..##..#",
-  "#..p....g..#",
+  "#.#....##..#",
+  "#.hp....g..#",
   "#.....##...#",
   "#..r...g.e.#",
   "#..........#",
   "############",
 ] as const;
 
-type Tile = "." | "#" | "g" | "p" | "r" | "e";
+type Tile = "." | "#" | "g" | "p" | "r" | "e" | "h";
 type LevelStatus = "active" | "lost" | "won";
 interface Coordinate {
   row: number;
@@ -62,6 +62,7 @@ const TILE_STYLES: Record<Tile, string> = {
   p: "bg-[#f3b63f] shadow-[inset_0_-5px_0_rgba(63,49,36,0.35),0_0_16px_rgba(243,182,63,0.35)]",
   r: "bg-[#76716a] shadow-[inset_0_-5px_0_rgba(0,0,0,0.32),inset_0_3px_0_rgba(255,255,255,0.12)]",
   e: "bg-[#6d3ab7] shadow-[inset_0_0_0_2px_rgba(245,231,200,0.18),0_0_16px_rgba(170,102,255,0.35)]",
+  h: "bg-[#b94431] shadow-[inset_0_-5px_0_rgba(0,0,0,0.35),0_0_16px_rgba(185,68,49,0.36)]",
 };
 
 function parseLevelRows(): BoardCell[][] {
@@ -102,7 +103,7 @@ function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
 }
 
 function isWalkable(tile: Tile | null): boolean {
-  return tile === "." || tile === "g" || tile === "e" || tile === "p";
+  return tile === "." || tile === "g" || tile === "e" || tile === "h" || tile === "p";
 }
 
 function getPositionKey(position: Coordinate): string {
@@ -110,6 +111,10 @@ function getPositionKey(position: Coordinate): string {
 }
 
 function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
+  if (currentState.status !== "active") {
+    return { state: currentState, accepted: false };
+  }
+
   const nextPosition = {
     row: currentState.playerPosition.row + delta.row,
     col: currentState.playerPosition.col + delta.col,
@@ -125,6 +130,8 @@ function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
     nextTile === "g" && !currentState.collectedGemKeys.includes(nextPositionKey)
       ? [...currentState.collectedGemKeys, nextPositionKey]
       : currentState.collectedGemKeys;
+  const status =
+    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemKeys.length === INITIAL_GEM_COUNT ? "won" : "active";
 
   return {
     accepted: true,
@@ -132,6 +139,7 @@ function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
       playerPosition: nextPosition,
       moveCount: currentState.moveCount + 1,
       collectedGemKeys,
+      status,
     },
   };
 }
@@ -224,9 +232,11 @@ export default function GameEntry() {
                     data-testid={
                       hasPlayer
                         ? GAME_GUARDRAIL_TEST_IDS.player
-                        : cell.tile === "e"
-                          ? GAME_GUARDRAIL_TEST_IDS.exit
-                          : undefined
+                        : cell.tile === "h"
+                          ? GAME_GUARDRAIL_TEST_IDS.hazard
+                          : cell.tile === "e"
+                            ? GAME_GUARDRAIL_TEST_IDS.exit
+                            : undefined
                     }
                     key={`${cell.row}-${cell.col}`}
                   />
@@ -268,9 +278,22 @@ export default function GameEntry() {
                 {gameState.moveCount}:{gameState.playerPosition.row},{gameState.playerPosition.col}
               </p>
             </div>
-            <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
+            <div
+              className={cn(
+                "border-4 border-[#3f3124] bg-[#231d16] p-3",
+                gameState.status === "lost" && "border-[#b94431] bg-[#2a1713]",
+                gameState.status === "won" && "border-[#79eada] bg-[#142621]",
+              )}
+            >
               <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Status</p>
-              <p className="text-2xl font-black text-[#f3b63f]" data-testid={GAME_GUARDRAIL_TEST_IDS.levelStatus}>
+              <p
+                className={cn(
+                  "text-2xl font-black text-[#f3b63f]",
+                  gameState.status === "lost" && "text-[#ff705b]",
+                  gameState.status === "won" && "text-[#79eada]",
+                )}
+                data-testid={GAME_GUARDRAIL_TEST_IDS.levelStatus}
+              >
                 {gameState.status.toUpperCase()}
               </p>
             </div>
