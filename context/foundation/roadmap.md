@@ -29,7 +29,7 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 | ---- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------- | ------------- |
 | F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | impl_reviewed |
 | F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | impl_reviewed |
-| S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | proposed      |
+| S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | impl_reviewed |
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | proposed      |
 | S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | proposed      |
 | S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | proposed      |
@@ -96,7 +96,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Czy starter auth/dashboard ma zostac usuniety od razu czy tylko wyjety ze sciezki gry? - Owner: user. Block: no.
 - **Risk:** Ten slice musi przeciac scaffold auth tak, zeby MVP zaczynalo sie od gry, a nie od ekranu produktowego albo logowania.
-- **Status:** proposed
+- **Status:** impl_reviewed
 
 ### S-02: Controllable board and collection
 
@@ -157,7 +157,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 | F-01       | performance-play-signal-guardrails | Add MVP performance and play-signal guardrails       | yes                   | Run `/10x-plan performance-play-signal-guardrails` |
 | F-02       | public-playtest-deploy-path        | Prepare public playtest deployment path              | yes                   | Can run in parallel after F-01 starts              |
 | S-01       | immediate-browser-game-entry       | Let the player start the game immediately in browser | yes                   | Requires F-01                                      |
-| S-02       | controllable-board-collection      | Let the player move on the board and collect items   | no                    | Requires S-01                                      |
+| S-02       | controllable-board-collection      | Let the player move on the board and collect items   | yes                   | Requires S-01                                      |
 | S-03       | level-end-states                   | Let the player lose or complete the level            | no                    | Requires S-02                                      |
 | S-04       | replayable-arcade-loop             | Let the player immediately replay after a level ends | no                    | Requires S-03 and F-02                             |
 | S-05       | risk-reward-level-tuning           | Tune one level around visible risk-reward choices    | no                    | Requires S-04                                      |
