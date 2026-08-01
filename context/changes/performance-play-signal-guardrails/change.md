@@ -1,6 +1,6 @@
 ---
 change_id: performance-play-signal-guardrails
-status: implemented
+status: impl_reviewed
 created: 2026-08-01
 updated: 2026-08-01
 roadmap_id: F-01

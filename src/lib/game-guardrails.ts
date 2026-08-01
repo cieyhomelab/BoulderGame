@@ -30,7 +30,11 @@ function resolveStorage(storage?: GameAttemptStorage): GameAttemptStorage | null
     return null;
   }
 
-  return window.sessionStorage;
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
 }
 
 export function readGameAttemptCount(storage?: GameAttemptStorage): number {
@@ -39,10 +43,14 @@ export function readGameAttemptCount(storage?: GameAttemptStorage): number {
     return 0;
   }
 
-  const value = targetStorage.getItem(GAME_ATTEMPT_SESSION_KEY);
-  const parsedValue = value === null ? 0 : Number.parseInt(value, 10);
+  try {
+    const value = targetStorage.getItem(GAME_ATTEMPT_SESSION_KEY);
+    const parsedValue = value === null ? 0 : Number.parseInt(value, 10);
 
-  return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
+    return Number.isFinite(parsedValue) && parsedValue >= 0 ? parsedValue : 0;
+  } catch {
+    return 0;
+  }
 }
 
 export function incrementGameAttemptCount(storage?: GameAttemptStorage): number {
@@ -51,13 +59,21 @@ export function incrementGameAttemptCount(storage?: GameAttemptStorage): number 
     return 0;
   }
 
-  const nextCount = readGameAttemptCount(targetStorage) + 1;
-  targetStorage.setItem(GAME_ATTEMPT_SESSION_KEY, String(nextCount));
+  try {
+    const nextCount = readGameAttemptCount(targetStorage) + 1;
+    targetStorage.setItem(GAME_ATTEMPT_SESSION_KEY, String(nextCount));
 
-  return nextCount;
+    return nextCount;
+  } catch {
+    return 0;
+  }
 }
 
 export function resetGameAttemptCount(storage?: GameAttemptStorage): void {
   const targetStorage = resolveStorage(storage);
-  targetStorage?.removeItem(GAME_ATTEMPT_SESSION_KEY);
+  try {
+    targetStorage?.removeItem(GAME_ATTEMPT_SESSION_KEY);
+  } catch {
+    // Storage may be unavailable in privacy-restricted browser contexts.
+  }
 }
