@@ -32,8 +32,8 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 | S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | impl_reviewed |
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | impl_reviewed |
 | S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | impl_reviewed |
-| S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | ready         |
-| S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | proposed      |
+| S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | impl_reviewed |
+| S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | ready         |
 
 ## Streams
 
@@ -135,7 +135,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Czy gra ma jawnie pokazywac liczbe prob, czy wystarczy obserwowalny replay w sesji? - Owner: user. Block: no.
 - **Risk:** To pierwszy pelny test powrotu do gry; jesli replay wymaga myslenia albo instrukcji, MVP nie trafia w glowny sygnal sukcesu.
-- **Status:** ready
+- **Status:** impl_reviewed
 
 ### S-05: Risk-reward level tuning
 
@@ -148,7 +148,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Jaki uklad planszy daje widoczna decyzje ryzyko-nagroda bez potrzeby instrukcji? - Owner: team. Block: no.
 - **Risk:** Ten slice jest po pelnej petli, bo tuning ma sens dopiero wtedy, gdy mozna zagrac, przegrac, wygrac i sprobowac ponownie.
-- **Status:** proposed
+- **Status:** ready
 
 ## Backlog Handoff
 
@@ -160,7 +160,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 | S-02       | controllable-board-collection      | Let the player move on the board and collect items   | yes                   | Requires S-01                                      |
 | S-03       | level-end-states                   | Let the player lose or complete the level            | yes                   | Requires S-02                                      |
 | S-04       | replayable-arcade-loop             | Let the player immediately replay after a level ends | yes                   | Requires S-03 and F-02                             |
-| S-05       | risk-reward-level-tuning           | Tune one level around visible risk-reward choices    | no                    | Requires S-04                                      |
+| S-05       | risk-reward-level-tuning           | Tune one level around visible risk-reward choices    | yes                   | Requires S-04                                      |
 
 ## Open Roadmap Questions
 
