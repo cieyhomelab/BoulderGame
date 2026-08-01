@@ -188,13 +188,13 @@ No data migration is required.
 
 #### Automated
 
-- [ ] 1.1 Type-aware lint passes after quota contract
-- [ ] 1.2 Production build passes after quota contract
+- [x] 1.1 Type-aware lint passes after quota contract
+- [x] 1.2 Production build passes after quota contract
 
 #### Manual
 
-- [ ] 1.3 Existing game loop still behaves as before
-- [ ] 1.4 HUD exposes quota and bonus progress without requiring external instructions
+- [x] 1.3 Existing game loop still behaves as before
+- [x] 1.4 HUD exposes quota and bonus progress without requiring external instructions
 
 ### Phase 2: Safer and Riskier Completion Paths
 

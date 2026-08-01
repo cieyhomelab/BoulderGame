@@ -19,6 +19,8 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   exit: "game-exit",
   replayButton: "game-replay-button",
   outcomeMessage: "game-outcome-message",
+  gemQuota: "game-gem-quota",
+  bonusGems: "game-bonus-gems",
 } as const;
 
 export const GAME_ATTEMPT_SESSION_KEY = "boulder-game:attempt-count";

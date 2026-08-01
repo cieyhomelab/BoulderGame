@@ -41,6 +41,7 @@ interface MoveResult {
 }
 
 const GEM_SCORE_VALUE = 100;
+const REQUIRED_GEM_COUNT = 2;
 const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   ArrowUp: { row: -1, col: 0 },
   w: { row: -1, col: 0 },
@@ -149,6 +150,7 @@ const LEVEL_BOARD = parseLevelRows();
 const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
 const PLAYER_START = findPlayerStart(LEVEL_BOARD);
 const INITIAL_GEM_COUNT = countGems(LEVEL_BOARD);
+const OPTIONAL_GEM_COUNT = INITIAL_GEM_COUNT - REQUIRED_GEM_COUNT;
 
 function createInitialGameState(): GameState {
   return {
@@ -215,6 +217,8 @@ export default function GameEntry() {
       : gameState.status === "lost"
         ? "Cave-in. Play again?"
         : null;
+  const collectedRequiredGems = Math.min(gameState.collectedGemKeys.length, REQUIRED_GEM_COUNT);
+  const collectedBonusGems = Math.max(gameState.collectedGemKeys.length - REQUIRED_GEM_COUNT, 0);
 
   return (
     <main
@@ -291,6 +295,20 @@ export default function GameEntry() {
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Score</p>
                 <p className="text-2xl font-black text-[#c56cff]" data-testid={GAME_GUARDRAIL_TEST_IDS.score}>
                   {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
+                <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Quota</p>
+                <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemQuota}>
+                  {String(collectedRequiredGems).padStart(2, "0")}/{String(REQUIRED_GEM_COUNT).padStart(2, "0")}
+                </p>
+              </div>
+              <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
+                <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Bonus</p>
+                <p className="text-2xl font-black text-[#f3b63f]" data-testid={GAME_GUARDRAIL_TEST_IDS.bonusGems}>
+                  {collectedBonusGems}/{OPTIONAL_GEM_COUNT}
                 </p>
               </div>
             </div>
