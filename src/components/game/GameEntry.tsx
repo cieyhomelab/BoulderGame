@@ -364,7 +364,8 @@ export default function GameEntry() {
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
               {INITIAL_GEM_COUNT - gameState.collectedGemKeys.length} gems remaining. Score{" "}
-              {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}. Status {gameState.status}.
+              {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of{" "}
+              {REQUIRED_GEM_COUNT}. Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. Status {gameState.status}.
             </p>
           </aside>
         </div>
