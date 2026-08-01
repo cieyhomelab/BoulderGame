@@ -208,28 +208,28 @@ No data migration is required.
 
 #### Automated
 
-- [x] 2.1 Type-aware lint passes after end-state rules
-- [x] 2.2 Production build passes after end-state rules
-- [x] 2.3 Local Playwright verifies loss and completion behavior
+- [x] 2.1 Type-aware lint passes after end-state rules — 48fc98a
+- [x] 2.2 Production build passes after end-state rules — 48fc98a
+- [x] 2.3 Local Playwright verifies loss and completion behavior — 48fc98a
 
 #### Manual
 
-- [x] 2.4 Stepping onto a hazard shows a loss state and stops further movement
-- [x] 2.5 Collecting all gems then entering the exit shows a completion state and stops further movement
-- [x] 2.6 No replay or play-again control appears
+- [x] 2.4 Stepping onto a hazard shows a loss state and stops further movement — 48fc98a
+- [x] 2.5 Collecting all gems then entering the exit shows a completion state and stops further movement — 48fc98a
+- [x] 2.6 No replay or play-again control appears — 48fc98a
 
 ### Phase 3: End-State E2E and Docs
 
 #### Automated
 
-- [ ] 3.1 Formatting check passes for changed docs/tests/source/plan files
-- [ ] 3.2 Type-aware lint passes
-- [ ] 3.3 Production build passes
-- [ ] 3.4 Local Playwright end-state smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files
+- [x] 3.2 Type-aware lint passes
+- [x] 3.3 Production build passes
+- [x] 3.4 Local Playwright end-state smoke passes
 
 #### Manual
 
-- [ ] 3.5 Fresh browser session can lose on the hazard
-- [ ] 3.6 Fresh browser session can win after collecting all gems and entering the exit
-- [ ] 3.7 Terminal states do not offer replay yet
-- [ ] 3.8 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session can lose on the hazard
+- [x] 3.6 Fresh browser session can win after collecting all gems and entering the exit
+- [x] 3.7 Terminal states do not offer replay yet
+- [x] 3.8 No CI production deploy or Playwright CI workflow is introduced

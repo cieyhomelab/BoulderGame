@@ -19,7 +19,7 @@ BoulderGame is an Astro 7 SSR web app for a Boulder Dash-style arcade MVP, using
 - `npm run lint` runs type-aware ESLint.
 - `npm run lint:fix` applies ESLint fixes.
 - `npm run format` runs Prettier with Astro and Tailwind plugins.
-- `npm run test:e2e` runs local Playwright smoke checks for the anonymous BoulderGame entry, keyboard movement, and gem collection; CI still runs lint and build only.
+- `npm run test:e2e` runs local Playwright smoke checks for anonymous entry, keyboard movement, gem collection, loss, and level completion; CI still runs lint and build only.
 - `npm run test:e2e:ui` opens Playwright UI mode for local debugging.
 - `npm run deploy:site-check` validates `PUBLIC_SITE_URL` before production deploy.
 - `npm run deploy:dry-run` builds and compiles the Cloudflare Worker upload without publishing.
