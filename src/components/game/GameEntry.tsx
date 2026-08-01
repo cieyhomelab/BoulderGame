@@ -163,6 +163,7 @@ export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const countedAttemptRef = useRef(false);
+  const replayButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (countedAttemptRef.current) {
@@ -192,6 +193,15 @@ export default function GameEntry() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (gameState.status === "active") {
+      return;
+    }
+
+    replayButtonRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    replayButtonRef.current?.focus({ preventScroll: true });
+  }, [gameState.status]);
 
   function handleReplayClick(): void {
     setGameState(createInitialGameState());
@@ -317,7 +327,7 @@ export default function GameEntry() {
             </div>
             {isTerminalState && (
               <div
-                className="border-4 border-[#3f3124] bg-[#191d17] p-3 shadow-[6px_6px_0_#070806]"
+                className="fixed right-4 bottom-24 left-4 z-30 border-4 border-[#3f3124] bg-[#191d17] p-3 shadow-[6px_6px_0_#070806] lg:static"
                 data-testid={GAME_GUARDRAIL_TEST_IDS.outcomeMessage}
               >
                 <p className="mb-3 text-sm leading-snug font-bold text-[#f5e7c8]">{outcomeMessage}</p>
@@ -325,6 +335,7 @@ export default function GameEntry() {
                   className="inline-flex w-full items-center justify-center gap-2 border-4 border-[#79eada] bg-[#142621] px-3 py-2 font-mono text-sm font-black text-[#79eada] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f3b63f]"
                   data-testid={GAME_GUARDRAIL_TEST_IDS.replayButton}
                   onClick={handleReplayClick}
+                  ref={replayButtonRef}
                   type="button"
                 >
                   <RotateCcw aria-hidden="true" className="size-4" />

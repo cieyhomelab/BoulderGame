@@ -86,6 +86,21 @@ export async function expectReplayButtonVisible(page: Page): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton)).toBeVisible();
 }
 
+export async function expectReplayButtonInViewport(page: Page): Promise<void> {
+  const replayButton = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton);
+
+  await expect(replayButton).toBeVisible();
+  await expect
+    .poll(() =>
+      replayButton.evaluate((button) => {
+        const rect = button.getBoundingClientRect();
+
+        return rect.top >= 0 && rect.left >= 0 && rect.bottom <= window.innerHeight && rect.right <= window.innerWidth;
+      }),
+    )
+    .toBe(true);
+}
+
 export async function expectReplayButtonHidden(page: Page): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton)).toHaveCount(0);
 }

@@ -17,6 +17,7 @@ import {
   expectPlayerAt,
   expectPlayerRemainsAtAfterInput,
   expectReplayButtonHidden,
+  expectReplayButtonInViewport,
   expectReplayButtonVisible,
   expectScore,
   expectSessionAttemptCount,
@@ -186,4 +187,46 @@ test("replay loop reaches the repeat-play threshold", async ({ page }) => {
   await expectPlayerAt(page, 3, 3);
   await expectInputResponseText(page, "0:3,3");
   await expectReplayButtonHidden(page);
+});
+
+test("mobile terminal states keep replay action in viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  await expectInputResponseMarker(page);
+  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
+  await expectLevelStatus(page, "lost");
+  await expectReplayButtonInViewport(page);
+
+  await activateReplay(page);
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expectCollectedGems(page, 1);
+
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowUp");
+  await page.keyboard.press("ArrowUp");
+  await expectCollectedGems(page, 2);
+
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expectCollectedGems(page, 3);
+
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expectLevelStatus(page, "won");
+  await expectReplayButtonInViewport(page);
 });
