@@ -209,14 +209,14 @@ No data migration is required. Renaming the Worker before first deploy is safe; 
 
 #### Automated
 
-- [x] 2.1 Formatting check passes for changed docs/config files
-- [x] 2.2 Type-aware lint still passes
-- [x] 2.3 Production build still passes
-- [x] 2.4 Local Playwright smoke still passes
-- [x] 2.5 Wrangler deploy dry-run completes without publishing
+- [x] 2.1 Formatting check passes for changed docs/config files — a85cf61
+- [x] 2.2 Type-aware lint still passes — a85cf61
+- [x] 2.3 Production build still passes — a85cf61
+- [x] 2.4 Local Playwright smoke still passes — a85cf61
+- [x] 2.5 Wrangler deploy dry-run completes without publishing — a85cf61
 
 #### Manual
 
-- [x] 2.6 README clearly shows the manual first-deploy, log tail, deployment listing/status, and rollback path
-- [x] 2.7 AGENTS.md clearly states production deployment approval boundaries
-- [x] 2.8 No GitHub Actions production deploy workflow is introduced in this change
+- [x] 2.6 README clearly shows the manual first-deploy, log tail, deployment listing/status, and rollback path — a85cf61
+- [x] 2.7 AGENTS.md clearly states production deployment approval boundaries — a85cf61
+- [x] 2.8 No GitHub Actions production deploy workflow is introduced in this change — a85cf61
