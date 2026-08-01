@@ -37,6 +37,20 @@ export async function expectInputResponseText(page: Page, expectedText: string):
   });
 }
 
+export async function pressAndExpectInputResponse(page: Page, key: string, expectedText: string): Promise<void> {
+  const inputStartedAtMs = Date.now();
+
+  await page.keyboard.press(key);
+
+  const elapsedMs = Date.now() - inputStartedAtMs;
+  expect(elapsedMs).toBeLessThanOrEqual(GAME_GUARDRAIL_THRESHOLDS.inputResponseMs);
+
+  const remainingMs = Math.max(GAME_GUARDRAIL_THRESHOLDS.inputResponseMs - elapsedMs, 1);
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.inputResponseMarker)).toHaveText(expectedText, {
+    timeout: remainingMs,
+  });
+}
+
 export async function expectPlayerAt(page: Page, row: number, col: number): Promise<void> {
   const player = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.player);
 

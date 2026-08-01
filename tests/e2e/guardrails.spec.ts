@@ -12,6 +12,7 @@ import {
   expectPlayerAt,
   expectScore,
   expectSessionAttemptCount,
+  pressAndExpectInputResponse,
 } from "./guardrail-assertions";
 
 test("root route starts the anonymous BoulderGame level", async ({ page }) => {
@@ -40,9 +41,8 @@ test("player moves on accepted input and stays put against blockers", async ({ p
   await expectPlayerAt(page, 3, 3);
   await expectInputResponseText(page, "0:3,3");
 
-  await page.keyboard.press("ArrowRight");
+  await pressAndExpectInputResponse(page, "ArrowRight", "1:3,4");
   await expectPlayerAt(page, 3, 4);
-  await expectInputResponseText(page, "1:3,4");
 });
 
 test("player collects a gem and updates the HUD", async ({ page }) => {

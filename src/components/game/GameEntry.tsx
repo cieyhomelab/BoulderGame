@@ -26,6 +26,17 @@ interface BoardCell {
   col: number;
 }
 
+interface GameState {
+  playerPosition: Coordinate;
+  moveCount: number;
+  collectedGemKeys: string[];
+}
+
+interface MoveResult {
+  state: GameState;
+  accepted: boolean;
+}
+
 const GEM_SCORE_VALUE = 100;
 const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   ArrowUp: { row: -1, col: 0 },
@@ -96,6 +107,33 @@ function getPositionKey(position: Coordinate): string {
   return `${position.row}:${position.col}`;
 }
 
+function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
+  const nextPosition = {
+    row: currentState.playerPosition.row + delta.row,
+    col: currentState.playerPosition.col + delta.col,
+  };
+
+  const nextTile = getTileAt(nextPosition);
+  if (!isWalkable(nextTile)) {
+    return { state: currentState, accepted: false };
+  }
+
+  const nextPositionKey = getPositionKey(nextPosition);
+  const collectedGemKeys =
+    nextTile === "g" && !currentState.collectedGemKeys.includes(nextPositionKey)
+      ? [...currentState.collectedGemKeys, nextPositionKey]
+      : currentState.collectedGemKeys;
+
+  return {
+    accepted: true,
+    state: {
+      playerPosition: nextPosition,
+      moveCount: currentState.moveCount + 1,
+      collectedGemKeys,
+    },
+  };
+}
+
 const LEVEL_BOARD = parseLevelRows();
 const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
 const PLAYER_START = findPlayerStart(LEVEL_BOARD);
@@ -103,9 +141,11 @@ const INITIAL_GEM_COUNT = countGems(LEVEL_BOARD);
 
 export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
-  const [playerPosition, setPlayerPosition] = useState<Coordinate>(PLAYER_START);
-  const [moveCount, setMoveCount] = useState(0);
-  const [collectedGemKeys, setCollectedGemKeys] = useState<string[]>([]);
+  const [gameState, setGameState] = useState<GameState>({
+    playerPosition: PLAYER_START,
+    moveCount: 0,
+    collectedGemKeys: [],
+  });
   const countedAttemptRef = useRef(false);
 
   useEffect(() => {
@@ -124,28 +164,10 @@ export default function GameEntry() {
         return;
       }
 
-      setPlayerPosition((currentPosition) => {
-        const nextPosition = {
-          row: currentPosition.row + delta.row,
-          col: currentPosition.col + delta.col,
-        };
-
-        if (!isWalkable(getTileAt(nextPosition))) {
-          return currentPosition;
-        }
-
-        event.preventDefault();
-        if (getTileAt(nextPosition) === "g") {
-          const nextPositionKey = getPositionKey(nextPosition);
-          setCollectedGemKeys((currentCollectedGemKeys) =>
-            currentCollectedGemKeys.includes(nextPositionKey)
-              ? currentCollectedGemKeys
-              : [...currentCollectedGemKeys, nextPositionKey],
-          );
-        }
-
-        setMoveCount((currentMoveCount) => currentMoveCount + 1);
-        return nextPosition;
+      event.preventDefault();
+      setGameState((currentState) => {
+        const moveResult = resolveMove(currentState, delta);
+        return moveResult.state;
       });
     }
 
@@ -186,8 +208,8 @@ export default function GameEntry() {
               role="img"
             >
               {LEVEL_CELLS.map((cell) => {
-                const hasPlayer = isSameCoordinate(cell, playerPosition);
-                const isCollectedGem = cell.tile === "g" && collectedGemKeys.includes(getPositionKey(cell));
+                const hasPlayer = isSameCoordinate(cell, gameState.playerPosition);
+                const isCollectedGem = cell.tile === "g" && gameState.collectedGemKeys.includes(getPositionKey(cell));
                 const tile = hasPlayer ? "p" : cell.tile === "p" || isCollectedGem ? "." : cell.tile;
 
                 return (
@@ -215,18 +237,18 @@ export default function GameEntry() {
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Gems</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemsRemaining}>
-                  {String(INITIAL_GEM_COUNT - collectedGemKeys.length).padStart(2, "0")}
+                  {String(INITIAL_GEM_COUNT - gameState.collectedGemKeys.length).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Score</p>
                 <p className="text-2xl font-black text-[#c56cff]" data-testid={GAME_GUARDRAIL_TEST_IDS.score}>
-                  {collectedGemKeys.length * GEM_SCORE_VALUE}
+                  {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}
                 </p>
               </div>
             </div>
             <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.collectedGems}>
-              {collectedGemKeys.length}
+              {gameState.collectedGemKeys.length}
             </p>
             <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
               <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Input</p>
@@ -234,9 +256,14 @@ export default function GameEntry() {
                 className="text-xl font-black text-[#f3b63f]"
                 data-testid={GAME_GUARDRAIL_TEST_IDS.inputResponseMarker}
               >
-                {moveCount}:{playerPosition.row},{playerPosition.col}
+                {gameState.moveCount}:{gameState.playerPosition.row},{gameState.playerPosition.col}
               </p>
             </div>
+            <p className="sr-only" aria-live="polite">
+              Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
+              {INITIAL_GEM_COUNT - gameState.collectedGemKeys.length} gems remaining. Score{" "}
+              {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}.
+            </p>
           </aside>
         </div>
       </section>
