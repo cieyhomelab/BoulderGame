@@ -58,6 +58,30 @@ export async function expectPlayerAt(page: Page, row: number, col: number): Prom
   await expect(player).toHaveAttribute("data-col", String(col));
 }
 
+export async function expectPlayerRemainsAtAfterInput(
+  page: Page,
+  key: string,
+  row: number,
+  col: number,
+): Promise<void> {
+  await page.keyboard.press(key);
+  await expectPlayerAt(page, row, col);
+}
+
+export async function expectHazardAt(page: Page, row: number, col: number): Promise<void> {
+  const hazard = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.hazard);
+
+  await expect(hazard).toHaveAttribute("data-row", String(row));
+  await expect(hazard).toHaveAttribute("data-col", String(col));
+}
+
+export async function expectExitAt(page: Page, row: number, col: number): Promise<void> {
+  const exit = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.exit);
+
+  await expect(exit).toHaveAttribute("data-row", String(row));
+  await expect(exit).toHaveAttribute("data-col", String(col));
+}
+
 export async function expectAttemptCounterAtTarget(page: Page): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.attemptCounter)).toHaveText(
     String(GAME_GUARDRAIL_THRESHOLDS.replayAttemptTarget),

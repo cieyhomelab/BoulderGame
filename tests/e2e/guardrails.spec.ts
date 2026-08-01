@@ -4,13 +4,16 @@ import {
   expectAttemptCounter,
   expectAttemptCounterAtTarget,
   expectCollectedGems,
+  expectExitAt,
   expectGameEntrySurface,
   expectGameReadyFromNavigationStart,
   expectGemsRemaining,
+  expectHazardAt,
   expectInputResponseMarker,
   expectInputResponseText,
   expectLevelStatus,
   expectPlayerAt,
+  expectPlayerRemainsAtAfterInput,
   expectScore,
   expectSessionAttemptCount,
   pressAndExpectInputResponse,
@@ -76,12 +79,12 @@ test("player loses on a hazard and movement freezes", async ({ page }) => {
   await page.goto("/");
 
   await expectInputResponseMarker(page);
+  await expectHazardAt(page, 3, 2);
   await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
   await expectPlayerAt(page, 3, 2);
   await expectLevelStatus(page, "lost");
 
-  await page.keyboard.press("ArrowRight");
-  await expectPlayerAt(page, 3, 2);
+  await expectPlayerRemainsAtAfterInput(page, "ArrowRight", 3, 2);
   await expectInputResponseText(page, "1:3,2");
 });
 
@@ -89,6 +92,7 @@ test("player completes the level after collecting all gems and entering the exit
   await page.goto("/");
 
   await expectInputResponseMarker(page);
+  await expectExitAt(page, 5, 9);
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");
@@ -124,8 +128,7 @@ test("player completes the level after collecting all gems and entering the exit
   await expectPlayerAt(page, 5, 9);
   await expectLevelStatus(page, "won");
 
-  await page.keyboard.press("ArrowLeft");
-  await expectPlayerAt(page, 5, 9);
+  await expectPlayerRemainsAtAfterInput(page, "ArrowLeft", 5, 9);
   await expectLevelStatus(page, "won");
   await expect(page.getByText(/play again/i)).toHaveCount(0);
 });

@@ -1,6 +1,6 @@
 ---
 change_id: level-end-states
-status: implemented
+status: impl_reviewed
 created: 2026-08-01
 updated: 2026-08-01
 roadmap_id: S-03
