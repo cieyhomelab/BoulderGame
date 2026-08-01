@@ -238,14 +238,14 @@ No data migration is required. The existing auth/dashboard scaffold stays in pla
 
 #### Automated
 
-- [ ] 1.1 Type-aware lint passes after route/layout changes
-- [ ] 1.2 Production build passes after route/layout changes
+- [x] 1.1 Type-aware lint passes after route/layout changes
+- [x] 1.2 Production build passes after route/layout changes
 
 #### Manual
 
-- [ ] 1.3 `/` has document title `BoulderGame` and does not show `10x Astro Starter`
-- [ ] 1.4 `/` does not show sign-in/sign-up CTAs or Supabase missing-config warnings
-- [ ] 1.5 `/auth/*` and `/dashboard` scaffold routes remain present for later cleanup decisions
+- [x] 1.3 `/` has document title `BoulderGame` and does not show `10x Astro Starter`
+- [x] 1.4 `/` does not show sign-in/sign-up CTAs or Supabase missing-config warnings
+- [x] 1.5 `/auth/*` and `/dashboard` scaffold routes remain present for later cleanup decisions
 
 ### Phase 2: Immediate Level Entry
 

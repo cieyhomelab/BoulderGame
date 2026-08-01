@@ -5,9 +5,10 @@ import { missingConfigs } from "@/lib/config-status";
 
 interface Props {
   title?: string;
+  showConfigWarnings?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "10x Astro Starter", showConfigWarnings = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -20,20 +21,21 @@ const { title = "10x Astro Starter" } = Astro.props;
   </head>
   <body>
     {
-      missingConfigs.map((cfg) => (
-        <Banner variant="error">
-          <strong>Uwaga:</strong> {cfg.message}
-          {cfg.docsUrl && (
-            <>
-              {" "}
-              <a href={cfg.docsUrl} target="_blank" rel="noopener noreferrer">
-                {cfg.docsLabel ?? "Dokumentacja"}
-              </a>
-              .
-            </>
-          )}
-        </Banner>
-      ))
+      showConfigWarnings &&
+        missingConfigs.map((cfg) => (
+          <Banner variant="error">
+            <strong>Uwaga:</strong> {cfg.message}
+            {cfg.docsUrl && (
+              <>
+                {" "}
+                <a href={cfg.docsUrl} target="_blank" rel="noopener noreferrer">
+                  {cfg.docsLabel ?? "Dokumentacja"}
+                </a>
+                .
+              </>
+            )}
+          </Banner>
+        ))
     }
     <slot />
   </body>

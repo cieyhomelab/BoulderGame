@@ -1,8 +1,36 @@
 ---
-import Welcome from "@/components/Welcome.astro";
 import Layout from "@/layouts/Layout.astro";
 ---
 
-<Layout>
-  <Welcome />
+<Layout title="BoulderGame" showConfigWarnings={false}>
+  <main class="min-h-screen bg-[#11100d] text-[#f5e7c8]">
+    <section class="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-8">
+      <header class="flex items-center justify-between border-b-4 border-[#36261b] pb-4">
+        <p class="font-mono text-sm tracking-[0.12em] text-[#f3b63f] uppercase">BoulderGame</p>
+        <p class="font-mono text-xs text-[#9fb58f] uppercase">Level 01 ready</p>
+      </header>
+
+      <div class="grid flex-1 place-items-center py-10">
+        <div class="w-full max-w-4xl border-4 border-[#3f3124] bg-[#1b1712] p-5 shadow-[12px_12px_0_#080705]">
+          <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 class="font-mono text-4xl leading-none font-black tracking-normal text-[#f5e7c8] sm:text-6xl">
+                BoulderGame
+              </h1>
+              <p class="mt-2 max-w-xl font-mono text-sm text-[#c9b58a]">
+                Pierwsza plansza startuje od razu. Ruch, zbieranie i ryzyko wejda w kolejnych slice'ach.
+              </p>
+            </div>
+            <div class="border-2 border-[#5a4631] bg-[#251f18] px-4 py-3 font-mono text-sm text-[#f3b63f]">
+              ATTEMPT --
+            </div>
+          </div>
+
+          <div class="grid aspect-[16/9] min-h-[280px] place-items-center border-4 border-[#5a4631] bg-[#2b241b]">
+            <div class="font-mono text-lg text-[#9fb58f] uppercase">Game surface loading</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 </Layout>
