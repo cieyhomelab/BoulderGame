@@ -15,6 +15,18 @@ const LEVEL_ROWS = [
 ] as const;
 
 type Tile = "." | "#" | "g" | "p" | "r" | "e";
+interface Coordinate {
+  row: number;
+  col: number;
+}
+
+interface BoardCell {
+  tile: Tile;
+  row: number;
+  col: number;
+}
+
+const GEM_SCORE_VALUE = 100;
 
 const TILE_STYLES: Record<Tile, string> = {
   ".": "bg-[#2f3b2d] shadow-[inset_0_0_0_1px_rgba(196,217,142,0.08)]",
@@ -25,11 +37,39 @@ const TILE_STYLES: Record<Tile, string> = {
   e: "bg-[#6d3ab7] shadow-[inset_0_0_0_2px_rgba(245,231,200,0.18),0_0_16px_rgba(170,102,255,0.35)]",
 };
 
-function flattenLevel(): Tile[] {
-  return LEVEL_ROWS.flatMap((row) => row.split("") as Tile[]);
+function parseLevelRows(): BoardCell[][] {
+  return LEVEL_ROWS.map((row, rowIndex) =>
+    (row.split("") as Tile[]).map((tile, colIndex) => ({
+      tile,
+      row: rowIndex,
+      col: colIndex,
+    })),
+  );
 }
 
-const LEVEL_TILES = flattenLevel();
+function flattenBoard(board: BoardCell[][]): BoardCell[] {
+  return board.flat();
+}
+
+function findPlayerStart(board: BoardCell[][]): Coordinate {
+  for (const row of board) {
+    const playerCell = row.find((cell) => cell.tile === "p");
+    if (playerCell) {
+      return { row: playerCell.row, col: playerCell.col };
+    }
+  }
+
+  return { row: 0, col: 0 };
+}
+
+function countGems(board: BoardCell[][]): number {
+  return flattenBoard(board).filter((cell) => cell.tile === "g").length;
+}
+
+const LEVEL_BOARD = parseLevelRows();
+const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
+const PLAYER_START = findPlayerStart(LEVEL_BOARD);
+const INITIAL_GEM_COUNT = countGems(LEVEL_BOARD);
 
 export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
@@ -69,15 +109,22 @@ export default function GameEntry() {
         <div className="grid flex-1 items-center gap-5 py-5 lg:grid-cols-[1fr_18rem]">
           <div className="border-4 border-[#3f3124] bg-[#171a15] p-3 shadow-[10px_10px_0_#070806] sm:p-5">
             <div
-              aria-label="Static BoulderGame level preview with a player, gems, rocks, and an open exit."
+              aria-label="BoulderGame level board with player start, gems, rocks, and an open exit."
               className="grid grid-cols-12 gap-1 border-4 border-[#5c4a36] bg-[#0b0e0a] p-2"
+              data-testid={GAME_GUARDRAIL_TEST_IDS.board}
               role="img"
             >
-              {LEVEL_TILES.map((tile, index) => (
+              {LEVEL_CELLS.map((cell) => (
                 <div
                   aria-hidden="true"
-                  className={cn("aspect-square min-h-0 rounded-[2px]", TILE_STYLES[tile])}
-                  key={`${tile}-${index}`}
+                  className={cn("aspect-square min-h-0 rounded-[2px]", TILE_STYLES[cell.tile])}
+                  data-player={cell.row === PLAYER_START.row && cell.col === PLAYER_START.col ? "true" : undefined}
+                  data-testid={
+                    cell.row === PLAYER_START.row && cell.col === PLAYER_START.col
+                      ? GAME_GUARDRAIL_TEST_IDS.player
+                      : undefined
+                  }
+                  key={`${cell.row}-${cell.col}`}
                 />
               ))}
             </div>
@@ -93,13 +140,20 @@ export default function GameEntry() {
             <div className="grid grid-cols-2 gap-3">
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Gems</p>
-                <p className="text-2xl font-black text-[#79eada]">03</p>
+                <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemsRemaining}>
+                  {String(INITIAL_GEM_COUNT).padStart(2, "0")}
+                </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
-                <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Exit</p>
-                <p className="text-2xl font-black text-[#c56cff]">OPEN</p>
+                <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Score</p>
+                <p className="text-2xl font-black text-[#c56cff]" data-testid={GAME_GUARDRAIL_TEST_IDS.score}>
+                  {0 * GEM_SCORE_VALUE}
+                </p>
               </div>
             </div>
+            <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.collectedGems}>
+              0
+            </p>
           </aside>
         </div>
       </section>

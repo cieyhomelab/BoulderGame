@@ -9,6 +9,11 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   readyMarker: "game-ready",
   inputResponseMarker: "game-input-response",
   attemptCounter: "game-attempt-counter",
+  board: "game-board",
+  player: "game-player",
+  gemsRemaining: "game-gems-remaining",
+  score: "game-score",
+  collectedGems: "game-collected-gems",
 } as const;
 
 export const GAME_ATTEMPT_SESSION_KEY = "boulder-game:attempt-count";

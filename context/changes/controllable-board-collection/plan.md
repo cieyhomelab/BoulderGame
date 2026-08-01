@@ -218,13 +218,13 @@ No data migration is required. The board remains client-local and session-only.
 
 #### Automated
 
-- [ ] 1.1 Type-aware lint passes after selector/helper changes
-- [ ] 1.2 Production build passes after selector/helper changes
+- [x] 1.1 Type-aware lint passes after selector/helper changes
+- [x] 1.2 Production build passes after selector/helper changes
 
 #### Manual
 
-- [ ] 1.3 `/` still renders the same ready board shape as S-01
-- [ ] 1.4 Existing anonymous entry E2E behavior is not weakened
+- [x] 1.3 `/` still renders the same ready board shape as S-01
+- [x] 1.4 Existing anonymous entry E2E behavior is not weakened
 
 ### Phase 2: Keyboard Movement
 
