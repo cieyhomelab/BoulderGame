@@ -92,6 +92,10 @@ function isWalkable(tile: Tile | null): boolean {
   return tile === "." || tile === "g" || tile === "e" || tile === "p";
 }
 
+function getPositionKey(position: Coordinate): string {
+  return `${position.row}:${position.col}`;
+}
+
 const LEVEL_BOARD = parseLevelRows();
 const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
 const PLAYER_START = findPlayerStart(LEVEL_BOARD);
@@ -101,6 +105,7 @@ export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
   const [playerPosition, setPlayerPosition] = useState<Coordinate>(PLAYER_START);
   const [moveCount, setMoveCount] = useState(0);
+  const [collectedGemKeys, setCollectedGemKeys] = useState<string[]>([]);
   const countedAttemptRef = useRef(false);
 
   useEffect(() => {
@@ -130,6 +135,15 @@ export default function GameEntry() {
         }
 
         event.preventDefault();
+        if (getTileAt(nextPosition) === "g") {
+          const nextPositionKey = getPositionKey(nextPosition);
+          setCollectedGemKeys((currentCollectedGemKeys) =>
+            currentCollectedGemKeys.includes(nextPositionKey)
+              ? currentCollectedGemKeys
+              : [...currentCollectedGemKeys, nextPositionKey],
+          );
+        }
+
         setMoveCount((currentMoveCount) => currentMoveCount + 1);
         return nextPosition;
       });
@@ -173,7 +187,8 @@ export default function GameEntry() {
             >
               {LEVEL_CELLS.map((cell) => {
                 const hasPlayer = isSameCoordinate(cell, playerPosition);
-                const tile = hasPlayer ? "p" : cell.tile === "p" ? "." : cell.tile;
+                const isCollectedGem = cell.tile === "g" && collectedGemKeys.includes(getPositionKey(cell));
+                const tile = hasPlayer ? "p" : cell.tile === "p" || isCollectedGem ? "." : cell.tile;
 
                 return (
                   <div
@@ -200,18 +215,18 @@ export default function GameEntry() {
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Gems</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemsRemaining}>
-                  {String(INITIAL_GEM_COUNT).padStart(2, "0")}
+                  {String(INITIAL_GEM_COUNT - collectedGemKeys.length).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Score</p>
                 <p className="text-2xl font-black text-[#c56cff]" data-testid={GAME_GUARDRAIL_TEST_IDS.score}>
-                  {0 * GEM_SCORE_VALUE}
+                  {collectedGemKeys.length * GEM_SCORE_VALUE}
                 </p>
               </div>
             </div>
             <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.collectedGems}>
-              0
+              {collectedGemKeys.length}
             </p>
             <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
               <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Input</p>

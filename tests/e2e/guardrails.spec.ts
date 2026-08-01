@@ -3,11 +3,14 @@ import { expect, test } from "@playwright/test";
 import {
   expectAttemptCounter,
   expectAttemptCounterAtTarget,
+  expectCollectedGems,
   expectGameEntrySurface,
   expectGameReadyFromNavigationStart,
+  expectGemsRemaining,
   expectInputResponseMarker,
   expectInputResponseText,
   expectPlayerAt,
+  expectScore,
   expectSessionAttemptCount,
 } from "./guardrail-assertions";
 
@@ -40,6 +43,28 @@ test("player moves on accepted input and stays put against blockers", async ({ p
   await page.keyboard.press("ArrowRight");
   await expectPlayerAt(page, 3, 4);
   await expectInputResponseText(page, "1:3,4");
+});
+
+test("player collects a gem and updates the HUD", async ({ page }) => {
+  await page.goto("/");
+
+  await expectPlayerAt(page, 3, 3);
+  await expectGemsRemaining(page, 3);
+  await expectScore(page, 0);
+  await expectCollectedGems(page, 0);
+
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+
+  await expectPlayerAt(page, 3, 8);
+  await expectInputResponseText(page, "5:3,8");
+  await expectGemsRemaining(page, 2);
+  await expectScore(page, 100);
+  await expectCollectedGems(page, 1);
+  await expect(page.getByText(/won|lost|play again/i)).toHaveCount(0);
 });
 
 test.skip("future replay target marker reaches the repeat-play threshold", async ({ page }) => {

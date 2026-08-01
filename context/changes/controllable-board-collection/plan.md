@@ -230,28 +230,28 @@ No data migration is required. The board remains client-local and session-only.
 
 #### Automated
 
-- [x] 2.1 Type-aware lint passes after movement changes
-- [x] 2.2 Production build passes after movement changes
-- [x] 2.3 Local Playwright verifies accepted movement updates the player marker and input response within 100ms
+- [x] 2.1 Type-aware lint passes after movement changes — bdf736c
+- [x] 2.2 Production build passes after movement changes — bdf736c
+- [x] 2.3 Local Playwright verifies accepted movement updates the player marker and input response within 100ms — bdf736c
 
 #### Manual
 
-- [x] 2.4 Arrow keys and WASD move the player on `/`
-- [x] 2.5 Wall and rock blockers prevent movement without breaking the board
-- [x] 2.6 Movement feels immediate in a local browser
+- [x] 2.4 Arrow keys and WASD move the player on `/` — bdf736c
+- [x] 2.5 Wall and rock blockers prevent movement without breaking the board — bdf736c
+- [x] 2.6 Movement feels immediate in a local browser — bdf736c
 
 ### Phase 3: Gem Collection and HUD
 
 #### Automated
 
-- [ ] 3.1 Formatting check passes for changed docs/tests/source/plan files
-- [ ] 3.2 Type-aware lint passes
-- [ ] 3.3 Production build passes
-- [ ] 3.4 Local Playwright movement and collection smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files
+- [x] 3.2 Type-aware lint passes
+- [x] 3.3 Production build passes
+- [x] 3.4 Local Playwright movement and collection smoke passes
 
 #### Manual
 
-- [ ] 3.5 Fresh browser session can move the player and collect at least one gem
-- [ ] 3.6 HUD updates gems remaining and score immediately after collection
-- [ ] 3.7 No win/loss/replay UI appears in S-02
-- [ ] 3.8 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session can move the player and collect at least one gem
+- [x] 3.6 HUD updates gems remaining and score immediately after collection
+- [x] 3.7 No win/loss/replay UI appears in S-02
+- [x] 3.8 No CI production deploy or Playwright CI workflow is introduced

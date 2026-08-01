@@ -59,3 +59,17 @@ export async function expectSessionAttemptCount(page: Page, expectedCount: numbe
     .poll(() => page.evaluate((key) => window.sessionStorage.getItem(key), GAME_ATTEMPT_SESSION_KEY))
     .toBe(String(expectedCount));
 }
+
+export async function expectGemsRemaining(page: Page, expectedCount: number): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.gemsRemaining)).toHaveText(
+    String(expectedCount).padStart(2, "0"),
+  );
+}
+
+export async function expectScore(page: Page, expectedScore: number): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.score)).toHaveText(String(expectedScore));
+}
+
+export async function expectCollectedGems(page: Page, expectedCount: number): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.collectedGems)).toHaveText(String(expectedCount));
+}

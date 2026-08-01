@@ -83,7 +83,7 @@ npx playwright install
 npm run test:e2e
 ```
 
-These checks are intentionally local-only for now. They verify the anonymous BoulderGame entry surface; CI still runs lint and build only.
+These checks are intentionally local-only for now. They verify the anonymous BoulderGame entry, keyboard movement, and gem collection; CI still runs lint and build only.
 
 ## Project Structure
 
