@@ -4,6 +4,8 @@ import { RotateCcw } from "lucide-react";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { cn } from "@/lib/utils";
 
+import { TileArt, TileDefs, type Tile } from "./TileArt";
+
 const LEVEL_ROWS = [
   "############",
   "#..g....r..#",
@@ -15,7 +17,6 @@ const LEVEL_ROWS = [
   "############",
 ] as const;
 
-type Tile = "." | "#" | "g" | "p" | "r" | "e" | "h";
 type LevelStatus = "active" | "lost" | "won";
 interface Coordinate {
   row: number;
@@ -55,16 +56,6 @@ const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   ArrowRight: { row: 0, col: 1 },
   d: { row: 0, col: 1 },
   D: { row: 0, col: 1 },
-};
-
-const TILE_STYLES: Record<Tile, string> = {
-  ".": "bg-[#2f3b2d] shadow-[inset_0_0_0_1px_rgba(196,217,142,0.08)]",
-  "#": "bg-[#5c4a36] shadow-[inset_0_-4px_0_rgba(0,0,0,0.35),inset_0_3px_0_rgba(245,231,200,0.08)]",
-  g: "bg-[#183840] shadow-[inset_0_0_0_2px_rgba(121,234,218,0.22),0_0_12px_rgba(121,234,218,0.22)]",
-  p: "bg-[#f3b63f] shadow-[inset_0_-5px_0_rgba(63,49,36,0.35),0_0_16px_rgba(243,182,63,0.35)]",
-  r: "bg-[#76716a] shadow-[inset_0_-5px_0_rgba(0,0,0,0.32),inset_0_3px_0_rgba(255,255,255,0.12)]",
-  e: "bg-[#6d3ab7] shadow-[inset_0_0_0_2px_rgba(245,231,200,0.18),0_0_16px_rgba(170,102,255,0.35)]",
-  h: "bg-[#b94431] shadow-[inset_0_-5px_0_rgba(0,0,0,0.35),0_0_16px_rgba(185,68,49,0.36)]",
 };
 
 function parseLevelRows(): BoardCell[][] {
@@ -243,10 +234,11 @@ export default function GameEntry() {
         </header>
 
         <div className="grid flex-1 items-center gap-5 py-5 lg:grid-cols-[1fr_18rem]">
-          <div className="border-4 border-[#3f3124] bg-[#171a15] p-3 shadow-[10px_10px_0_#070806] sm:p-5">
+          <div className="relative border-4 border-[#2f2519] bg-[#171a15] p-3 shadow-[10px_10px_0_#070806] sm:p-5">
+            <TileDefs />
             <div
               aria-label="BoulderGame level board with player start, gems, rocks, and an open exit."
-              className="grid grid-cols-12 gap-1 border-4 border-[#5c4a36] bg-[#0b0e0a] p-2"
+              className="grid grid-cols-12 gap-1 border-4 border-[#6b5540] bg-[#070a06] p-2"
               data-testid={GAME_GUARDRAIL_TEST_IDS.board}
               role="img"
             >
@@ -258,7 +250,7 @@ export default function GameEntry() {
                 return (
                   <div
                     aria-hidden="true"
-                    className={cn("aspect-square min-h-0 rounded-[2px]", TILE_STYLES[tile])}
+                    className="aspect-square min-h-0 overflow-hidden rounded-[2px]"
                     data-col={cell.col}
                     data-row={cell.row}
                     data-testid={
@@ -271,7 +263,9 @@ export default function GameEntry() {
                             : undefined
                     }
                     key={`${cell.row}-${cell.col}`}
-                  />
+                  >
+                    <TileArt tile={tile} />
+                  </div>
                 );
               })}
             </div>
