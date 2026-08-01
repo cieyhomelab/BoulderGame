@@ -251,27 +251,27 @@ No data migration is required. The existing auth/dashboard scaffold stays in pla
 
 #### Automated
 
-- [x] 2.1 Type-aware lint passes after the game entry component lands
-- [x] 2.2 Production build passes with the game entry island
+- [x] 2.1 Type-aware lint passes after the game entry component lands — fefaf8a
+- [x] 2.2 Production build passes with the game entry island — fefaf8a
 
 #### Manual
 
-- [x] 2.3 Fresh browser session opening `/` sees a ready game surface immediately without pressing a start button
-- [x] 2.4 Visible attempt counter reads `1` on first load in a fresh session
-- [x] 2.5 First viewport reads as a retro arcade game surface, not as a starter or product landing page
+- [x] 2.3 Fresh browser session opening `/` sees a ready game surface immediately without pressing a start button — fefaf8a
+- [x] 2.4 Visible attempt counter reads `1` on first load in a fresh session — fefaf8a
+- [x] 2.5 First viewport reads as a retro arcade game surface, not as a starter or product landing page — fefaf8a
 
 ### Phase 3: Guardrail E2E Stabilization
 
 #### Automated
 
-- [ ] 3.1 Formatting check passes for changed docs/tests/config files
-- [ ] 3.2 Type-aware lint passes
-- [ ] 3.3 Production build passes
-- [ ] 3.4 Local Playwright game-entry smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/config files
+- [x] 3.2 Type-aware lint passes
+- [x] 3.3 Production build passes
+- [x] 3.4 Local Playwright game-entry smoke passes
 
 #### Manual
 
-- [ ] 3.5 Fresh browser session to `/` starts the first level without login, instructions, or a separate start button
-- [ ] 3.6 `/` shows no Supabase missing-config banner while auth scaffold pages can still show configuration warnings
-- [ ] 3.7 A new browser session resets the session-local attempt count
-- [ ] 3.8 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session to `/` starts the first level without login, instructions, or a separate start button
+- [x] 3.6 `/` shows no Supabase missing-config banner while auth scaffold pages can still show configuration warnings
+- [x] 3.7 A new browser session resets the session-local attempt count
+- [x] 3.8 No CI production deploy or Playwright CI workflow is introduced
