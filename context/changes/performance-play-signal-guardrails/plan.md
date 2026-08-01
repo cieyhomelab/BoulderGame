@@ -255,27 +255,27 @@ No data migration is required. This plan intentionally avoids Supabase, auth sta
 
 #### Automated
 
-- [x] 2.1 Playwright browsers/dependencies install successfully for local use
-- [x] 2.2 Local browser smoke tests pass
-- [x] 2.3 Type-aware lint still passes
-- [x] 2.4 Production build still passes
+- [x] 2.1 Playwright browsers/dependencies install successfully for local use — 2f6ffbf
+- [x] 2.2 Local browser smoke tests pass — 2f6ffbf
+- [x] 2.3 Type-aware lint still passes — 2f6ffbf
+- [x] 2.4 Production build still passes — 2f6ffbf
 
 #### Manual
 
-- [x] 2.5 Developer can run `npm run test:e2e` from a clean checkout after dependency installation
-- [x] 2.6 Smoke report or failure output explains page load, auth blocking, or guardrail contract failure clearly
+- [x] 2.5 Developer can run `npm run test:e2e` from a clean checkout after dependency installation — 2f6ffbf
+- [x] 2.6 Smoke report or failure output explains page load, auth blocking, or guardrail contract failure clearly — 2f6ffbf
 
 ### Phase 3: Attempt Signal and Verification Documentation
 
 #### Automated
 
-- [ ] 3.1 README and AGENTS formatting passes through the repo formatter if run
-- [ ] 3.2 Local smoke tests still pass after docs updates
-- [ ] 3.3 Type-aware lint still passes
-- [ ] 3.4 Production build still passes
+- [x] 3.1 README and AGENTS formatting passes through the repo formatter if run
+- [x] 3.2 Local smoke tests still pass after docs updates
+- [x] 3.3 Type-aware lint still passes
+- [x] 3.4 Production build still passes
 
 #### Manual
 
-- [ ] 3.5 README clearly states how to run the new guardrail checks
-- [ ] 3.6 AGENTS.md tells future agents when to run `npm run test:e2e`
-- [ ] 3.7 Plan leaves no open implementation decision about thresholds, harness scope, attempt counting, or CI timing
+- [x] 3.5 README clearly states how to run the new guardrail checks
+- [x] 3.6 AGENTS.md tells future agents when to run `npm run test:e2e`
+- [x] 3.7 Plan leaves no open implementation decision about thresholds, harness scope, attempt counting, or CI timing
