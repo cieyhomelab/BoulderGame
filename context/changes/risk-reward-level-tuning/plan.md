@@ -200,28 +200,28 @@ No data migration is required.
 
 #### Automated
 
-- [x] 2.1 Type-aware lint passes after level tuning
-- [x] 2.2 Production build passes after level tuning
-- [x] 2.3 Local Playwright verifies safe completion and risky higher-score completion
+- [x] 2.1 Type-aware lint passes after level tuning — f790386
+- [x] 2.2 Production build passes after level tuning — f790386
+- [x] 2.3 Local Playwright verifies safe completion and risky higher-score completion — f790386
 
 #### Manual
 
-- [x] 2.4 Player can win after collecting the quota and entering the exit with one bonus gem left
-- [x] 2.5 Player can collect the optional gem for higher score and still win by avoiding the adjacent hazard
-- [x] 2.6 Stepping into either hazard still loses
-- [x] 2.7 Replay still resets quota, bonus, score, status, and attempt count
+- [x] 2.4 Player can win after collecting the quota and entering the exit with one bonus gem left — f790386
+- [x] 2.5 Player can collect the optional gem for higher score and still win by avoiding the adjacent hazard — f790386
+- [x] 2.6 Stepping into either hazard still loses — f790386
+- [x] 2.7 Replay still resets quota, bonus, score, status, and attempt count — f790386
 
 ### Phase 3: Risk-Reward E2E and Docs
 
 #### Automated
 
-- [ ] 3.1 Formatting check passes for changed docs/tests/source/plan files
-- [ ] 3.2 Type-aware lint passes
-- [ ] 3.3 Production build passes
-- [ ] 3.4 Local Playwright risk-reward smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files
+- [x] 3.2 Type-aware lint passes
+- [x] 3.3 Production build passes
+- [x] 3.4 Local Playwright risk-reward smoke passes
 
 #### Manual
 
-- [ ] 3.5 Fresh browser session offers a visible safer completion and a riskier higher-score route
-- [ ] 3.6 Player can replay and reach the 3-attempt signal after the tuned level
-- [ ] 3.7 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session offers a visible safer completion and a riskier higher-score route
+- [x] 3.6 Player can replay and reach the 3-attempt signal after the tuned level
+- [x] 3.7 No CI production deploy or Playwright CI workflow is introduced

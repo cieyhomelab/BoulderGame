@@ -83,7 +83,7 @@ npx playwright install
 npm run test:e2e
 ```
 
-These checks are intentionally local-only for now. They verify anonymous entry, keyboard movement, gem collection, loss, level completion, replay, and the 3-attempt repeat-play target; CI still runs lint and build only.
+These checks are intentionally local-only for now. They verify anonymous entry, keyboard movement, gem collection, loss, safe completion, risky higher-score completion, replay, and the 3-attempt repeat-play target; CI still runs lint and build only.
 
 ## Project Structure
 
