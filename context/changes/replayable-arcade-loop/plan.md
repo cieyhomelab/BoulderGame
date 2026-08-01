@@ -208,28 +208,28 @@ No data migration is required.
 
 #### Automated
 
-- [x] 2.1 Type-aware lint passes after replay UI
-- [x] 2.2 Production build passes after replay UI
-- [x] 2.3 Local Playwright verifies replay after loss and win
+- [x] 2.1 Type-aware lint passes after replay UI — 8282355
+- [x] 2.2 Production build passes after replay UI — 8282355
+- [x] 2.3 Local Playwright verifies replay after loss and win — 8282355
 
 #### Manual
 
-- [x] 2.4 Losing then selecting `Play again` returns the board to the initial active state
-- [x] 2.5 Winning then selecting `Play again` returns the board to the initial active state
-- [x] 2.6 Attempt count increments on every replay and remains session-scoped
-- [x] 2.7 Replay is not visible during active play
+- [x] 2.4 Losing then selecting `Play again` returns the board to the initial active state — 8282355
+- [x] 2.5 Winning then selecting `Play again` returns the board to the initial active state — 8282355
+- [x] 2.6 Attempt count increments on every replay and remains session-scoped — 8282355
+- [x] 2.7 Replay is not visible during active play — 8282355
 
 ### Phase 3: Repeat-Play Signal and Docs
 
 #### Automated
 
-- [ ] 3.1 Formatting check passes for changed docs/tests/source/plan files
-- [ ] 3.2 Type-aware lint passes
-- [ ] 3.3 Production build passes
-- [ ] 3.4 Local Playwright repeat-play smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files
+- [x] 3.2 Type-aware lint passes
+- [x] 3.3 Production build passes
+- [x] 3.4 Local Playwright repeat-play smoke passes
 
 #### Manual
 
-- [ ] 3.5 Fresh browser session can reach three attempts through replay actions
-- [ ] 3.6 Replays happen without reload, auth, or instructions
-- [ ] 3.7 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session can reach three attempts through replay actions
+- [x] 3.6 Replays happen without reload, auth, or instructions
+- [x] 3.7 No CI production deploy or Playwright CI workflow is introduced

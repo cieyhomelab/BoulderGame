@@ -164,8 +164,26 @@ test("player completes the level after collecting all gems and entering the exit
   await expectReplayButtonHidden(page);
 });
 
-test.skip("future replay target marker reaches the repeat-play threshold", async ({ page }) => {
+test("replay loop reaches the repeat-play threshold", async ({ page }) => {
   await page.goto("/");
 
+  await expectAttemptCounter(page, 1);
+
+  await expectHazardAt(page, 3, 2);
+  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
+  await expectLevelStatus(page, "lost");
+  await activateReplay(page);
+  await expectAttemptCounter(page, 2);
+  await expectLevelStatus(page, "active");
+
+  await expectHazardAt(page, 3, 2);
+  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
+  await expectLevelStatus(page, "lost");
+  await activateReplay(page);
   await expectAttemptCounterAtTarget(page);
+  await expectSessionAttemptCount(page, 3);
+  await expectLevelStatus(page, "active");
+  await expectPlayerAt(page, 3, 3);
+  await expectInputResponseText(page, "0:3,3");
+  await expectReplayButtonHidden(page);
 });
