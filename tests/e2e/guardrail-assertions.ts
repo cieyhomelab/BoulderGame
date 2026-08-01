@@ -82,6 +82,22 @@ export async function expectExitAt(page: Page, row: number, col: number): Promis
   await expect(exit).toHaveAttribute("data-col", String(col));
 }
 
+export async function expectReplayButtonVisible(page: Page): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton)).toBeVisible();
+}
+
+export async function expectReplayButtonHidden(page: Page): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton)).toHaveCount(0);
+}
+
+export async function expectOutcomeMessage(page: Page, expectedText: RegExp | string): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.outcomeMessage)).toHaveText(expectedText);
+}
+
+export async function activateReplay(page: Page): Promise<void> {
+  await page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton).click();
+}
+
 export async function expectAttemptCounterAtTarget(page: Page): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.attemptCounter)).toHaveText(
     String(GAME_GUARDRAIL_THRESHOLDS.replayAttemptTarget),

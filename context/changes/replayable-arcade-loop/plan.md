@@ -196,13 +196,13 @@ No data migration is required.
 
 #### Automated
 
-- [ ] 1.1 Type-aware lint passes after replay selector contract
-- [ ] 1.2 Production build passes after replay selector contract
+- [x] 1.1 Type-aware lint passes after replay selector contract
+- [x] 1.2 Production build passes after replay selector contract
 
 #### Manual
 
-- [ ] 1.3 Existing replay target remains skipped until the UI exists
-- [ ] 1.4 Existing movement, collection, loss, and win tests still pass
+- [x] 1.3 Existing replay target remains skipped until the UI exists
+- [x] 1.4 Existing movement, collection, loss, and win tests still pass
 
 ### Phase 2: Replay UI and Reset Behavior
 
