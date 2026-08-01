@@ -269,13 +269,13 @@ No data migration is required. This plan intentionally avoids Supabase, auth sta
 
 #### Automated
 
-- [x] 3.1 README and AGENTS formatting passes through the repo formatter if run
-- [x] 3.2 Local smoke tests still pass after docs updates
-- [x] 3.3 Type-aware lint still passes
-- [x] 3.4 Production build still passes
+- [x] 3.1 README and AGENTS formatting passes through the repo formatter if run — 134a054
+- [x] 3.2 Local smoke tests still pass after docs updates — 134a054
+- [x] 3.3 Type-aware lint still passes — 134a054
+- [x] 3.4 Production build still passes — 134a054
 
 #### Manual
 
-- [x] 3.5 README clearly states how to run the new guardrail checks
-- [x] 3.6 AGENTS.md tells future agents when to run `npm run test:e2e`
-- [x] 3.7 Plan leaves no open implementation decision about thresholds, harness scope, attempt counting, or CI timing
+- [x] 3.5 README clearly states how to run the new guardrail checks — 134a054
+- [x] 3.6 AGENTS.md tells future agents when to run `npm run test:e2e` — 134a054
+- [x] 3.7 Plan leaves no open implementation decision about thresholds, harness scope, attempt counting, or CI timing — 134a054
