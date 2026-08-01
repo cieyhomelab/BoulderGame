@@ -223,13 +223,13 @@ No data migration is required.
 
 #### Automated
 
-- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files
-- [x] 3.2 Type-aware lint passes
-- [x] 3.3 Production build passes
-- [x] 3.4 Local Playwright repeat-play smoke passes
+- [x] 3.1 Formatting check passes for changed docs/tests/source/plan files — dd4523d
+- [x] 3.2 Type-aware lint passes — dd4523d
+- [x] 3.3 Production build passes — dd4523d
+- [x] 3.4 Local Playwright repeat-play smoke passes — dd4523d
 
 #### Manual
 
-- [x] 3.5 Fresh browser session can reach three attempts through replay actions
-- [x] 3.6 Replays happen without reload, auth, or instructions
-- [x] 3.7 No CI production deploy or Playwright CI workflow is introduced
+- [x] 3.5 Fresh browser session can reach three attempts through replay actions — dd4523d
+- [x] 3.6 Replays happen without reload, auth, or instructions — dd4523d
+- [x] 3.7 No CI production deploy or Playwright CI workflow is introduced — dd4523d

@@ -1,6 +1,6 @@
 ---
 change_id: replayable-arcade-loop
-status: implementing
+status: implemented
 created: 2026-08-01
 updated: 2026-08-01
 roadmap_id: S-04
