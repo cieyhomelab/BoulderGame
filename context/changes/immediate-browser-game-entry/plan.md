@@ -238,27 +238,27 @@ No data migration is required. The existing auth/dashboard scaffold stays in pla
 
 #### Automated
 
-- [x] 1.1 Type-aware lint passes after route/layout changes
-- [x] 1.2 Production build passes after route/layout changes
+- [x] 1.1 Type-aware lint passes after route/layout changes — ea92b86
+- [x] 1.2 Production build passes after route/layout changes — ea92b86
 
 #### Manual
 
-- [x] 1.3 `/` has document title `BoulderGame` and does not show `10x Astro Starter`
-- [x] 1.4 `/` does not show sign-in/sign-up CTAs or Supabase missing-config warnings
-- [x] 1.5 `/auth/*` and `/dashboard` scaffold routes remain present for later cleanup decisions
+- [x] 1.3 `/` has document title `BoulderGame` and does not show `10x Astro Starter` — ea92b86
+- [x] 1.4 `/` does not show sign-in/sign-up CTAs or Supabase missing-config warnings — ea92b86
+- [x] 1.5 `/auth/*` and `/dashboard` scaffold routes remain present for later cleanup decisions — ea92b86
 
 ### Phase 2: Immediate Level Entry
 
 #### Automated
 
-- [ ] 2.1 Type-aware lint passes after the game entry component lands
-- [ ] 2.2 Production build passes with the game entry island
+- [x] 2.1 Type-aware lint passes after the game entry component lands
+- [x] 2.2 Production build passes with the game entry island
 
 #### Manual
 
-- [ ] 2.3 Fresh browser session opening `/` sees a ready game surface immediately without pressing a start button
-- [ ] 2.4 Visible attempt counter reads `1` on first load in a fresh session
-- [ ] 2.5 First viewport reads as a retro arcade game surface, not as a starter or product landing page
+- [x] 2.3 Fresh browser session opening `/` sees a ready game surface immediately without pressing a start button
+- [x] 2.4 Visible attempt counter reads `1` on first load in a fresh session
+- [x] 2.5 First viewport reads as a retro arcade game surface, not as a starter or product landing page
 
 ### Phase 3: Guardrail E2E Stabilization
 
