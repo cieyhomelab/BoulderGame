@@ -27,6 +27,20 @@ interface BoardCell {
 }
 
 const GEM_SCORE_VALUE = 100;
+const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
+  ArrowUp: { row: -1, col: 0 },
+  w: { row: -1, col: 0 },
+  W: { row: -1, col: 0 },
+  ArrowDown: { row: 1, col: 0 },
+  s: { row: 1, col: 0 },
+  S: { row: 1, col: 0 },
+  ArrowLeft: { row: 0, col: -1 },
+  a: { row: 0, col: -1 },
+  A: { row: 0, col: -1 },
+  ArrowRight: { row: 0, col: 1 },
+  d: { row: 0, col: 1 },
+  D: { row: 0, col: 1 },
+};
 
 const TILE_STYLES: Record<Tile, string> = {
   ".": "bg-[#2f3b2d] shadow-[inset_0_0_0_1px_rgba(196,217,142,0.08)]",
@@ -66,6 +80,18 @@ function countGems(board: BoardCell[][]): number {
   return flattenBoard(board).filter((cell) => cell.tile === "g").length;
 }
 
+function getTileAt(position: Coordinate): Tile | null {
+  return LEVEL_BOARD[position.row]?.[position.col]?.tile ?? null;
+}
+
+function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
+  return a.row === b.row && a.col === b.col;
+}
+
+function isWalkable(tile: Tile | null): boolean {
+  return tile === "." || tile === "g" || tile === "e" || tile === "p";
+}
+
 const LEVEL_BOARD = parseLevelRows();
 const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
 const PLAYER_START = findPlayerStart(LEVEL_BOARD);
@@ -73,6 +99,8 @@ const INITIAL_GEM_COUNT = countGems(LEVEL_BOARD);
 
 export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
+  const [playerPosition, setPlayerPosition] = useState<Coordinate>(PLAYER_START);
+  const [moveCount, setMoveCount] = useState(0);
   const countedAttemptRef = useRef(false);
 
   useEffect(() => {
@@ -82,6 +110,35 @@ export default function GameEntry() {
 
     countedAttemptRef.current = true;
     setAttemptCount(incrementGameAttemptCount());
+  }, []);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent): void {
+      const delta = MOVE_KEYS[event.key];
+      if (!delta) {
+        return;
+      }
+
+      setPlayerPosition((currentPosition) => {
+        const nextPosition = {
+          row: currentPosition.row + delta.row,
+          col: currentPosition.col + delta.col,
+        };
+
+        if (!isWalkable(getTileAt(nextPosition))) {
+          return currentPosition;
+        }
+
+        event.preventDefault();
+        setMoveCount((currentMoveCount) => currentMoveCount + 1);
+        return nextPosition;
+      });
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   return (
@@ -114,19 +171,21 @@ export default function GameEntry() {
               data-testid={GAME_GUARDRAIL_TEST_IDS.board}
               role="img"
             >
-              {LEVEL_CELLS.map((cell) => (
-                <div
-                  aria-hidden="true"
-                  className={cn("aspect-square min-h-0 rounded-[2px]", TILE_STYLES[cell.tile])}
-                  data-player={cell.row === PLAYER_START.row && cell.col === PLAYER_START.col ? "true" : undefined}
-                  data-testid={
-                    cell.row === PLAYER_START.row && cell.col === PLAYER_START.col
-                      ? GAME_GUARDRAIL_TEST_IDS.player
-                      : undefined
-                  }
-                  key={`${cell.row}-${cell.col}`}
-                />
-              ))}
+              {LEVEL_CELLS.map((cell) => {
+                const hasPlayer = isSameCoordinate(cell, playerPosition);
+                const tile = hasPlayer ? "p" : cell.tile === "p" ? "." : cell.tile;
+
+                return (
+                  <div
+                    aria-hidden="true"
+                    className={cn("aspect-square min-h-0 rounded-[2px]", TILE_STYLES[tile])}
+                    data-col={cell.col}
+                    data-row={cell.row}
+                    data-testid={hasPlayer ? GAME_GUARDRAIL_TEST_IDS.player : undefined}
+                    key={`${cell.row}-${cell.col}`}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -154,6 +213,15 @@ export default function GameEntry() {
             <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.collectedGems}>
               0
             </p>
+            <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
+              <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Input</p>
+              <p
+                className="text-xl font-black text-[#f3b63f]"
+                data-testid={GAME_GUARDRAIL_TEST_IDS.inputResponseMarker}
+              >
+                {moveCount}:{playerPosition.row},{playerPosition.col}
+              </p>
+            </div>
           </aside>
         </div>
       </section>

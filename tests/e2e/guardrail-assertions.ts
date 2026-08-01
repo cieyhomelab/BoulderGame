@@ -28,9 +28,20 @@ export async function expectGameReadyFromNavigationStart(page: Page, navigationS
 }
 
 export async function expectInputResponseMarker(page: Page): Promise<void> {
-  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.inputResponseMarker)).toBeVisible({
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.inputResponseMarker)).toBeVisible();
+}
+
+export async function expectInputResponseText(page: Page, expectedText: string): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.inputResponseMarker)).toHaveText(expectedText, {
     timeout: GAME_GUARDRAIL_THRESHOLDS.inputResponseMs,
   });
+}
+
+export async function expectPlayerAt(page: Page, row: number, col: number): Promise<void> {
+  const player = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.player);
+
+  await expect(player).toHaveAttribute("data-row", String(row));
+  await expect(player).toHaveAttribute("data-col", String(col));
 }
 
 export async function expectAttemptCounterAtTarget(page: Page): Promise<void> {

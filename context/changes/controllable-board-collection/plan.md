@@ -218,27 +218,27 @@ No data migration is required. The board remains client-local and session-only.
 
 #### Automated
 
-- [x] 1.1 Type-aware lint passes after selector/helper changes
-- [x] 1.2 Production build passes after selector/helper changes
+- [x] 1.1 Type-aware lint passes after selector/helper changes — 8cf4997
+- [x] 1.2 Production build passes after selector/helper changes — 8cf4997
 
 #### Manual
 
-- [x] 1.3 `/` still renders the same ready board shape as S-01
-- [x] 1.4 Existing anonymous entry E2E behavior is not weakened
+- [x] 1.3 `/` still renders the same ready board shape as S-01 — 8cf4997
+- [x] 1.4 Existing anonymous entry E2E behavior is not weakened — 8cf4997
 
 ### Phase 2: Keyboard Movement
 
 #### Automated
 
-- [ ] 2.1 Type-aware lint passes after movement changes
-- [ ] 2.2 Production build passes after movement changes
-- [ ] 2.3 Local Playwright verifies accepted movement updates the player marker and input response within 100ms
+- [x] 2.1 Type-aware lint passes after movement changes
+- [x] 2.2 Production build passes after movement changes
+- [x] 2.3 Local Playwright verifies accepted movement updates the player marker and input response within 100ms
 
 #### Manual
 
-- [ ] 2.4 Arrow keys and WASD move the player on `/`
-- [ ] 2.5 Wall and rock blockers prevent movement without breaking the board
-- [ ] 2.6 Movement feels immediate in a local browser
+- [x] 2.4 Arrow keys and WASD move the player on `/`
+- [x] 2.5 Wall and rock blockers prevent movement without breaking the board
+- [x] 2.6 Movement feels immediate in a local browser
 
 ### Phase 3: Gem Collection and HUD
 

@@ -6,6 +6,8 @@ import {
   expectGameEntrySurface,
   expectGameReadyFromNavigationStart,
   expectInputResponseMarker,
+  expectInputResponseText,
+  expectPlayerAt,
   expectSessionAttemptCount,
 } from "./guardrail-assertions";
 
@@ -25,9 +27,23 @@ test("root route starts the anonymous BoulderGame level", async ({ page }) => {
   await expect(page.getByText("Supabase nie jest skonfigurowany")).toHaveCount(0);
 });
 
-test.skip("future controllable board exposes input response and replay target markers", async ({ page }) => {
+test("player moves on accepted input and stays put against blockers", async ({ page }) => {
   await page.goto("/");
 
   await expectInputResponseMarker(page);
+  await expectPlayerAt(page, 3, 3);
+
+  await page.keyboard.press("ArrowUp");
+  await expectPlayerAt(page, 3, 3);
+  await expectInputResponseText(page, "0:3,3");
+
+  await page.keyboard.press("ArrowRight");
+  await expectPlayerAt(page, 3, 4);
+  await expectInputResponseText(page, "1:3,4");
+});
+
+test.skip("future replay target marker reaches the repeat-play threshold", async ({ page }) => {
+  await page.goto("/");
+
   await expectAttemptCounterAtTarget(page);
 });
