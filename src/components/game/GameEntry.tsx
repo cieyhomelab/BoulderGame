@@ -10,7 +10,7 @@ const LEVEL_ROWS = [
   "#.#....##..#",
   "#.hp....g..#",
   "#.....##...#",
-  "#..r...g.e.#",
+  "#..r...ghe.#",
   "#..........#",
   "############",
 ] as const;
@@ -133,7 +133,7 @@ function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
       ? [...currentState.collectedGemKeys, nextPositionKey]
       : currentState.collectedGemKeys;
   const status =
-    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemKeys.length === INITIAL_GEM_COUNT ? "won" : "active";
+    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemKeys.length >= REQUIRED_GEM_COUNT ? "won" : "active";
 
   return {
     accepted: true,

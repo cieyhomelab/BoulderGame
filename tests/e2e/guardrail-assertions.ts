@@ -69,17 +69,15 @@ export async function expectPlayerRemainsAtAfterInput(
 }
 
 export async function expectHazardAt(page: Page, row: number, col: number): Promise<void> {
-  const hazard = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.hazard);
-
-  await expect(hazard).toHaveAttribute("data-row", String(row));
-  await expect(hazard).toHaveAttribute("data-col", String(col));
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.hazard}"][data-row="${row}"][data-col="${col}"]`),
+  ).toBeVisible();
 }
 
 export async function expectExitAt(page: Page, row: number, col: number): Promise<void> {
-  const exit = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.exit);
-
-  await expect(exit).toHaveAttribute("data-row", String(row));
-  await expect(exit).toHaveAttribute("data-col", String(col));
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.exit}"][data-row="${row}"][data-col="${col}"]`),
+  ).toBeVisible();
 }
 
 export async function expectReplayButtonVisible(page: Page): Promise<void> {
@@ -133,6 +131,14 @@ export async function expectGemsRemaining(page: Page, expectedCount: number): Pr
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.gemsRemaining)).toHaveText(
     String(expectedCount).padStart(2, "0"),
   );
+}
+
+export async function expectGemQuota(page: Page, expectedText: string): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.gemQuota)).toHaveText(expectedText);
+}
+
+export async function expectBonusGems(page: Page, expectedText: string): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.bonusGems)).toHaveText(expectedText);
 }
 
 export async function expectScore(page: Page, expectedScore: number): Promise<void> {

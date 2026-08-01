@@ -188,28 +188,28 @@ No data migration is required.
 
 #### Automated
 
-- [x] 1.1 Type-aware lint passes after quota contract
-- [x] 1.2 Production build passes after quota contract
+- [x] 1.1 Type-aware lint passes after quota contract — db33af7
+- [x] 1.2 Production build passes after quota contract — db33af7
 
 #### Manual
 
-- [x] 1.3 Existing game loop still behaves as before
-- [x] 1.4 HUD exposes quota and bonus progress without requiring external instructions
+- [x] 1.3 Existing game loop still behaves as before — db33af7
+- [x] 1.4 HUD exposes quota and bonus progress without requiring external instructions — db33af7
 
 ### Phase 2: Safer and Riskier Completion Paths
 
 #### Automated
 
-- [ ] 2.1 Type-aware lint passes after level tuning
-- [ ] 2.2 Production build passes after level tuning
-- [ ] 2.3 Local Playwright verifies safe completion and risky higher-score completion
+- [x] 2.1 Type-aware lint passes after level tuning
+- [x] 2.2 Production build passes after level tuning
+- [x] 2.3 Local Playwright verifies safe completion and risky higher-score completion
 
 #### Manual
 
-- [ ] 2.4 Player can win after collecting the quota and entering the exit with one bonus gem left
-- [ ] 2.5 Player can collect the optional gem for higher score and still win by avoiding the adjacent hazard
-- [ ] 2.6 Stepping into either hazard still loses
-- [ ] 2.7 Replay still resets quota, bonus, score, status, and attempt count
+- [x] 2.4 Player can win after collecting the quota and entering the exit with one bonus gem left
+- [x] 2.5 Player can collect the optional gem for higher score and still win by avoiding the adjacent hazard
+- [x] 2.6 Stepping into either hazard still loses
+- [x] 2.7 Replay still resets quota, bonus, score, status, and attempt count
 
 ### Phase 3: Risk-Reward E2E and Docs
 
