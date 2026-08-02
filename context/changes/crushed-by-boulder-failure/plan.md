@@ -163,11 +163,11 @@ verbatim so the existing spike test is untouched. Add `lossCause: "game-loss-cau
 
 #### Automated
 
-- [x] 2.1 New crush spec passes
-- [x] 2.2 Full suite passes
-- [x] 2.3 Linting passes
-- [x] 2.4 Build passes
+- [x] 2.1 New crush spec passes — 14f8525
+- [x] 2.2 Full suite passes — 14f8525
+- [x] 2.3 Linting passes — 14f8525
+- [x] 2.4 Build passes — 14f8525
 
 #### Manual
 
-- [x] 2.5 Deliberate-break check: ignoring landedOn fails the crush test
+- [x] 2.5 Deliberate-break check: ignoring landedOn fails the crush test — 14f8525
