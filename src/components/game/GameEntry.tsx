@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 
+import { tileAt, withTile, type Board, type Coordinate as SimulationCoordinate } from "@/lib/boulder-simulation";
 import { resolveGameClock, type GameClock } from "@/lib/game-clock";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { cn } from "@/lib/utils";
@@ -19,12 +20,7 @@ const LEVEL_ROWS = [
 ] as const;
 
 type LevelStatus = "active" | "lost" | "won";
-interface Coordinate {
-  row: number;
-  col: number;
-}
-
-type Board = Tile[][];
+type Coordinate = SimulationCoordinate;
 
 interface GameState {
   board: Board;
@@ -89,14 +85,6 @@ function parseLevel(): ParsedLevel {
   return { template, playerStart, gemCount };
 }
 
-/**
- * Reads a tile without trusting the index. `noUncheckedIndexedAccess` is off in this project, so
- * `board[row][col]` type-checks even outside the grid — `undefined` means "outside the cave".
- */
-function tileAt(board: Board, row: number, col: number): Tile | undefined {
-  return board[row]?.[col];
-}
-
 function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
   return a.row === b.row && a.col === b.col;
 }
@@ -107,20 +95,6 @@ function isWalkable(tile: Tile | undefined): boolean {
 
 function isDiggable(tile: Tile | undefined): boolean {
   return tile === "." || tile === "g";
-}
-
-/** Copies only the row being written, so unchanged rows stay shared across attempts' renders. */
-function withTile(board: Board, row: number, col: number, tile: Tile): Board {
-  return board.map((boardRow, rowIndex) => {
-    if (rowIndex !== row) {
-      return boardRow;
-    }
-
-    const nextRow = [...boardRow];
-    nextRow[col] = tile;
-
-    return nextRow;
-  });
 }
 
 function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
