@@ -1,6 +1,6 @@
 ---
 change_id: gravity-aware-level-layout
-status: implemented
+status: impl_reviewed
 created: 2026-08-02
 updated: 2026-08-02
 roadmap_id: S-04

@@ -1,6 +1,6 @@
 ---
 change_id: crushed-by-boulder-failure
-status: implemented
+status: impl_reviewed
 created: 2026-08-02
 updated: 2026-08-02
 roadmap_id: S-03
