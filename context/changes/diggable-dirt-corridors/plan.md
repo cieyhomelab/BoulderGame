@@ -298,36 +298,36 @@ acknowledgement threshold has three orders of magnitude of headroom.
 
 #### Automated
 
-- [x] 1.1 Type checking passes
-- [x] 1.2 Linting passes
-- [x] 1.3 All existing E2E tests still pass
+- [x] 1.1 Type checking passes — d358ce6
+- [x] 1.2 Linting passes — d358ce6
+- [x] 1.3 All existing E2E tests still pass — d358ce6
 
 #### Manual
 
-- [x] 1.4 Open space is visually distinguishable from Dirt
+- [x] 1.4 Open space is visually distinguishable from Dirt — d358ce6
 
 ### Phase 2: Per-attempt mutable board and digging
 
 #### Automated
 
-- [x] 2.1 Type checking passes
-- [x] 2.2 Linting passes
-- [x] 2.3 All existing E2E tests still pass unchanged
-- [x] 2.4 Build passes
+- [x] 2.1 Type checking passes — 928b1fa
+- [x] 2.2 Linting passes — 928b1fa
+- [x] 2.3 All existing E2E tests still pass unchanged — 928b1fa
+- [x] 2.4 Build passes — 928b1fa
 
 #### Manual
 
-- [x] 2.5 Walking carves a visible corridor that stays open
-- [x] 2.6 "Play again" restores the full Dirt field and all gems
+- [x] 2.5 Walking carves a visible corridor that stays open — 928b1fa
+- [x] 2.6 "Play again" restores the full Dirt field and all gems — 928b1fa
 
 ### Phase 3: E2E coverage for digging
 
 #### Automated
 
-- [x] 3.1 New digging spec passes
-- [x] 3.2 Full suite passes
-- [x] 3.3 Linting passes
+- [x] 3.1 New digging spec passes — 6635035
+- [x] 3.2 Full suite passes — 6635035
+- [x] 3.3 Linting passes — 6635035
 
 #### Manual
 
-- [x] 3.4 Deliberate-break check: replay that carries the dug board forward fails the spec (original shallow-copy break was invalid — see Correction)
+- [x] 3.4 Deliberate-break check: replay that carries the dug board forward fails the spec (original shallow-copy break was invalid — see Correction) — 6635035
