@@ -33,7 +33,7 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | done          |
 | S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | done          |
 | S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | done          |
-| S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | impl_reviewed |
+| S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | done          |
 
 ## Streams
 
@@ -148,7 +148,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Jaki uklad planszy daje widoczna decyzje ryzyko-nagroda bez potrzeby instrukcji? - Owner: team. Block: no.
 - **Risk:** Ten slice jest po pelnej petli, bo tuning ma sens dopiero wtedy, gdy mozna zagrac, przegrac, wygrac i sprobowac ponownie.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -183,3 +183,4 @@ None currently identified.
 - **S-02: gracz moze poruszac postacia po planszy i zbierac elementy** — Archived 2026-08-02 → `context/archive/2026-08-01-controllable-board-collection/`. Lesson: —.
 - **S-03: gracz moze przegrac na zagrozeniu albo ukonczyc poziom** — Archived 2026-08-02 → `context/archive/2026-08-01-level-end-states/`. Lesson: —.
 - **S-04: gracz moze zakonczyc probe i natychmiast zagrac ponownie** — Archived 2026-08-02 → `context/archive/2026-08-01-replayable-arcade-loop/`. Lesson: —.
+- **S-05: gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik** — Archived 2026-08-02 → `context/archive/2026-08-01-risk-reward-level-tuning/`. Lesson: —.

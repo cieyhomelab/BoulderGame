@@ -1,10 +1,11 @@
 ---
 change_id: risk-reward-level-tuning
-status: impl_reviewed
+status: archived
 created: 2026-08-01
-updated: 2026-08-01
+updated: 2026-08-02
 roadmap_id: S-05
 roadmap_source: context/foundation/roadmap.md
+archived_at: 2026-08-02T10:05:26Z
 ---
 
 # Risk-Reward Level Tuning
