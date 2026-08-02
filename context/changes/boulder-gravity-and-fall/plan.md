@@ -285,6 +285,17 @@ shape.
    100 ms threshold via `pressAndExpectInputResponse`.
 6. **Replay resets boulders**: after a fall, "Play again" puts the boulder back at its start.
 
+> **Coverage gap recorded during Phase 4 — FR-005 cadence and FR-009 chain reactions are
+> implemented but not E2E-covered.** The current level cannot produce either. Its only
+> undermineable boulder is at `(5,3)`: its support at `(6,3)` is Dirt, and the tile below *that*
+> is the bottom wall — so it falls exactly one tile and lands. The other boulder at `(1,8)` rests
+> directly on a wall and can never move. A multi-tile fall needs a vertical shaft and a chain
+> reaction needs two stacked boulders; neither exists in this layout.
+>
+> Rather than write a test that asserts nothing, both are **deferred to `S-04`**, which
+> re-authors the level for gravity and must include a shaft deep enough to observe the 120 ms
+> cadence and a boulder stack to observe FR-009. `S-04` is not complete without them.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -379,11 +390,11 @@ guardrail is the first thing to fail.
 
 #### Automated
 
-- [ ] 4.1 New gravity spec passes
-- [ ] 4.2 Full suite passes
-- [ ] 4.3 Linting passes
-- [ ] 4.4 Build passes
+- [x] 4.1 New gravity spec passes
+- [x] 4.2 Full suite passes
+- [x] 4.3 Linting passes
+- [x] 4.4 Build passes
 
 #### Manual
 
-- [ ] 4.5 Deliberate-break check: grace window of 0 fails the grace-window test
+- [x] 4.5 Deliberate-break check: grace window of 0 fails the grace-window test

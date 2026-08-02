@@ -115,6 +115,25 @@ export async function expectDirtAt(page: Page, row: number, col: number): Promis
   ).toBeVisible();
 }
 
+export async function expectBoulderAt(page: Page, row: number, col: number): Promise<void> {
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.boulder}"][data-row="${row}"][data-col="${col}"]`),
+  ).toBeVisible();
+}
+
+export async function expectUnstableBoulderAt(page: Page, row: number, col: number): Promise<void> {
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.unstableBoulder}"][data-row="${row}"][data-col="${col}"]`),
+  ).toBeVisible();
+}
+
+export async function expectNoBoulderAt(page: Page, row: number, col: number): Promise<void> {
+  const boulderIds = [GAME_GUARDRAIL_TEST_IDS.boulder, GAME_GUARDRAIL_TEST_IDS.unstableBoulder];
+  const selector = boulderIds.map((id) => `[data-testid="${id}"][data-row="${row}"][data-col="${col}"]`).join(", ");
+
+  await expect(page.locator(selector)).toHaveCount(0);
+}
+
 export async function expectExitAt(page: Page, row: number, col: number): Promise<void> {
   await expect(
     page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.exit}"][data-row="${row}"][data-col="${col}"]`),
