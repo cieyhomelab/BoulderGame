@@ -352,15 +352,15 @@ guardrail is the first thing to fail.
 
 #### Automated
 
-- [ ] 2.1 Type checking passes
-- [ ] 2.2 Linting passes
-- [ ] 2.3 Full E2E suite still passes
-- [ ] 2.4 Build passes
+- [x] 2.1 Type checking passes
+- [x] 2.2 Linting passes
+- [x] 2.3 Full E2E suite still passes
+- [x] 2.4 Build passes
 
 #### Manual
 
-- [ ] 2.5 Digging under a boulder makes it fall and stop on the next solid tile
-- [ ] 2.6 The board does not re-render when nothing is moving
+- [x] 2.5 Digging under a boulder makes it fall and stop on the next solid tile
+- [x] 2.6 The board does not re-render when nothing is moving
 
 ### Phase 3: The instability telegraph
 

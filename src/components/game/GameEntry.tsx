@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 
-import { tileAt, withTile, type Board, type Coordinate as SimulationCoordinate } from "@/lib/boulder-simulation";
+import {
+  NO_BOULDER_MOTIONS,
+  stepSimulation,
+  tileAt,
+  withTile,
+  type Board,
+  type BoulderMotions,
+  type Coordinate as SimulationCoordinate,
+} from "@/lib/boulder-simulation";
 import { resolveGameClock, type GameClock } from "@/lib/game-clock";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { cn } from "@/lib/utils";
@@ -24,6 +32,7 @@ type Coordinate = SimulationCoordinate;
 
 interface GameState {
   board: Board;
+  boulderMotions: BoulderMotions;
   playerPosition: Coordinate;
   moveCount: number;
   collectedGemCount: number;
@@ -97,7 +106,25 @@ function isDiggable(tile: Tile | undefined): boolean {
   return tile === "." || tile === "g";
 }
 
-function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
+/**
+ * Runs the cave's gravity rule against the current state. Returns the same state object when the
+ * step changed nothing, so the animation-frame subscription cannot re-render an idle board.
+ */
+function applySimulation(currentState: GameState, nowMs: number): GameState {
+  if (currentState.status !== "active") {
+    return currentState;
+  }
+
+  const result = stepSimulation({ board: currentState.board, boulderMotions: currentState.boulderMotions }, nowMs);
+
+  if (result.board === currentState.board && result.boulderMotions === currentState.boulderMotions) {
+    return currentState;
+  }
+
+  return { ...currentState, board: result.board, boulderMotions: result.boulderMotions };
+}
+
+function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number): MoveResult {
   if (currentState.status !== "active") {
     return { state: currentState, accepted: false };
   }
@@ -121,16 +148,18 @@ function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
   const status =
     nextTile === "h" ? "lost" : nextTile === "e" && collectedGemCount >= REQUIRED_GEM_COUNT ? "won" : "active";
 
-  return {
-    accepted: true,
-    state: {
-      board,
-      playerPosition: nextPosition,
-      moveCount: currentState.moveCount + 1,
-      collectedGemCount,
-      status,
-    },
+  const movedState: GameState = {
+    ...currentState,
+    board,
+    playerPosition: nextPosition,
+    moveCount: currentState.moveCount + 1,
+    collectedGemCount,
+    status,
   };
+
+  // The cave re-evaluates support after every board change, so digging registers instability in
+  // the same update that produced the hole rather than a frame later.
+  return { accepted: true, state: applySimulation(movedState, nowMs) };
 }
 
 const LEVEL = parseLevel();
@@ -142,6 +171,7 @@ function createInitialGameState(): GameState {
     // Row-level copy: a shallow copy of the outer array alone would let a dug corridor leak
     // from one attempt into the next.
     board: LEVEL.template.map((row) => [...row]),
+    boulderMotions: NO_BOULDER_MOTIONS,
     playerPosition: LEVEL.playerStart,
     moveCount: 0,
     collectedGemCount: 0,
@@ -155,10 +185,6 @@ export default function GameEntry() {
   const countedAttemptRef = useRef(false);
   const replayButtonRef = useRef<HTMLButtonElement | null>(null);
   const gameClockRef = useRef<GameClock | null>(null);
-
-  useEffect(() => {
-    gameClockRef.current ??= resolveGameClock();
-  }, []);
 
   useEffect(() => {
     if (countedAttemptRef.current) {
@@ -177,8 +203,10 @@ export default function GameEntry() {
       }
 
       event.preventDefault();
+      // Read the clock at keypress time — a value captured when the effect ran would be stale.
+      const nowMs = gameClockRef.current?.now() ?? 0;
       setGameState((currentState) => {
-        const moveResult = resolveMove(currentState, delta);
+        const moveResult = resolveMove(currentState, delta, nowMs);
         return moveResult.state;
       });
     }
@@ -187,6 +215,14 @@ export default function GameEntry() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
+  }, []);
+
+  useEffect(() => {
+    const clock = (gameClockRef.current ??= resolveGameClock());
+
+    return clock.subscribe((nowMs) => {
+      setGameState((currentState) => applySimulation(currentState, nowMs));
+    });
   }, []);
 
   useEffect(() => {
