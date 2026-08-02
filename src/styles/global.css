@@ -122,3 +122,33 @@
     @apply bg-background text-foreground;
   }
 }
+
+/*
+ * Instability telegraph for an undermined boulder. The 400 ms grace window is the player's whole
+ * reaction budget, so an unstable boulder has to be distinguishable from a stable one at a glance.
+ */
+@keyframes boulder-wobble {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(-6%, 1%) rotate(-3deg);
+  }
+  75% {
+    transform: translate(6%, 1%) rotate(3deg);
+  }
+}
+
+.boulder-unstable {
+  animation: boulder-wobble 140ms ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+
+/* Motion is the primary signal; without it, a warning tint carries the same information. */
+@media (prefers-reduced-motion: reduce) {
+  .boulder-unstable {
+    animation: none;
+    filter: drop-shadow(0 0 3px #f3b63f) saturate(1.4);
+  }
+}

@@ -1,39 +1,61 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 
+import {
+  NO_BOULDER_MOTIONS,
+  motionKey,
+  stepSimulation,
+  tileAt,
+  withTile,
+  type Board,
+  type BoulderMotions,
+  type Coordinate as SimulationCoordinate,
+} from "@/lib/boulder-simulation";
+import { resolveGameClock, type GameClock } from "@/lib/game-clock";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { cn } from "@/lib/utils";
 
 import { TileArt, TileDefs, type Tile } from "./TileArt";
 
+/**
+ * The cave, authored against the live simulation. `.` is Dirt (solid, diggable, holds boulders),
+ * `" "` is carved open space, `p` is the Miner's start.
+ *
+ * Invariants any future edit must preserve:
+ * - No boulder is unsupported at t=0 — nothing may fall before the player acts.
+ * - No boulder sits in or above the exit's column, so the exit cannot be sealed.
+ * - Spikes remain present.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder.
+ * - The bonus gem at (1,9) is walled on every side but (1,8), which holds a boulder — it is
+ *   obtainable only by deliberately undermining it (FR-011).
+ * - The shaft at (3,8)/(4,8) gives the (1,8) boulder a three-tile fall, so the 120 ms cadence is
+ *   observable; the stack at (1,4)/(2,4) produces the FR-009 chain reaction.
+ */
 const LEVEL_ROWS = [
   "############",
-  "#..g....r..#",
-  "#.#....##..#",
-  "#.hp....g..#",
-  "#.....##...#",
-  "#..r...ghe.#",
-  "#..........#",
+  "#...r...rg##",
+  "#...r....#.#",
+  "# p..... #.#",
+  "#.#...#. #.#",
+  "#.#g.h#g...#",
+  "#.........e#",
   "############",
 ] as const;
 
 type LevelStatus = "active" | "lost" | "won";
-interface Coordinate {
-  row: number;
-  col: number;
-}
-
-interface BoardCell {
-  tile: Tile;
-  row: number;
-  col: number;
-}
+/** Why the level was lost. The status set stays `active | lost | won`; being crushed is a new
+ * cause of the existing losing status, not a new status value. */
+type LossCause = "spikes" | "crushed";
+type Coordinate = SimulationCoordinate;
 
 interface GameState {
+  board: Board;
+  boulderMotions: BoulderMotions;
   playerPosition: Coordinate;
   moveCount: number;
-  collectedGemKeys: string[];
+  collectedGemCount: number;
   status: LevelStatus;
+  lossCause: LossCause | null;
 }
 
 interface MoveResult {
@@ -58,52 +80,80 @@ const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   D: { row: 0, col: 1 },
 };
 
-function parseLevelRows(): BoardCell[][] {
-  return LEVEL_ROWS.map((row, rowIndex) =>
-    (row.split("") as Tile[]).map((tile, colIndex) => ({
-      tile,
-      row: rowIndex,
-      col: colIndex,
-    })),
+interface ParsedLevel {
+  template: Board;
+  playerStart: Coordinate;
+  gemCount: number;
+}
+
+/**
+ * Parses the level rows once. The `p` start marker is resolved away here — the Miner has by
+ * definition already dug the tile they stand in, so the cell becomes open space and `p` survives
+ * only as a render-time overlay.
+ */
+function parseLevel(): ParsedLevel {
+  let playerStart: Coordinate = { row: 0, col: 0 };
+  let gemCount = 0;
+
+  const template = LEVEL_ROWS.map((row, rowIndex) =>
+    (row.split("") as Tile[]).map((tile, colIndex) => {
+      if (tile === "g") {
+        gemCount += 1;
+      }
+
+      if (tile !== "p") {
+        return tile;
+      }
+
+      playerStart = { row: rowIndex, col: colIndex };
+      return " ";
+    }),
   );
-}
 
-function flattenBoard(board: BoardCell[][]): BoardCell[] {
-  return board.flat();
-}
-
-function findPlayerStart(board: BoardCell[][]): Coordinate {
-  for (const row of board) {
-    const playerCell = row.find((cell) => cell.tile === "p");
-    if (playerCell) {
-      return { row: playerCell.row, col: playerCell.col };
-    }
-  }
-
-  return { row: 0, col: 0 };
-}
-
-function countGems(board: BoardCell[][]): number {
-  return flattenBoard(board).filter((cell) => cell.tile === "g").length;
-}
-
-function getTileAt(position: Coordinate): Tile | null {
-  return LEVEL_BOARD[position.row]?.[position.col]?.tile ?? null;
+  return { template, playerStart, gemCount };
 }
 
 function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
-function isWalkable(tile: Tile | null): boolean {
-  return tile === "." || tile === "g" || tile === "e" || tile === "h" || tile === "p";
+function isWalkable(tile: Tile | undefined): boolean {
+  return tile === "." || tile === " " || tile === "g" || tile === "e" || tile === "h";
 }
 
-function getPositionKey(position: Coordinate): string {
-  return `${position.row}:${position.col}`;
+function isDiggable(tile: Tile | undefined): boolean {
+  return tile === "." || tile === "g";
 }
 
-function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
+/**
+ * Runs the cave's gravity rule against the current state. Returns the same state object when the
+ * step changed nothing, so the animation-frame subscription cannot re-render an idle board.
+ */
+function applySimulation(currentState: GameState, nowMs: number): GameState {
+  if (currentState.status !== "active") {
+    return currentState;
+  }
+
+  const result = stepSimulation({ board: currentState.board, boulderMotions: currentState.boulderMotions }, nowMs);
+
+  if (result.board === currentState.board && result.boulderMotions === currentState.boulderMotions) {
+    return currentState;
+  }
+
+  // A boulder that moved into the Miner's tile crushes them. Compared against the position in the
+  // state the step was applied to, so a boulder dropping into a tile the Miner just left is safe.
+  const crushed = result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
+
+  return {
+    ...currentState,
+    board: result.board,
+    boulderMotions: result.boulderMotions,
+    status: crushed ? "lost" : currentState.status,
+    lossCause: crushed ? "crushed" : currentState.lossCause,
+  };
+}
+
+function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number): MoveResult {
   if (currentState.status !== "active") {
     return { state: currentState, accepted: false };
   }
@@ -113,42 +163,50 @@ function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
     col: currentState.playerPosition.col + delta.col,
   };
 
-  const nextTile = getTileAt(nextPosition);
+  // Read the target before digging it — after the dig it is open space and the gem/spike
+  // branches below would be lost.
+  const nextTile = tileAt(currentState.board, nextPosition.row, nextPosition.col);
   if (!isWalkable(nextTile)) {
     return { state: currentState, accepted: false };
   }
 
-  const nextPositionKey = getPositionKey(nextPosition);
-  const collectedGemKeys =
-    nextTile === "g" && !currentState.collectedGemKeys.includes(nextPositionKey)
-      ? [...currentState.collectedGemKeys, nextPositionKey]
-      : currentState.collectedGemKeys;
+  const collectedGemCount = currentState.collectedGemCount + (nextTile === "g" ? 1 : 0);
+  const board = isDiggable(nextTile)
+    ? withTile(currentState.board, nextPosition.row, nextPosition.col, " ")
+    : currentState.board;
   const status =
-    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemKeys.length >= REQUIRED_GEM_COUNT ? "won" : "active";
+    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemCount >= REQUIRED_GEM_COUNT ? "won" : "active";
 
-  return {
-    accepted: true,
-    state: {
-      playerPosition: nextPosition,
-      moveCount: currentState.moveCount + 1,
-      collectedGemKeys,
-      status,
-    },
+  const movedState: GameState = {
+    ...currentState,
+    board,
+    playerPosition: nextPosition,
+    moveCount: currentState.moveCount + 1,
+    collectedGemCount,
+    status,
+    lossCause: status === "lost" ? "spikes" : currentState.lossCause,
   };
+
+  // The cave re-evaluates support after every board change, so digging registers instability in
+  // the same update that produced the hole rather than a frame later.
+  return { accepted: true, state: applySimulation(movedState, nowMs) };
 }
 
-const LEVEL_BOARD = parseLevelRows();
-const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
-const PLAYER_START = findPlayerStart(LEVEL_BOARD);
-const INITIAL_GEM_COUNT = countGems(LEVEL_BOARD);
+const LEVEL = parseLevel();
+const INITIAL_GEM_COUNT = LEVEL.gemCount;
 const OPTIONAL_GEM_COUNT = INITIAL_GEM_COUNT - REQUIRED_GEM_COUNT;
 
 function createInitialGameState(): GameState {
   return {
-    playerPosition: PLAYER_START,
+    // Row-level copy: a shallow copy of the outer array alone would let a dug corridor leak
+    // from one attempt into the next.
+    board: LEVEL.template.map((row) => [...row]),
+    boulderMotions: NO_BOULDER_MOTIONS,
+    playerPosition: LEVEL.playerStart,
     moveCount: 0,
-    collectedGemKeys: [],
+    collectedGemCount: 0,
     status: "active",
+    lossCause: null,
   };
 }
 
@@ -157,6 +215,7 @@ export default function GameEntry() {
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const countedAttemptRef = useRef(false);
   const replayButtonRef = useRef<HTMLButtonElement | null>(null);
+  const gameClockRef = useRef<GameClock | null>(null);
 
   useEffect(() => {
     if (countedAttemptRef.current) {
@@ -175,8 +234,10 @@ export default function GameEntry() {
       }
 
       event.preventDefault();
+      // Read the clock at keypress time — a value captured when the effect ran would be stale.
+      const nowMs = gameClockRef.current?.now() ?? 0;
       setGameState((currentState) => {
-        const moveResult = resolveMove(currentState, delta);
+        const moveResult = resolveMove(currentState, delta, nowMs);
         return moveResult.state;
       });
     }
@@ -185,6 +246,14 @@ export default function GameEntry() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
+  }, []);
+
+  useEffect(() => {
+    const clock = (gameClockRef.current ??= resolveGameClock());
+
+    return clock.subscribe((nowMs) => {
+      setGameState((currentState) => applySimulation(currentState, nowMs));
+    });
   }, []);
 
   useEffect(() => {
@@ -206,10 +275,19 @@ export default function GameEntry() {
     gameState.status === "won"
       ? "Level complete. Play again?"
       : gameState.status === "lost"
-        ? "Cave-in. Play again?"
+        ? gameState.lossCause === "crushed"
+          ? "Failed — crushed by a falling boulder. Play again?"
+          : "Cave-in. Play again?"
         : null;
-  const collectedRequiredGems = Math.min(gameState.collectedGemKeys.length, REQUIRED_GEM_COUNT);
-  const collectedBonusGems = Math.max(gameState.collectedGemKeys.length - REQUIRED_GEM_COUNT, 0);
+  const collectedRequiredGems = Math.min(gameState.collectedGemCount, REQUIRED_GEM_COUNT);
+  const collectedBonusGems = Math.max(gameState.collectedGemCount - REQUIRED_GEM_COUNT, 0);
+  // A count, not an event: the live region announces once when the cave becomes unsettled and
+  // once when it settles, rather than firing on every wobble frame.
+  const unstableBoulderCount = gameState.boulderMotions.size;
+  const unstableBoulderDescription =
+    unstableBoulderCount === 0
+      ? "The cave is stable."
+      : `${unstableBoulderCount} boulder${unstableBoulderCount === 1 ? "" : "s"} losing support.`;
 
   return (
     <main
@@ -237,37 +315,47 @@ export default function GameEntry() {
           <div className="relative border-4 border-[#2f2519] bg-[#171a15] p-3 shadow-[10px_10px_0_#070806] sm:p-5">
             <TileDefs />
             <div
-              aria-label="BoulderGame level board with player start, gems, rocks, and an open exit."
+              aria-label="BoulderGame cave of diggable dirt, with the miner, gems, boulders, spikes and an open exit."
               className="grid grid-cols-12 gap-1 border-4 border-[#6b5540] bg-[#070a06] p-2"
               data-testid={GAME_GUARDRAIL_TEST_IDS.board}
               role="img"
             >
-              {LEVEL_CELLS.map((cell) => {
-                const hasPlayer = isSameCoordinate(cell, gameState.playerPosition);
-                const isCollectedGem = cell.tile === "g" && gameState.collectedGemKeys.includes(getPositionKey(cell));
-                const tile = hasPlayer ? "p" : cell.tile === "p" || isCollectedGem ? "." : cell.tile;
+              {gameState.board.flatMap((boardRow, row) =>
+                boardRow.map((cellTile, col) => {
+                  const hasPlayer = isSameCoordinate({ row, col }, gameState.playerPosition);
+                  const isUnstableBoulder =
+                    cellTile === "r" && gameState.boulderMotions.get(motionKey(row, col))?.phase === "grace";
 
-                return (
-                  <div
-                    aria-hidden="true"
-                    className="aspect-square min-h-0 overflow-hidden rounded-[2px]"
-                    data-col={cell.col}
-                    data-row={cell.row}
-                    data-testid={
-                      hasPlayer
-                        ? GAME_GUARDRAIL_TEST_IDS.player
-                        : cell.tile === "h"
-                          ? GAME_GUARDRAIL_TEST_IDS.hazard
-                          : cell.tile === "e"
-                            ? GAME_GUARDRAIL_TEST_IDS.exit
-                            : undefined
-                    }
-                    key={`${cell.row}-${cell.col}`}
-                  >
-                    <TileArt tile={tile} />
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      aria-hidden="true"
+                      className="aspect-square min-h-0 overflow-hidden rounded-[2px]"
+                      data-col={col}
+                      data-row={row}
+                      data-testid={
+                        hasPlayer
+                          ? GAME_GUARDRAIL_TEST_IDS.player
+                          : cellTile === "h"
+                            ? GAME_GUARDRAIL_TEST_IDS.hazard
+                            : cellTile === "e"
+                              ? GAME_GUARDRAIL_TEST_IDS.exit
+                              : cellTile === "r"
+                                ? isUnstableBoulder
+                                  ? GAME_GUARDRAIL_TEST_IDS.unstableBoulder
+                                  : GAME_GUARDRAIL_TEST_IDS.boulder
+                                : cellTile === "."
+                                  ? GAME_GUARDRAIL_TEST_IDS.dirt
+                                  : cellTile === " "
+                                    ? GAME_GUARDRAIL_TEST_IDS.openSpace
+                                    : undefined
+                      }
+                      key={`${row}-${col}`}
+                    >
+                      <TileArt tile={hasPlayer ? "p" : cellTile} unstable={isUnstableBoulder} />
+                    </div>
+                  );
+                }),
+              )}
             </div>
           </div>
 
@@ -282,13 +370,13 @@ export default function GameEntry() {
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Gems</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemsRemaining}>
-                  {String(INITIAL_GEM_COUNT - gameState.collectedGemKeys.length).padStart(2, "0")}
+                  {String(INITIAL_GEM_COUNT - gameState.collectedGemCount).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Score</p>
                 <p className="text-2xl font-black text-[#c56cff]" data-testid={GAME_GUARDRAIL_TEST_IDS.score}>
-                  {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}
+                  {gameState.collectedGemCount * GEM_SCORE_VALUE}
                 </p>
               </div>
             </div>
@@ -307,7 +395,10 @@ export default function GameEntry() {
               </div>
             </div>
             <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.collectedGems}>
-              {gameState.collectedGemKeys.length}
+              {gameState.collectedGemCount}
+            </p>
+            <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.lossCause}>
+              {gameState.lossCause ?? "none"}
             </p>
             <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
               <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Input</p>
@@ -357,9 +448,10 @@ export default function GameEntry() {
             )}
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
-              {INITIAL_GEM_COUNT - gameState.collectedGemKeys.length} gems remaining. Score{" "}
-              {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of{" "}
-              {REQUIRED_GEM_COUNT}. Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. Status {gameState.status}.
+              {INITIAL_GEM_COUNT - gameState.collectedGemCount} gems remaining. Score{" "}
+              {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {REQUIRED_GEM_COUNT}.
+              Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. {unstableBoulderDescription} Status {gameState.status}
+              .
             </p>
           </aside>
         </div>

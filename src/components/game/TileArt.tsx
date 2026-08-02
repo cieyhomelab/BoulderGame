@@ -1,4 +1,8 @@
-export type Tile = "." | "#" | "g" | "p" | "r" | "e" | "h";
+/**
+ * `.` is Dirt — solid, diggable, and a support for boulders.
+ * `" "` is open space — walkable, supports nothing. It is what digging leaves behind.
+ */
+export type Tile = "." | " " | "#" | "g" | "p" | "r" | "e" | "h";
 
 const DIRT_SPECKS = [
   { cx: 13.5, cy: 16.5, rx: 3.5, ry: 2.5, fill: "#1f2a19" },
@@ -25,6 +29,10 @@ export function TileDefs() {
         <linearGradient id="bg-dirt" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#3d4d35" />
           <stop offset="1" stopColor="#28331f" />
+        </linearGradient>
+        <linearGradient id="bg-open" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#0b0f0a" />
+          <stop offset="1" stopColor="#131810" />
         </linearGradient>
         <linearGradient id="bg-gem" x1="0.1" y1="0" x2="0.9" y2="1">
           <stop offset="0" stopColor="#c8fff5" />
@@ -105,6 +113,20 @@ function DirtGround() {
   );
 }
 
+/**
+ * A dug-out cavity. Deliberately darker and flatter than `DirtGround` so a carved corridor reads
+ * as a hole in the cave; the lit top lip keeps it from looking like an unrendered gap.
+ */
+function OpenSpace() {
+  return (
+    <>
+      <rect width="64" height="64" fill="url(#bg-open)" />
+      <rect width="64" height="4" fill="#232b1d" />
+      <rect y="60" width="64" height="4" fill="#050704" />
+    </>
+  );
+}
+
 function Wall() {
   return (
     <>
@@ -153,7 +175,8 @@ function Gem() {
 function Miner() {
   return (
     <>
-      <DirtGround />
+      {/* The Miner always stands in a tile that has been dug, so the backdrop is open space. */}
+      <OpenSpace />
       <circle cx="32" cy="32" r="28" fill="url(#glow-lamp)" />
       <ellipse cx="32" cy="54.5" rx="16" ry="4.5" fill="#000000" fillOpacity="0.44" />
       <rect x="19" y="33" width="26" height="20" rx="7" fill="#d1552f" stroke="#7a2f18" strokeWidth="2" />
@@ -195,6 +218,7 @@ function Spikes() {
 
 const TILE_ART: Record<Tile, () => React.JSX.Element> = {
   ".": DirtGround,
+  " ": OpenSpace,
   "#": Wall,
   g: Gem,
   p: Miner,
@@ -203,12 +227,20 @@ const TILE_ART: Record<Tile, () => React.JSX.Element> = {
   h: Spikes,
 };
 
-export function TileArt({ tile }: { tile: Tile }) {
+export function TileArt({ tile, unstable = false }: { tile: Tile; unstable?: boolean }) {
   const Art = TILE_ART[tile];
 
+  // The wobble sits on the group rather than the <svg>, so the tile's own box never moves and
+  // neighbouring cells cannot be nudged by a shaking boulder.
   return (
     <svg className="block size-full" viewBox="0 0 64 64">
-      <Art />
+      {unstable ? (
+        <g className="boulder-unstable">
+          <Art />
+        </g>
+      ) : (
+        <Art />
+      )}
     </svg>
   );
 }
