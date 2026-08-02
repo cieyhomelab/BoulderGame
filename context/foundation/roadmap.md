@@ -3,7 +3,7 @@ project: BoulderGame
 version: 1
 status: draft
 created: 2026-08-01
-updated: 2026-08-01
+updated: 2026-08-02
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -27,7 +27,7 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 
 | ID   | Change ID                          | Outcome (user can ...)                                                                                          | Prerequisites | PRD refs                                            | Status        |
 | ---- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------- | ------------- |
-| F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | impl_reviewed |
+| F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | done          |
 | F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | impl_reviewed |
 | S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | impl_reviewed |
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | impl_reviewed |
@@ -68,7 +68,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Blockers:** -
 - **Unknowns:** -
 - **Risk:** Bez tej minimalnej weryfikacji latwo zbudowac gre, ktora dziala, ale nie spelnia warunkow szybkiego startu i responsywnego sterowania.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### F-02: Public playtest deploy path
 
@@ -176,3 +176,5 @@ None currently identified.
 - **Game database and saved profiles** - Why parked: PRD Access Control says single user session with no account; Supabase scaffold is not a product requirement for MVP.
 
 ## Done
+
+- **F-01: (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji** — Archived 2026-08-02 → `context/archive/2026-08-01-performance-play-signal-guardrails/`. Lesson: —.
