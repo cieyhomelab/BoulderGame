@@ -25,6 +25,7 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   openSpace: "game-open-space",
   boulder: "game-boulder",
   unstableBoulder: "game-unstable-boulder",
+  lossCause: "game-loss-cause",
 } as const;
 
 export const GAME_ATTEMPT_SESSION_KEY = "boulder-game:attempt-count";

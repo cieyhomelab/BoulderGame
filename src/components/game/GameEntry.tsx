@@ -29,6 +29,9 @@ const LEVEL_ROWS = [
 ] as const;
 
 type LevelStatus = "active" | "lost" | "won";
+/** Why the level was lost. The status set stays `active | lost | won`; being crushed is a new
+ * cause of the existing losing status, not a new status value. */
+type LossCause = "spikes" | "crushed";
 type Coordinate = SimulationCoordinate;
 
 interface GameState {
@@ -38,6 +41,7 @@ interface GameState {
   moveCount: number;
   collectedGemCount: number;
   status: LevelStatus;
+  lossCause: LossCause | null;
 }
 
 interface MoveResult {
@@ -122,7 +126,17 @@ function applySimulation(currentState: GameState, nowMs: number): GameState {
     return currentState;
   }
 
-  return { ...currentState, board: result.board, boulderMotions: result.boulderMotions };
+  // A boulder that moved into the Miner's tile crushes them. Compared against the position in the
+  // state the step was applied to, so a boulder dropping into a tile the Miner just left is safe.
+  const crushed = result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
+
+  return {
+    ...currentState,
+    board: result.board,
+    boulderMotions: result.boulderMotions,
+    status: crushed ? "lost" : currentState.status,
+    lossCause: crushed ? "crushed" : currentState.lossCause,
+  };
 }
 
 function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number): MoveResult {
@@ -156,6 +170,7 @@ function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number):
     moveCount: currentState.moveCount + 1,
     collectedGemCount,
     status,
+    lossCause: status === "lost" ? "spikes" : currentState.lossCause,
   };
 
   // The cave re-evaluates support after every board change, so digging registers instability in
@@ -177,6 +192,7 @@ function createInitialGameState(): GameState {
     moveCount: 0,
     collectedGemCount: 0,
     status: "active",
+    lossCause: null,
   };
 }
 
@@ -245,7 +261,9 @@ export default function GameEntry() {
     gameState.status === "won"
       ? "Level complete. Play again?"
       : gameState.status === "lost"
-        ? "Cave-in. Play again?"
+        ? gameState.lossCause === "crushed"
+          ? "Failed — crushed by a falling boulder. Play again?"
+          : "Cave-in. Play again?"
         : null;
   const collectedRequiredGems = Math.min(gameState.collectedGemCount, REQUIRED_GEM_COUNT);
   const collectedBonusGems = Math.max(gameState.collectedGemCount - REQUIRED_GEM_COUNT, 0);
@@ -364,6 +382,9 @@ export default function GameEntry() {
             </div>
             <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.collectedGems}>
               {gameState.collectedGemCount}
+            </p>
+            <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.lossCause}>
+              {gameState.lossCause ?? "none"}
             </p>
             <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
               <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Input</p>
