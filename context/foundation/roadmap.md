@@ -32,7 +32,7 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 | S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | done          |
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | done          |
 | S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | done          |
-| S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | impl_reviewed |
+| S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | done          |
 | S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | impl_reviewed |
 
 ## Streams
@@ -135,7 +135,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Czy gra ma jawnie pokazywac liczbe prob, czy wystarczy obserwowalny replay w sesji? - Owner: user. Block: no.
 - **Risk:** To pierwszy pelny test powrotu do gry; jesli replay wymaga myslenia albo instrukcji, MVP nie trafia w glowny sygnal sukcesu.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### S-05: Risk-reward level tuning
 
@@ -182,3 +182,4 @@ None currently identified.
 - **S-01: gracz moze otworzyc gre w browserze i zaczac poziom bez konta** — Archived 2026-08-02 → `context/archive/2026-08-01-immediate-browser-game-entry/`. Lesson: —.
 - **S-02: gracz moze poruszac postacia po planszy i zbierac elementy** — Archived 2026-08-02 → `context/archive/2026-08-01-controllable-board-collection/`. Lesson: —.
 - **S-03: gracz moze przegrac na zagrozeniu albo ukonczyc poziom** — Archived 2026-08-02 → `context/archive/2026-08-01-level-end-states/`. Lesson: —.
+- **S-04: gracz moze zakonczyc probe i natychmiast zagrac ponownie** — Archived 2026-08-02 → `context/archive/2026-08-01-replayable-arcade-loop/`. Lesson: —.
