@@ -13,12 +13,16 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run lint:fix` — auto-fix lint issues
 - `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
 
+- `npm run astro` — Astro CLI passthrough. `npm run astro -- check` is the full type-check across `.astro` files; there is no dedicated `typecheck` script.
+
 ### Testing
 
-- `npm run test:e2e` — Playwright smoke tests (`tests/e2e/`, Chromium only; starts its own dev server on port 4321)
+- `npm run test:e2e` — Playwright (`tests/e2e/`, Chromium only; starts its own dev server on port 4321)
 - `npm run test:e2e:ui` — Playwright UI mode for local debugging
 
-Run these when a change touches game entry, browser behavior, guardrail selectors, or replay/input readiness. There is no unit-test runner; all automated tests are E2E.
+29 tests across 6 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
+
+Run these when a change touches game entry, browser behavior, guardrail selectors, simulation timing, or replay/input readiness. There is no unit-test runner; all automated tests are E2E.
 
 ### Deployment
 
@@ -35,7 +39,7 @@ Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` 
 
 ## Architecture
 
-**Astro 7 SSR app** with React 19 islands, Tailwind 4, Supabase auth, and shadcn/ui components. Deployed to Cloudflare Workers.
+**Astro 7 SSR app** with React 19 islands, Tailwind 4, and shadcn/ui components. Deployed to Cloudflare Workers. Supabase auth is optional starter scaffolding — the game itself is no-auth (see [Auth flow](#auth-flow)).
 
 ### Version reality — do not rely on recall
 
@@ -53,11 +57,30 @@ When a remembered API and the installed version disagree, the installed version 
 
 ### Rendering mode
 
-Full server-side rendering (`output: "server"` in astro.config.mjs). All pages are server-rendered by default. API routes must export `const prerender = false`.
+Full server-side rendering (`output: "server"` in astro.config.mjs). All pages are server-rendered by default, so API routes do not need `export const prerender = false` — none of the existing routes declare it.
+
+### Game logic
+
+The game is the point of this repository; everything below `src/lib/` is domain code, not scaffolding.
+
+| Module                  | Responsibility                                                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `boulder-simulation.ts` | Board state, boulder support, fall scheduling. Pure — `stepSimulation(input, nowMs)` maps `(state, time)` → state.           |
+| `game-clock.ts`         | Clock abstraction. Real play uses `requestAnimationFrame`; `?clock=manual` installs a clock that only advances when told to. |
+| `game-guardrails.ts`    | MVP thresholds, `data-testid` values, session-local attempt counter.                                                         |
+| `config-status.ts`      | Reports which optional integrations are configured.                                                                          |
+
+Rendering is one React island: `src/components/game/GameEntry.tsx`, with tile visuals in `TileArt.tsx`.
+
+**Keep simulation logic pure and time-injected.** `stepSimulation` takes `nowMs` as a parameter rather than calling `Date.now()` internally, which is what makes the grace window and fall cadence reproducible. Do not introduce `Date.now()`, `setTimeout`, or `performance.now()` into simulation code — take the clock or the timestamp as an argument.
+
+**Never assert a timing window through a real clock.** Timing assertions go through the manual clock (`?clock=manual`, published at `window.__boulderGameClock`), which advances by an exact number of milliseconds. Real-clock browser assertions on sub-second windows are flaky by construction.
 
 ### Auth flow
 
-- `src/lib/supabase.ts` — creates a Supabase SSR client using `@supabase/ssr` with cookie-based sessions. Uses `astro:env/server` for `SUPABASE_URL` and `SUPABASE_KEY` (server-only secrets declared in astro.config.mjs `env.schema`).
+The MVP game path (`/`) never touches Supabase. These routes are starter scaffolding kept for a possible non-MVP path.
+
+- `src/lib/supabase.ts` — creates a Supabase SSR client using `@supabase/ssr` with cookie-based sessions. Uses `astro:env/server` for `SUPABASE_URL` and `SUPABASE_KEY` (server-only secrets declared in astro.config.mjs `env.schema`). **Returns `null` when either variable is missing** — every caller must handle that, and the existing routes do by redirecting with an error. Do not assume a non-null client.
 - `src/middleware.ts` — runs on every request, resolves the current user, attaches to `context.locals.user`. Redirects unauthenticated users away from routes listed in `PROTECTED_ROUTES`.
 - API endpoints: `src/pages/api/auth/{signin,signup,signout}.ts`
 - Auth pages: `src/pages/auth/{signin,signup,confirm-email}.astro`
@@ -69,33 +92,45 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 - **Astro components** for static content/layout; **React components** only when interactivity is needed.
 - **Tailwind class merging**: use the `cn()` helper from `@/lib/utils` (clsx + tailwind-merge) for conditional/merged class names. Do not concatenate class strings manually.
 - **shadcn/ui**: components live in `src/components/ui/`, "new-york" style variant. Install new ones with `npx shadcn@latest add [name]`.
-- **API routes**: use uppercase `GET`, `POST` exports; validate input with zod.
-- **Supabase migrations**: `supabase/migrations/` using naming format `YYYYMMDDHHmmss_short_description.sql`. Always enable RLS on new tables with granular per-operation, per-role policies.
-- **React**: no Next.js directives ("use client" etc.). Extract hooks to `src/components/hooks/`.
-- **Services/helpers** go in `src/lib/` (or `src/lib/services/` for extracted business logic).
-- **Shared types** (entities, DTOs) go in `src/types.ts`.
+- **API routes**: use uppercase `GET`, `POST` exports, typed as `APIRoute`. The existing auth routes read `formData()` directly. **zod is not installed** — do not `import` it without adding the dependency first; if you introduce JSON body validation, install it deliberately rather than assuming it is present.
+- **React**: no Next.js directives ("use client" etc.).
+- **Services/helpers** go in `src/lib/`.
+
+The following paths do **not** exist yet. Use them when the need first arises — do not assume they are already there, and do not create them speculatively:
+
+- `src/types.ts` — shared entity/DTO types. Types currently live beside the code that uses them (e.g. `Board`, `Tile`, `SimulationInput` in `boulder-simulation.ts`).
+- `src/components/hooks/` — extracted React hooks.
+- `src/lib/services/` — extracted business logic, if `src/lib/` outgrows a flat layout.
+- `supabase/migrations/` — naming format `YYYYMMDDHHmmss_short_description.sql`. There are no tables and no migrations; the auth scaffold uses only Supabase's built-in `auth.users`. If you add a table, enable RLS with granular per-operation, per-role policies.
 
 ### Board indexing
 
 `noUncheckedIndexedAccess` is NOT enabled, so TypeScript will type `board[y][x]` as a defined tile even when the index is out of bounds. The compiler will not catch it — you must.
 
-Every board read that can leave the grid needs an explicit bounds check first. This applies especially to support resolution, which reads the tile _below_ a boulder: a boulder on the bottom row has no tile beneath it, and `board[y + 1]` is `undefined` at runtime.
+Every board read that can leave the grid needs an explicit bounds check first. This applies especially to support resolution, which reads the tile _below_ a boulder: a boulder on the bottom row has no tile beneath it, and `board[row + 1]` is `undefined` at runtime.
 
-Prefer a single accessor over raw indexing:
+**The accessor already exists — use it instead of raw indexing:**
 
 ```ts
-function tileAt(board: Board, x: number, y: number): Tile | undefined;
+// src/lib/boulder-simulation.ts
+export function tileAt(board: Board, row: number, col: number): Tile | undefined;
+export function withTile(board: Board, row: number, col: number, tile: Tile): Board;
 ```
 
-and treat `undefined` as "outside the cave" — which, for support resolution, means supported (a boulder does not fall off the bottom of the board).
+Note the argument order: **`(row, col)`, not `(x, y)`.** Row is the vertical index, column the horizontal one — getting this backwards type-checks cleanly and fails silently.
+
+Treat `undefined` as "outside the cave", which for support resolution means supported — a boulder does not fall off the bottom of the board. `isSupported()` already encodes this; prefer calling it over re-deriving the rule.
+
+Writes go through `withTile`, which copies only the affected row so unchanged rows stay referentially shared between renders. Do not mutate a board in place.
 
 ### Environment
 
 - Node.js v22.14.0 (see `.nvmrc`)
-- Env vars: `SUPABASE_URL`, `SUPABASE_KEY` (copy `.env.example` to `.env` for Node, or `.dev.vars` for Cloudflare local dev)
-- Local Supabase: `npx supabase start` (requires Docker)
+- Env vars: `SUPABASE_URL`, `SUPABASE_KEY` — both optional. Copy `.env.example` to `.env` for Node, or `.dev.vars` for Cloudflare local dev. The game runs with them blank.
+- Local Supabase: `npx supabase start` (requires Docker, ~7 GB RAM). **This is the only part of the project that needs Docker** — the game has no container dependency. `supabase/config.toml` is committed, so `supabase init` is not needed.
 - Cloudflare local dev: secrets go in `.dev.vars` (gitignored)
 - Deploy: `npm run deploy` (requires Cloudflare account, `wrangler` auth, and `PUBLIC_SITE_URL` set to the real Workers URL)
+- `PUBLIC_SITE_URL` also gates the sitemap: `astro.config.mjs` only registers `@astrojs/sitemap` when it is set.
 
 ## CI
 
