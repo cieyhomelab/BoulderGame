@@ -150,24 +150,24 @@ verbatim so the existing spike test is untouched. Add `lossCause: "game-loss-cau
 
 #### Automated
 
-- [x] 1.1 Type checking passes
-- [x] 1.2 Linting passes
-- [x] 1.3 Full E2E suite still passes
-- [x] 1.4 Build passes
+- [x] 1.1 Type checking passes — 49fa10f
+- [x] 1.2 Linting passes — 49fa10f
+- [x] 1.3 Full E2E suite still passes — 49fa10f
+- [x] 1.4 Build passes — 49fa10f
 
 #### Manual
 
-- [x] 1.5 Standing under an undermined boulder ends the level as Failed
+- [x] 1.5 Standing under an undermined boulder ends the level as Failed — 49fa10f
 
 ### Phase 2: E2E coverage for the crush
 
 #### Automated
 
-- [ ] 2.1 New crush spec passes
-- [ ] 2.2 Full suite passes
-- [ ] 2.3 Linting passes
-- [ ] 2.4 Build passes
+- [x] 2.1 New crush spec passes
+- [x] 2.2 Full suite passes
+- [x] 2.3 Linting passes
+- [x] 2.4 Build passes
 
 #### Manual
 
-- [ ] 2.5 Deliberate-break check: ignoring landedOn fails the crush test
+- [x] 2.5 Deliberate-break check: ignoring landedOn fails the crush test
