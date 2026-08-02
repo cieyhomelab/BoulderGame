@@ -366,14 +366,14 @@ guardrail is the first thing to fail.
 
 #### Automated
 
-- [ ] 3.1 Type checking passes
-- [ ] 3.2 Linting passes
-- [ ] 3.3 Full E2E suite still passes
+- [x] 3.1 Type checking passes
+- [x] 3.2 Linting passes
+- [x] 3.3 Full E2E suite still passes
 
 #### Manual
 
-- [ ] 3.4 An undermined boulder visibly shakes before it drops
-- [ ] 3.5 Reduced-motion users still get a distinguishable unstable state
+- [x] 3.4 An undermined boulder visibly shakes before it drops
+- [x] 3.5 Reduced-motion users still get a distinguishable unstable state
 
 ### Phase 4: E2E coverage for the fall lifecycle
 

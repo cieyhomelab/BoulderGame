@@ -3,6 +3,7 @@ import { RotateCcw } from "lucide-react";
 
 import {
   NO_BOULDER_MOTIONS,
+  motionKey,
   stepSimulation,
   tileAt,
   withTile,
@@ -248,6 +249,13 @@ export default function GameEntry() {
         : null;
   const collectedRequiredGems = Math.min(gameState.collectedGemCount, REQUIRED_GEM_COUNT);
   const collectedBonusGems = Math.max(gameState.collectedGemCount - REQUIRED_GEM_COUNT, 0);
+  // A count, not an event: the live region announces once when the cave becomes unsettled and
+  // once when it settles, rather than firing on every wobble frame.
+  const unstableBoulderCount = gameState.boulderMotions.size;
+  const unstableBoulderDescription =
+    unstableBoulderCount === 0
+      ? "The cave is stable."
+      : `${unstableBoulderCount} boulder${unstableBoulderCount === 1 ? "" : "s"} losing support.`;
 
   return (
     <main
@@ -283,6 +291,8 @@ export default function GameEntry() {
               {gameState.board.flatMap((boardRow, row) =>
                 boardRow.map((cellTile, col) => {
                   const hasPlayer = isSameCoordinate({ row, col }, gameState.playerPosition);
+                  const isUnstableBoulder =
+                    cellTile === "r" && gameState.boulderMotions.get(motionKey(row, col))?.phase === "grace";
 
                   return (
                     <div
@@ -297,15 +307,19 @@ export default function GameEntry() {
                             ? GAME_GUARDRAIL_TEST_IDS.hazard
                             : cellTile === "e"
                               ? GAME_GUARDRAIL_TEST_IDS.exit
-                              : cellTile === "."
-                                ? GAME_GUARDRAIL_TEST_IDS.dirt
-                                : cellTile === " "
-                                  ? GAME_GUARDRAIL_TEST_IDS.openSpace
-                                  : undefined
+                              : cellTile === "r"
+                                ? isUnstableBoulder
+                                  ? GAME_GUARDRAIL_TEST_IDS.unstableBoulder
+                                  : GAME_GUARDRAIL_TEST_IDS.boulder
+                                : cellTile === "."
+                                  ? GAME_GUARDRAIL_TEST_IDS.dirt
+                                  : cellTile === " "
+                                    ? GAME_GUARDRAIL_TEST_IDS.openSpace
+                                    : undefined
                       }
                       key={`${row}-${col}`}
                     >
-                      <TileArt tile={hasPlayer ? "p" : cellTile} />
+                      <TileArt tile={hasPlayer ? "p" : cellTile} unstable={isUnstableBoulder} />
                     </div>
                   );
                 }),
@@ -401,7 +415,8 @@ export default function GameEntry() {
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
               {INITIAL_GEM_COUNT - gameState.collectedGemCount} gems remaining. Score{" "}
               {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {REQUIRED_GEM_COUNT}.
-              Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. Status {gameState.status}.
+              Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. {unstableBoulderDescription} Status {gameState.status}
+              .
             </p>
           </aside>
         </div>

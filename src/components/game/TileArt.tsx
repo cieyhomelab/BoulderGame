@@ -227,12 +227,20 @@ const TILE_ART: Record<Tile, () => React.JSX.Element> = {
   h: Spikes,
 };
 
-export function TileArt({ tile }: { tile: Tile }) {
+export function TileArt({ tile, unstable = false }: { tile: Tile; unstable?: boolean }) {
   const Art = TILE_ART[tile];
 
+  // The wobble sits on the group rather than the <svg>, so the tile's own box never moves and
+  // neighbouring cells cannot be nudged by a shaking boulder.
   return (
     <svg className="block size-full" viewBox="0 0 64 64">
-      <Art />
+      {unstable ? (
+        <g className="boulder-unstable">
+          <Art />
+        </g>
+      ) : (
+        <Art />
+      )}
     </svg>
   );
 }

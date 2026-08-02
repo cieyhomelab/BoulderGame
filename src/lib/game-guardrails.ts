@@ -23,6 +23,8 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   bonusGems: "game-bonus-gems",
   dirt: "game-dirt",
   openSpace: "game-open-space",
+  boulder: "game-boulder",
+  unstableBoulder: "game-unstable-boulder",
 } as const;
 
 export const GAME_ATTEMPT_SESSION_KEY = "boulder-game:attempt-count";
