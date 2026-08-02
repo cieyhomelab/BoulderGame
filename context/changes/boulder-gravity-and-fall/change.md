@@ -1,6 +1,6 @@
 ---
 change_id: boulder-gravity-and-fall
-status: implemented
+status: impl_reviewed
 created: 2026-08-02
 updated: 2026-08-02
 roadmap_id: S-02
