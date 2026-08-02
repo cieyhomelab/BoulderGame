@@ -1,10 +1,11 @@
 ---
 change_id: replayable-arcade-loop
-status: impl_reviewed
+status: archived
 created: 2026-08-01
-updated: 2026-08-01
+updated: 2026-08-02
 roadmap_id: S-04
 roadmap_source: context/foundation/roadmap.md
+archived_at: 2026-08-02T10:05:08Z
 ---
 
 # Replayable Arcade Loop

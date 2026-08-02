@@ -1,10 +1,11 @@
 ---
 change_id: controllable-board-collection
-status: impl_reviewed
+status: archived
 created: 2026-08-01
-updated: 2026-08-01
+updated: 2026-08-02
 roadmap_id: S-02
 roadmap_source: context/foundation/roadmap.md
+archived_at: 2026-08-02T10:04:35Z
 ---
 
 # Controllable Board and Collection

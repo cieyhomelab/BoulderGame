@@ -3,7 +3,7 @@ project: BoulderGame
 version: 1
 status: draft
 created: 2026-08-01
-updated: 2026-08-01
+updated: 2026-08-02
 prd_version: 1
 main_goal: market-feedback
 top_blocker: capacity
@@ -27,13 +27,13 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 
 | ID   | Change ID                          | Outcome (user can ...)                                                                                          | Prerequisites | PRD refs                                            | Status        |
 | ---- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------- | ------------- |
-| F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | impl_reviewed |
-| F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | impl_reviewed |
-| S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | impl_reviewed |
-| S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | impl_reviewed |
-| S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | impl_reviewed |
-| S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | impl_reviewed |
-| S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | impl_reviewed |
+| F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | done          |
+| F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | done          |
+| S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | done          |
+| S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | done          |
+| S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | done          |
+| S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | done          |
+| S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | done          |
 
 ## Streams
 
@@ -68,7 +68,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Blockers:** -
 - **Unknowns:** -
 - **Risk:** Bez tej minimalnej weryfikacji latwo zbudowac gre, ktora dziala, ale nie spelnia warunkow szybkiego startu i responsywnego sterowania.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### F-02: Public playtest deploy path
 
@@ -81,7 +81,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Blockers:** Cloudflare account access for first real deployment
 - **Unknowns:** -
 - **Risk:** Jesli deploy zostanie odlozony do samego konca, problem z nazwa projektu, konfiguracja hostingu albo logami moze opoznic zebranie sygnalu od gracza.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ## Slices
 
@@ -96,7 +96,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Czy starter auth/dashboard ma zostac usuniety od razu czy tylko wyjety ze sciezki gry? - Owner: user. Block: no.
 - **Risk:** Ten slice musi przeciac scaffold auth tak, zeby MVP zaczynalo sie od gry, a nie od ekranu produktowego albo logowania.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### S-02: Controllable board and collection
 
@@ -109,7 +109,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Jaki minimalny zestaw kafelkow wystarczy do pierwszej grywalnej planszy? - Owner: team. Block: no.
 - **Risk:** Jesli sterowanie i zbieranie nie beda przyjemne, dalsze end-state'y nie naprawia podstawowego odczucia gry.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### S-03: Level end states
 
@@ -122,7 +122,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Jak prosty warunek ukonczenia poziomu najlepiej wspiera zasade ryzyko-nagroda? - Owner: team. Block: no.
 - **Risk:** Bez obu zakonczen gra nie ma pelnej stawki: gracz musi widziec zarowno nagrode, jak i koszt ryzyka.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### S-04: Replayable arcade loop
 
@@ -135,7 +135,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Czy gra ma jawnie pokazywac liczbe prob, czy wystarczy obserwowalny replay w sesji? - Owner: user. Block: no.
 - **Risk:** To pierwszy pelny test powrotu do gry; jesli replay wymaga myslenia albo instrukcji, MVP nie trafia w glowny sygnal sukcesu.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### S-05: Risk-reward level tuning
 
@@ -148,7 +148,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Jaki uklad planszy daje widoczna decyzje ryzyko-nagroda bez potrzeby instrukcji? - Owner: team. Block: no.
 - **Risk:** Ten slice jest po pelnej petli, bo tuning ma sens dopiero wtedy, gdy mozna zagrac, przegrac, wygrac i sprobowac ponownie.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -176,3 +176,11 @@ None currently identified.
 - **Game database and saved profiles** - Why parked: PRD Access Control says single user session with no account; Supabase scaffold is not a product requirement for MVP.
 
 ## Done
+
+- **F-01: (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji** — Archived 2026-08-02 → `context/archive/2026-08-01-performance-play-signal-guardrails/`. Lesson: —.
+- **F-02: (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow** — Archived 2026-08-02 → `context/archive/2026-08-01-public-playtest-deploy-path/`. Lesson: —.
+- **S-01: gracz moze otworzyc gre w browserze i zaczac poziom bez konta** — Archived 2026-08-02 → `context/archive/2026-08-01-immediate-browser-game-entry/`. Lesson: —.
+- **S-02: gracz moze poruszac postacia po planszy i zbierac elementy** — Archived 2026-08-02 → `context/archive/2026-08-01-controllable-board-collection/`. Lesson: —.
+- **S-03: gracz moze przegrac na zagrozeniu albo ukonczyc poziom** — Archived 2026-08-02 → `context/archive/2026-08-01-level-end-states/`. Lesson: —.
+- **S-04: gracz moze zakonczyc probe i natychmiast zagrac ponownie** — Archived 2026-08-02 → `context/archive/2026-08-01-replayable-arcade-loop/`. Lesson: —.
+- **S-05: gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik** — Archived 2026-08-02 → `context/archive/2026-08-01-risk-reward-level-tuning/`. Lesson: —.
