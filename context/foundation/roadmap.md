@@ -28,7 +28,7 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 | ID   | Change ID                          | Outcome (user can ...)                                                                                          | Prerequisites | PRD refs                                            | Status        |
 | ---- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------- | ------------- |
 | F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | done          |
-| F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | impl_reviewed |
+| F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | done          |
 | S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | impl_reviewed |
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | impl_reviewed |
 | S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | impl_reviewed |
@@ -81,7 +81,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Blockers:** Cloudflare account access for first real deployment
 - **Unknowns:** -
 - **Risk:** Jesli deploy zostanie odlozony do samego konca, problem z nazwa projektu, konfiguracja hostingu albo logami moze opoznic zebranie sygnalu od gracza.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ## Slices
 
@@ -178,3 +178,4 @@ None currently identified.
 ## Done
 
 - **F-01: (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji** — Archived 2026-08-02 → `context/archive/2026-08-01-performance-play-signal-guardrails/`. Lesson: —.
+- **F-02: (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow** — Archived 2026-08-02 → `context/archive/2026-08-01-public-playtest-deploy-path/`. Lesson: —.
