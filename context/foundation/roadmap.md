@@ -31,7 +31,7 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 | F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | done          |
 | S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | done          |
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | done          |
-| S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | impl_reviewed |
+| S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | done          |
 | S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | impl_reviewed |
 | S-05 | risk-reward-level-tuning           | gracz moze wybrac bezpieczniejsza albo bardziej ryzykowna droge po lepszy wynik                                 | S-04          | US-01, FR-004, FR-005, FR-006, Business Logic       | impl_reviewed |
 
@@ -122,7 +122,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Jak prosty warunek ukonczenia poziomu najlepiej wspiera zasade ryzyko-nagroda? - Owner: team. Block: no.
 - **Risk:** Bez obu zakonczen gra nie ma pelnej stawki: gracz musi widziec zarowno nagrode, jak i koszt ryzyka.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### S-04: Replayable arcade loop
 
@@ -181,3 +181,4 @@ None currently identified.
 - **F-02: (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow** — Archived 2026-08-02 → `context/archive/2026-08-01-public-playtest-deploy-path/`. Lesson: —.
 - **S-01: gracz moze otworzyc gre w browserze i zaczac poziom bez konta** — Archived 2026-08-02 → `context/archive/2026-08-01-immediate-browser-game-entry/`. Lesson: —.
 - **S-02: gracz moze poruszac postacia po planszy i zbierac elementy** — Archived 2026-08-02 → `context/archive/2026-08-01-controllable-board-collection/`. Lesson: —.
+- **S-03: gracz moze przegrac na zagrozeniu albo ukonczyc poziom** — Archived 2026-08-02 → `context/archive/2026-08-01-level-end-states/`. Lesson: —.

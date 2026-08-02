@@ -1,10 +1,11 @@
 ---
 change_id: level-end-states
-status: impl_reviewed
+status: archived
 created: 2026-08-01
-updated: 2026-08-01
+updated: 2026-08-02
 roadmap_id: S-03
 roadmap_source: context/foundation/roadmap.md
+archived_at: 2026-08-02T10:04:51Z
 ---
 
 # Level End States
