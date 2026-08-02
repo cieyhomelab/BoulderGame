@@ -236,23 +236,23 @@ CPU cost of this change in production is nil.
 
 #### Automated
 
-- [x] 1.1 Type checking passes
-- [x] 1.2 Linting passes
+- [x] 1.1 Type checking passes — 4eceb62
+- [x] 1.2 Linting passes — 4eceb62
 
 #### Manual
 
-- [x] 1.3 `GAME_TIMING` is the only declaration of the 400 / 120 constants
+- [x] 1.3 `GAME_TIMING` is the only declaration of the 400 / 120 constants — 4eceb62
 
 ### Phase 2: Wire the clock into the game surface and prove it is drivable
 
 #### Automated
 
-- [x] 2.1 New clock spec passes
-- [x] 2.2 All pre-existing E2E tests still pass unchanged
-- [x] 2.3 Linting passes
-- [x] 2.4 Build passes
+- [x] 2.1 New clock spec passes — 50ea32b
+- [x] 2.2 All pre-existing E2E tests still pass unchanged — 50ea32b
+- [x] 2.3 Linting passes — 50ea32b
+- [x] 2.4 Build passes — 50ea32b
 
 #### Manual
 
-- [x] 2.5 `/` plays exactly as before
-- [x] 2.6 `__boulderGameClock` absent on `/`, present on `/?clock=manual`
+- [x] 2.5 `/` plays exactly as before — 50ea32b
+- [x] 2.6 `__boulderGameClock` absent on `/`, present on `/?clock=manual` — 50ea32b

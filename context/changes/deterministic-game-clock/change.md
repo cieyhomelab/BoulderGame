@@ -1,6 +1,6 @@
 ---
 change_id: deterministic-game-clock
-status: implementing
+status: implemented
 created: 2026-08-02
 updated: 2026-08-02
 roadmap_id: F-01
