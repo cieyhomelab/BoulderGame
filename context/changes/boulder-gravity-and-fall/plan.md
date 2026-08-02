@@ -351,50 +351,50 @@ guardrail is the first thing to fail.
 
 #### Automated
 
-- [x] 1.1 Type checking passes
-- [x] 1.2 Linting passes
-- [x] 1.3 Full E2E suite still passes
+- [x] 1.1 Type checking passes — 8fbef8d
+- [x] 1.2 Linting passes — 8fbef8d
+- [x] 1.3 Full E2E suite still passes — 8fbef8d
 
 #### Manual
 
-- [x] 1.4 No gameplay change yet
+- [x] 1.4 No gameplay change yet — 8fbef8d
 
 ### Phase 2: Wire gravity into the game
 
 #### Automated
 
-- [x] 2.1 Type checking passes
-- [x] 2.2 Linting passes
-- [x] 2.3 Full E2E suite still passes
-- [x] 2.4 Build passes
+- [x] 2.1 Type checking passes — 91d9121
+- [x] 2.2 Linting passes — 91d9121
+- [x] 2.3 Full E2E suite still passes — 91d9121
+- [x] 2.4 Build passes — 91d9121
 
 #### Manual
 
-- [x] 2.5 Digging under a boulder makes it fall and stop on the next solid tile
-- [x] 2.6 The board does not re-render when nothing is moving
+- [x] 2.5 Digging under a boulder makes it fall and stop on the next solid tile — 91d9121
+- [x] 2.6 The board does not re-render when nothing is moving — 91d9121
 
 ### Phase 3: The instability telegraph
 
 #### Automated
 
-- [x] 3.1 Type checking passes
-- [x] 3.2 Linting passes
-- [x] 3.3 Full E2E suite still passes
+- [x] 3.1 Type checking passes — 6b80acf
+- [x] 3.2 Linting passes — 6b80acf
+- [x] 3.3 Full E2E suite still passes — 6b80acf
 
 #### Manual
 
-- [x] 3.4 An undermined boulder visibly shakes before it drops
-- [x] 3.5 Reduced-motion users still get a distinguishable unstable state
+- [x] 3.4 An undermined boulder visibly shakes before it drops — 6b80acf
+- [x] 3.5 Reduced-motion users still get a distinguishable unstable state — 6b80acf
 
 ### Phase 4: E2E coverage for the fall lifecycle
 
 #### Automated
 
-- [x] 4.1 New gravity spec passes
-- [x] 4.2 Full suite passes
-- [x] 4.3 Linting passes
-- [x] 4.4 Build passes
+- [x] 4.1 New gravity spec passes — ded187e
+- [x] 4.2 Full suite passes — ded187e
+- [x] 4.3 Linting passes — ded187e
+- [x] 4.4 Build passes — ded187e
 
 #### Manual
 
-- [x] 4.5 Deliberate-break check: grace window of 0 fails the grace-window test
+- [x] 4.5 Deliberate-break check: grace window of 0 fails the grace-window test — ded187e
