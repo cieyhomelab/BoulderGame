@@ -301,15 +301,15 @@ acknowledgement threshold has three orders of magnitude of headroom.
 
 #### Automated
 
-- [ ] 2.1 Type checking passes
-- [ ] 2.2 Linting passes
-- [ ] 2.3 All existing E2E tests still pass unchanged
-- [ ] 2.4 Build passes
+- [x] 2.1 Type checking passes
+- [x] 2.2 Linting passes
+- [x] 2.3 All existing E2E tests still pass unchanged
+- [x] 2.4 Build passes
 
 #### Manual
 
-- [ ] 2.5 Walking carves a visible corridor that stays open
-- [ ] 2.6 "Play again" restores the full Dirt field and all gems
+- [x] 2.5 Walking carves a visible corridor that stays open
+- [x] 2.6 "Play again" restores the full Dirt field and all gems
 
 ### Phase 3: E2E coverage for digging
 

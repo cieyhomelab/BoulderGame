@@ -24,16 +24,13 @@ interface Coordinate {
   col: number;
 }
 
-interface BoardCell {
-  tile: Tile;
-  row: number;
-  col: number;
-}
+type Board = Tile[][];
 
 interface GameState {
+  board: Board;
   playerPosition: Coordinate;
   moveCount: number;
-  collectedGemKeys: string[];
+  collectedGemCount: number;
   status: LevelStatus;
 }
 
@@ -59,49 +56,71 @@ const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   D: { row: 0, col: 1 },
 };
 
-function parseLevelRows(): BoardCell[][] {
-  return LEVEL_ROWS.map((row, rowIndex) =>
-    (row.split("") as Tile[]).map((tile, colIndex) => ({
-      tile,
-      row: rowIndex,
-      col: colIndex,
-    })),
+interface ParsedLevel {
+  template: Board;
+  playerStart: Coordinate;
+  gemCount: number;
+}
+
+/**
+ * Parses the level rows once. The `p` start marker is resolved away here — the Miner has by
+ * definition already dug the tile they stand in, so the cell becomes open space and `p` survives
+ * only as a render-time overlay.
+ */
+function parseLevel(): ParsedLevel {
+  let playerStart: Coordinate = { row: 0, col: 0 };
+  let gemCount = 0;
+
+  const template = LEVEL_ROWS.map((row, rowIndex) =>
+    (row.split("") as Tile[]).map((tile, colIndex) => {
+      if (tile === "g") {
+        gemCount += 1;
+      }
+
+      if (tile !== "p") {
+        return tile;
+      }
+
+      playerStart = { row: rowIndex, col: colIndex };
+      return " ";
+    }),
   );
+
+  return { template, playerStart, gemCount };
 }
 
-function flattenBoard(board: BoardCell[][]): BoardCell[] {
-  return board.flat();
-}
-
-function findPlayerStart(board: BoardCell[][]): Coordinate {
-  for (const row of board) {
-    const playerCell = row.find((cell) => cell.tile === "p");
-    if (playerCell) {
-      return { row: playerCell.row, col: playerCell.col };
-    }
-  }
-
-  return { row: 0, col: 0 };
-}
-
-function countGems(board: BoardCell[][]): number {
-  return flattenBoard(board).filter((cell) => cell.tile === "g").length;
-}
-
-function getTileAt(position: Coordinate): Tile | null {
-  return LEVEL_BOARD[position.row]?.[position.col]?.tile ?? null;
+/**
+ * Reads a tile without trusting the index. `noUncheckedIndexedAccess` is off in this project, so
+ * `board[row][col]` type-checks even outside the grid — `undefined` means "outside the cave".
+ */
+function tileAt(board: Board, row: number, col: number): Tile | undefined {
+  return board[row]?.[col];
 }
 
 function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
-function isWalkable(tile: Tile | null): boolean {
-  return tile === "." || tile === "g" || tile === "e" || tile === "h" || tile === "p";
+function isWalkable(tile: Tile | undefined): boolean {
+  return tile === "." || tile === " " || tile === "g" || tile === "e" || tile === "h";
 }
 
-function getPositionKey(position: Coordinate): string {
-  return `${position.row}:${position.col}`;
+function isDiggable(tile: Tile | undefined): boolean {
+  return tile === "." || tile === "g";
+}
+
+/** Copies only the row being written, so unchanged rows stay shared across attempts' renders. */
+function withTile(board: Board, row: number, col: number, tile: Tile): Board {
+  return board.map((boardRow, rowIndex) => {
+    if (rowIndex !== row) {
+      return boardRow;
+    }
+
+    const nextRow = [...boardRow];
+    nextRow[col] = tile;
+
+    return nextRow;
+  });
 }
 
 function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
@@ -114,41 +133,44 @@ function resolveMove(currentState: GameState, delta: Coordinate): MoveResult {
     col: currentState.playerPosition.col + delta.col,
   };
 
-  const nextTile = getTileAt(nextPosition);
+  // Read the target before digging it — after the dig it is open space and the gem/spike
+  // branches below would be lost.
+  const nextTile = tileAt(currentState.board, nextPosition.row, nextPosition.col);
   if (!isWalkable(nextTile)) {
     return { state: currentState, accepted: false };
   }
 
-  const nextPositionKey = getPositionKey(nextPosition);
-  const collectedGemKeys =
-    nextTile === "g" && !currentState.collectedGemKeys.includes(nextPositionKey)
-      ? [...currentState.collectedGemKeys, nextPositionKey]
-      : currentState.collectedGemKeys;
+  const collectedGemCount = currentState.collectedGemCount + (nextTile === "g" ? 1 : 0);
+  const board = isDiggable(nextTile)
+    ? withTile(currentState.board, nextPosition.row, nextPosition.col, " ")
+    : currentState.board;
   const status =
-    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemKeys.length >= REQUIRED_GEM_COUNT ? "won" : "active";
+    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemCount >= REQUIRED_GEM_COUNT ? "won" : "active";
 
   return {
     accepted: true,
     state: {
+      board,
       playerPosition: nextPosition,
       moveCount: currentState.moveCount + 1,
-      collectedGemKeys,
+      collectedGemCount,
       status,
     },
   };
 }
 
-const LEVEL_BOARD = parseLevelRows();
-const LEVEL_CELLS = flattenBoard(LEVEL_BOARD);
-const PLAYER_START = findPlayerStart(LEVEL_BOARD);
-const INITIAL_GEM_COUNT = countGems(LEVEL_BOARD);
+const LEVEL = parseLevel();
+const INITIAL_GEM_COUNT = LEVEL.gemCount;
 const OPTIONAL_GEM_COUNT = INITIAL_GEM_COUNT - REQUIRED_GEM_COUNT;
 
 function createInitialGameState(): GameState {
   return {
-    playerPosition: PLAYER_START,
+    // Row-level copy: a shallow copy of the outer array alone would let a dug corridor leak
+    // from one attempt into the next.
+    board: LEVEL.template.map((row) => [...row]),
+    playerPosition: LEVEL.playerStart,
     moveCount: 0,
-    collectedGemKeys: [],
+    collectedGemCount: 0,
     status: "active",
   };
 }
@@ -214,8 +236,8 @@ export default function GameEntry() {
       : gameState.status === "lost"
         ? "Cave-in. Play again?"
         : null;
-  const collectedRequiredGems = Math.min(gameState.collectedGemKeys.length, REQUIRED_GEM_COUNT);
-  const collectedBonusGems = Math.max(gameState.collectedGemKeys.length - REQUIRED_GEM_COUNT, 0);
+  const collectedRequiredGems = Math.min(gameState.collectedGemCount, REQUIRED_GEM_COUNT);
+  const collectedBonusGems = Math.max(gameState.collectedGemCount - REQUIRED_GEM_COUNT, 0);
 
   return (
     <main
@@ -248,32 +270,36 @@ export default function GameEntry() {
               data-testid={GAME_GUARDRAIL_TEST_IDS.board}
               role="img"
             >
-              {LEVEL_CELLS.map((cell) => {
-                const hasPlayer = isSameCoordinate(cell, gameState.playerPosition);
-                const isCollectedGem = cell.tile === "g" && gameState.collectedGemKeys.includes(getPositionKey(cell));
-                const tile = hasPlayer ? "p" : cell.tile === "p" || isCollectedGem ? "." : cell.tile;
+              {gameState.board.flatMap((boardRow, row) =>
+                boardRow.map((cellTile, col) => {
+                  const hasPlayer = isSameCoordinate({ row, col }, gameState.playerPosition);
 
-                return (
-                  <div
-                    aria-hidden="true"
-                    className="aspect-square min-h-0 overflow-hidden rounded-[2px]"
-                    data-col={cell.col}
-                    data-row={cell.row}
-                    data-testid={
-                      hasPlayer
-                        ? GAME_GUARDRAIL_TEST_IDS.player
-                        : cell.tile === "h"
-                          ? GAME_GUARDRAIL_TEST_IDS.hazard
-                          : cell.tile === "e"
-                            ? GAME_GUARDRAIL_TEST_IDS.exit
-                            : undefined
-                    }
-                    key={`${cell.row}-${cell.col}`}
-                  >
-                    <TileArt tile={tile} />
-                  </div>
-                );
-              })}
+                  return (
+                    <div
+                      aria-hidden="true"
+                      className="aspect-square min-h-0 overflow-hidden rounded-[2px]"
+                      data-col={col}
+                      data-row={row}
+                      data-testid={
+                        hasPlayer
+                          ? GAME_GUARDRAIL_TEST_IDS.player
+                          : cellTile === "h"
+                            ? GAME_GUARDRAIL_TEST_IDS.hazard
+                            : cellTile === "e"
+                              ? GAME_GUARDRAIL_TEST_IDS.exit
+                              : cellTile === "."
+                                ? GAME_GUARDRAIL_TEST_IDS.dirt
+                                : cellTile === " "
+                                  ? GAME_GUARDRAIL_TEST_IDS.openSpace
+                                  : undefined
+                      }
+                      key={`${row}-${col}`}
+                    >
+                      <TileArt tile={hasPlayer ? "p" : cellTile} />
+                    </div>
+                  );
+                }),
+              )}
             </div>
           </div>
 
@@ -288,13 +314,13 @@ export default function GameEntry() {
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Gems</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemsRemaining}>
-                  {String(INITIAL_GEM_COUNT - gameState.collectedGemKeys.length).padStart(2, "0")}
+                  {String(INITIAL_GEM_COUNT - gameState.collectedGemCount).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Score</p>
                 <p className="text-2xl font-black text-[#c56cff]" data-testid={GAME_GUARDRAIL_TEST_IDS.score}>
-                  {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}
+                  {gameState.collectedGemCount * GEM_SCORE_VALUE}
                 </p>
               </div>
             </div>
@@ -313,7 +339,7 @@ export default function GameEntry() {
               </div>
             </div>
             <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.collectedGems}>
-              {gameState.collectedGemKeys.length}
+              {gameState.collectedGemCount}
             </p>
             <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
               <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Input</p>
@@ -363,9 +389,9 @@ export default function GameEntry() {
             )}
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
-              {INITIAL_GEM_COUNT - gameState.collectedGemKeys.length} gems remaining. Score{" "}
-              {gameState.collectedGemKeys.length * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of{" "}
-              {REQUIRED_GEM_COUNT}. Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. Status {gameState.status}.
+              {INITIAL_GEM_COUNT - gameState.collectedGemCount} gems remaining. Score{" "}
+              {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {REQUIRED_GEM_COUNT}.
+              Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. Status {gameState.status}.
             </p>
           </aside>
         </div>
