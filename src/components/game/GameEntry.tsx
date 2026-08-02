@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 
+import { resolveGameClock, type GameClock } from "@/lib/game-clock";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { cn } from "@/lib/utils";
 
@@ -157,6 +158,11 @@ export default function GameEntry() {
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
   const countedAttemptRef = useRef(false);
   const replayButtonRef = useRef<HTMLButtonElement | null>(null);
+  const gameClockRef = useRef<GameClock | null>(null);
+
+  useEffect(() => {
+    gameClockRef.current ??= resolveGameClock();
+  }, []);
 
   useEffect(() => {
     if (countedAttemptRef.current) {

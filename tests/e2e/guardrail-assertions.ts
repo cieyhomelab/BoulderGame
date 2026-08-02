@@ -1,10 +1,30 @@
 import { expect, type Page } from "@playwright/test";
 
+import { MANUAL_CLOCK_WINDOW_KEY } from "../../src/lib/game-clock";
 import {
   GAME_ATTEMPT_SESSION_KEY,
   GAME_GUARDRAIL_TEST_IDS,
   GAME_GUARDRAIL_THRESHOLDS,
 } from "../../src/lib/game-guardrails";
+
+/**
+ * Steps game time forward deterministically. Requires the page to have been opened with
+ * `?clock=manual`, otherwise the manual clock is absent and this throws rather than silently
+ * passing on a page where nothing can move.
+ */
+export async function advanceGameClock(page: Page, deltaMs: number): Promise<void> {
+  await page.evaluate(
+    ({ key, delta }) => {
+      const clock = window[key as typeof MANUAL_CLOCK_WINDOW_KEY];
+      if (!clock) {
+        throw new Error("Manual game clock is not installed — open the page with `?clock=manual`.");
+      }
+
+      clock.advance(delta);
+    },
+    { key: MANUAL_CLOCK_WINDOW_KEY, delta: deltaMs },
+  );
+}
 
 export async function expectGameEntrySurface(page: Page): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.entrySurface)).toBeVisible();

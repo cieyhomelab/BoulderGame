@@ -247,12 +247,12 @@ CPU cost of this change in production is nil.
 
 #### Automated
 
-- [ ] 2.1 New clock spec passes
-- [ ] 2.2 All pre-existing E2E tests still pass unchanged
-- [ ] 2.3 Linting passes
-- [ ] 2.4 Build passes
+- [x] 2.1 New clock spec passes
+- [x] 2.2 All pre-existing E2E tests still pass unchanged
+- [x] 2.3 Linting passes
+- [x] 2.4 Build passes
 
 #### Manual
 
-- [ ] 2.5 `/` plays exactly as before
-- [ ] 2.6 `__boulderGameClock` absent on `/`, present on `/?clock=manual`
+- [x] 2.5 `/` plays exactly as before
+- [x] 2.6 `__boulderGameClock` absent on `/`, present on `/?clock=manual`
