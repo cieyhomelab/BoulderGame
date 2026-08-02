@@ -29,66 +29,70 @@ test("moving into Dirt digs it out and leaves open space behind", async ({ page 
   await page.goto("/");
   await expectGameHydrated(page);
 
-  await expectPlayerAt(page, 3, 3);
-  await expectDirtAt(page, 3, 4);
+  await expectPlayerAt(page, 3, 2);
+  await expectDirtAt(page, 3, 3);
 
-  await pressKeys(page, ["ArrowRight", "ArrowRight"]);
+  await pressKeys(page, ["ArrowRight", "ArrowDown"]);
 
-  await expectPlayerAt(page, 3, 5);
-  await expectOpenSpaceAt(page, 3, 4);
+  await expectPlayerAt(page, 4, 3);
+  await expectOpenSpaceAt(page, 3, 3);
 });
 
 test("a dug corridor persists and re-entering it costs nothing", async ({ page }) => {
   await page.goto("/");
   await expectGameHydrated(page);
 
-  await pressKeys(page, ["ArrowRight", "ArrowRight", "ArrowRight", "ArrowRight"]);
-  await expectPlayerAt(page, 3, 7);
+  // Down through row 4, keeping clear of the Dirt at (3,4) that holds the boulder stack.
+  await pressKeys(page, ["ArrowRight", "ArrowDown", "ArrowRight", "ArrowRight"]);
+  await expectPlayerAt(page, 4, 5);
 
-  for (const col of [4, 5, 6]) {
-    await expectOpenSpaceAt(page, 3, col);
-  }
+  await expectOpenSpaceAt(page, 3, 3);
+  await expectOpenSpaceAt(page, 4, 3);
+  await expectOpenSpaceAt(page, 4, 4);
 
   // Walk back across the corridor: already-dug tiles remove nothing and collect nothing.
-  await pressKeys(page, ["ArrowLeft", "ArrowLeft", "ArrowLeft"]);
-  await expectPlayerAt(page, 3, 4);
-  await expectInputResponseText(page, "7:3,4");
+  await pressKeys(page, ["ArrowLeft", "ArrowLeft"]);
+  await expectPlayerAt(page, 4, 3);
+  await expectInputResponseText(page, "6:4,3");
   await expectCollectedGems(page, 0);
 
-  for (const col of [5, 6, 7]) {
-    await expectOpenSpaceAt(page, 3, col);
-  }
+  await expectOpenSpaceAt(page, 4, 4);
+  await expectOpenSpaceAt(page, 4, 5);
 });
 
 test("a wall is not diggable and the move is rejected", async ({ page }) => {
   await page.goto("/");
   await expectGameHydrated(page);
 
-  await pressKeys(page, ["ArrowUp"]);
-  await expectPlayerAt(page, 2, 3);
+  await pressKeys(page, ["ArrowLeft"]);
+  await expectPlayerAt(page, 3, 1);
 
+  // (3,0) is the border wall.
   await pressKeys(page, ["ArrowLeft"]);
 
-  await expectPlayerAt(page, 2, 3);
-  await expectInputResponseText(page, "1:2,3");
-  await expectNotOpenSpaceAt(page, 2, 2);
+  await expectPlayerAt(page, 3, 1);
+  await expectInputResponseText(page, "1:3,1");
+  await expectNotOpenSpaceAt(page, 3, 0);
 });
 
 test("Play again restores dug Dirt", async ({ page }) => {
   await page.goto("/");
   await expectGameHydrated(page);
 
-  await pressKeys(page, ["ArrowRight", "ArrowRight"]);
-  await expectOpenSpaceAt(page, 3, 4);
+  // Dig a corridor down to the spikes at (5,5) and die there.
+  await pressKeys(page, ["ArrowRight", "ArrowDown", "ArrowRight", "ArrowRight"]);
+  await expectOpenSpaceAt(page, 3, 3);
+  await expectOpenSpaceAt(page, 4, 3);
 
-  await pressKeys(page, ["ArrowLeft", "ArrowLeft", "ArrowLeft"]);
-  await expectPlayerAt(page, 3, 2);
+  await pressKeys(page, ["ArrowDown"]);
+  await expectPlayerAt(page, 5, 5);
   await expectLevelStatus(page, "lost");
 
   await activateReplay(page);
 
   await expectLevelStatus(page, "active");
-  await expectPlayerAt(page, 3, 3);
-  await expectDirtAt(page, 3, 4);
-  await expectDirtAt(page, 3, 5);
+  await expectPlayerAt(page, 3, 2);
+  await expectDirtAt(page, 3, 3);
+  await expectDirtAt(page, 4, 3);
+  await expectDirtAt(page, 4, 4);
 });

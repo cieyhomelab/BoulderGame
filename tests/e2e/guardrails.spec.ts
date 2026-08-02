@@ -32,55 +32,29 @@ async function pressKeys(page: Page, keys: string[]): Promise<void> {
   }
 }
 
-async function collectFirstTwoGems(page: Page): Promise<void> {
-  await pressKeys(page, ["ArrowRight", "ArrowRight", "ArrowRight", "ArrowRight", "ArrowRight"]);
+/**
+ * Start (3,2) → spikes (5,5), routed through row 4 so it never digs the Dirt at (3,4) that holds
+ * the boulder stack. Five accepted moves, no gem collected.
+ */
+const ROUTE_TO_SPIKES = ["ArrowRight", "ArrowDown", "ArrowRight", "ArrowRight", "ArrowDown"];
+
+/** Start (3,2) → the quota gem at (5,3). Three accepted moves. */
+const ROUTE_TO_FIRST_GEM = ["ArrowRight", "ArrowDown", "ArrowDown"];
+
+/** (5,3) → the second quota gem at (5,7), along row 6. Six accepted moves. */
+const ROUTE_FIRST_GEM_TO_SECOND = ["ArrowDown", "ArrowRight", "ArrowRight", "ArrowRight", "ArrowRight", "ArrowUp"];
+
+/** (5,7) → the exit at (6,10). Four accepted moves. */
+const ROUTE_SECOND_GEM_TO_EXIT = ["ArrowDown", "ArrowRight", "ArrowRight", "ArrowRight"];
+
+async function collectBothQuotaGems(page: Page): Promise<void> {
+  await pressKeys(page, ROUTE_TO_FIRST_GEM);
+  await expectPlayerAt(page, 5, 3);
   await expectCollectedGems(page, 1);
 
-  await pressKeys(page, ["ArrowLeft", "ArrowLeft", "ArrowLeft", "ArrowLeft", "ArrowLeft", "ArrowUp", "ArrowUp"]);
-  await expectPlayerAt(page, 1, 3);
-  await expectCollectedGems(page, 2);
-}
-
-async function moveFromTopGemToExitSafely(page: Page): Promise<void> {
-  await pressKeys(page, [
-    "ArrowDown",
-    "ArrowDown",
-    "ArrowDown",
-    "ArrowLeft",
-    "ArrowDown",
-    "ArrowDown",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowUp",
-  ]);
-}
-
-async function collectRiskyBonusFromTopGem(page: Page): Promise<void> {
-  await pressKeys(page, [
-    "ArrowDown",
-    "ArrowDown",
-    "ArrowDown",
-    "ArrowLeft",
-    "ArrowDown",
-    "ArrowDown",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowRight",
-    "ArrowUp",
-  ]);
+  await pressKeys(page, ROUTE_FIRST_GEM_TO_SECOND);
   await expectPlayerAt(page, 5, 7);
-  await expectCollectedGems(page, 3);
-}
-
-async function moveFromBonusGemToExitSafely(page: Page): Promise<void> {
-  await pressKeys(page, ["ArrowDown", "ArrowRight", "ArrowRight", "ArrowUp"]);
+  await expectCollectedGems(page, 2);
 }
 
 test("root route starts the anonymous BoulderGame level", async ({ page }) => {
@@ -107,37 +81,34 @@ test("player moves on accepted input and stays put against blockers", async ({ p
   await page.goto("/");
 
   await expectInputResponseMarker(page);
-  await expectPlayerAt(page, 3, 3);
+  await expectPlayerAt(page, 3, 2);
 
-  await pressAndExpectInputResponse(page, "ArrowDown", "1:4,3");
-  await expectPlayerAt(page, 4, 3);
+  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,1");
+  await expectPlayerAt(page, 3, 1);
 
-  await page.keyboard.press("ArrowDown");
-  await expectPlayerAt(page, 4, 3);
-  await expectInputResponseText(page, "1:4,3");
+  // (3,0) is the border wall — the move is rejected and costs nothing.
+  await page.keyboard.press("ArrowLeft");
+  await expectPlayerAt(page, 3, 1);
+  await expectInputResponseText(page, "1:3,1");
 
-  await pressAndExpectInputResponse(page, "ArrowRight", "2:4,4");
-  await expectPlayerAt(page, 4, 4);
+  await pressAndExpectInputResponse(page, "ArrowRight", "2:3,2");
+  await expectPlayerAt(page, 3, 2);
 });
 
 test("player collects a gem and updates the HUD", async ({ page }) => {
   await page.goto("/");
 
-  await expectPlayerAt(page, 3, 3);
+  await expectPlayerAt(page, 3, 2);
   await expectGemsRemaining(page, 3);
   await expectScore(page, 0);
   await expectCollectedGems(page, 0);
   await expectGemQuota(page, "00/02");
   await expectBonusGems(page, "0/1");
 
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
-  await page.keyboard.press("ArrowRight");
+  await pressKeys(page, ROUTE_TO_FIRST_GEM);
 
-  await expectPlayerAt(page, 3, 8);
-  await expectInputResponseText(page, "5:3,8");
+  await expectPlayerAt(page, 5, 3);
+  await expectInputResponseText(page, "3:5,3");
   await expectGemsRemaining(page, 2);
   await expectScore(page, 100);
   await expectCollectedGems(page, 1);
@@ -151,13 +122,15 @@ test("player loses on a hazard and movement freezes", async ({ page }) => {
   await page.goto("/");
 
   await expectInputResponseMarker(page);
-  await expectHazardAt(page, 3, 2);
-  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
-  await expectPlayerAt(page, 3, 2);
+  await expectHazardAt(page, 5, 5);
+
+  await pressKeys(page, ROUTE_TO_SPIKES);
+  await expectPlayerAt(page, 5, 5);
+  await expectInputResponseText(page, "5:5,5");
   await expectLevelStatus(page, "lost");
 
-  await expectPlayerRemainsAtAfterInput(page, "ArrowRight", 3, 2);
-  await expectInputResponseText(page, "1:3,2");
+  await expectPlayerRemainsAtAfterInput(page, "ArrowLeft", 5, 5);
+  await expectInputResponseText(page, "5:5,5");
   await expectOutcomeMessage(page, /cave-in/i);
   await expectReplayButtonVisible(page);
 
@@ -165,8 +138,8 @@ test("player loses on a hazard and movement freezes", async ({ page }) => {
   await expectAttemptCounter(page, 2);
   await expectSessionAttemptCount(page, 2);
   await expectLevelStatus(page, "active");
-  await expectPlayerAt(page, 3, 3);
-  await expectInputResponseText(page, "0:3,3");
+  await expectPlayerAt(page, 3, 2);
+  await expectInputResponseText(page, "0:3,2");
   await expectGemsRemaining(page, 3);
   await expectScore(page, 0);
   await expectCollectedGems(page, 0);
@@ -179,20 +152,20 @@ test("player completes the level safely after meeting the gem quota", async ({ p
   await page.goto("/");
 
   await expectInputResponseMarker(page);
-  await expectExitAt(page, 5, 9);
-  await collectFirstTwoGems(page);
+  await expectExitAt(page, 6, 10);
+  await collectBothQuotaGems(page);
   await expectGemsRemaining(page, 1);
   await expectGemQuota(page, "02/02");
   await expectBonusGems(page, "0/1");
   await expectScore(page, 200);
 
-  await moveFromTopGemToExitSafely(page);
-  await expectPlayerAt(page, 5, 9);
+  await pressKeys(page, ROUTE_SECOND_GEM_TO_EXIT);
+  await expectPlayerAt(page, 6, 10);
   await expectLevelStatus(page, "won");
   await expectGemsRemaining(page, 1);
   await expectScore(page, 200);
 
-  await expectPlayerRemainsAtAfterInput(page, "ArrowLeft", 5, 9);
+  await expectPlayerRemainsAtAfterInput(page, "ArrowLeft", 6, 10);
   await expectLevelStatus(page, "won");
   await expectOutcomeMessage(page, /level complete/i);
   await expectReplayButtonVisible(page);
@@ -201,8 +174,8 @@ test("player completes the level safely after meeting the gem quota", async ({ p
   await expectAttemptCounter(page, 2);
   await expectSessionAttemptCount(page, 2);
   await expectLevelStatus(page, "active");
-  await expectPlayerAt(page, 3, 3);
-  await expectInputResponseText(page, "0:3,3");
+  await expectPlayerAt(page, 3, 2);
+  await expectInputResponseText(page, "0:3,2");
   await expectGemsRemaining(page, 3);
   await expectScore(page, 0);
   await expectCollectedGems(page, 0);
@@ -211,36 +184,21 @@ test("player completes the level safely after meeting the gem quota", async ({ p
   await expectReplayButtonHidden(page);
 });
 
-test("player can take the risky bonus gem for a higher completion score", async ({ page }) => {
+test("a collected gem's score survives losing on the way onward", async ({ page }) => {
   await page.goto("/");
 
   await expectInputResponseMarker(page);
-  await expectHazardAt(page, 5, 8);
-  await collectFirstTwoGems(page);
-  await collectRiskyBonusFromTopGem(page);
-  await expectGemsRemaining(page, 0);
-  await expectGemQuota(page, "02/02");
-  await expectBonusGems(page, "1/1");
-  await expectScore(page, 300);
+  await expectHazardAt(page, 5, 5);
 
-  await moveFromBonusGemToExitSafely(page);
-  await expectPlayerAt(page, 5, 9);
-  await expectLevelStatus(page, "won");
-  await expectScore(page, 300);
-});
+  await pressKeys(page, ROUTE_TO_FIRST_GEM);
+  await expectScore(page, 100);
 
-test("player loses by stepping from the risky bonus gem into the adjacent hazard", async ({ page }) => {
-  await page.goto("/");
-
-  await expectInputResponseMarker(page);
-  await expectHazardAt(page, 5, 8);
-  await collectFirstTwoGems(page);
-  await collectRiskyBonusFromTopGem(page);
-
-  await page.keyboard.press("ArrowRight");
-  await expectPlayerAt(page, 5, 8);
+  // (5,3) → (5,4) → the spikes at (5,5).
+  await pressKeys(page, ["ArrowRight", "ArrowRight"]);
+  await expectPlayerAt(page, 5, 5);
   await expectLevelStatus(page, "lost");
-  await expectScore(page, 300);
+  await expectScore(page, 100);
+  await expectCollectedGems(page, 1);
   await expectReplayButtonVisible(page);
 });
 
@@ -249,22 +207,21 @@ test("replay loop reaches the repeat-play threshold", async ({ page }) => {
 
   await expectAttemptCounter(page, 1);
 
-  await expectHazardAt(page, 3, 2);
-  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
+  await expectHazardAt(page, 5, 5);
+  await pressKeys(page, ROUTE_TO_SPIKES);
   await expectLevelStatus(page, "lost");
   await activateReplay(page);
   await expectAttemptCounter(page, 2);
   await expectLevelStatus(page, "active");
 
-  await expectHazardAt(page, 3, 2);
-  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
+  await pressKeys(page, ROUTE_TO_SPIKES);
   await expectLevelStatus(page, "lost");
   await activateReplay(page);
   await expectAttemptCounterAtTarget(page);
   await expectSessionAttemptCount(page, 3);
   await expectLevelStatus(page, "active");
-  await expectPlayerAt(page, 3, 3);
-  await expectInputResponseText(page, "0:3,3");
+  await expectPlayerAt(page, 3, 2);
+  await expectInputResponseText(page, "0:3,2");
   await expectReplayButtonHidden(page);
 });
 
@@ -273,14 +230,13 @@ test("mobile terminal states keep replay action in viewport", async ({ page }) =
   await page.goto("/");
 
   await expectInputResponseMarker(page);
-  await pressAndExpectInputResponse(page, "ArrowLeft", "1:3,2");
+  await pressKeys(page, ROUTE_TO_SPIKES);
   await expectLevelStatus(page, "lost");
   await expectReplayButtonInViewport(page);
 
   await activateReplay(page);
-  await collectFirstTwoGems(page);
-  await collectRiskyBonusFromTopGem(page);
-  await moveFromBonusGemToExitSafely(page);
+  await collectBothQuotaGems(page);
+  await pressKeys(page, ROUTE_SECOND_GEM_TO_EXIT);
   await expectLevelStatus(page, "won");
   await expectReplayButtonInViewport(page);
 });

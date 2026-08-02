@@ -196,12 +196,12 @@ undermining it the player walks in and collects it, taking Bonus to `1/1`.
 
 #### Automated
 
-- [ ] 2.1 Full suite passes
-- [ ] 2.2 Linting passes
+- [x] 2.1 Full suite passes
+- [x] 2.2 Linting passes
 
 #### Manual
 
-- [ ] 2.3 The suite still covers the same guardrails
+- [x] 2.3 The suite still covers the same guardrails
 
 ### Phase 3: Close the deferred FR-005 and FR-009 coverage
 
