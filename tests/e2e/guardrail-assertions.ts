@@ -8,6 +8,15 @@ import {
 } from "../../src/lib/game-guardrails";
 
 /**
+ * Waits until the game island has hydrated. The attempt counter renders as `-` on the server and
+ * only becomes a number once the mount effect runs, so it is the cheapest available proof that
+ * client-side code — including clock resolution — has actually executed.
+ */
+export async function expectGameHydrated(page: Page): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.attemptCounter)).toHaveText(/^\d+$/);
+}
+
+/**
  * Steps game time forward deterministically. Requires the page to have been opened with
  * `?clock=manual`, otherwise the manual clock is absent and this throws rather than silently
  * passing on a page where nothing can move.
