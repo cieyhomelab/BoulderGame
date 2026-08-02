@@ -17,14 +17,28 @@ import { cn } from "@/lib/utils";
 
 import { TileArt, TileDefs, type Tile } from "./TileArt";
 
+/**
+ * The cave, authored against the live simulation. `.` is Dirt (solid, diggable, holds boulders),
+ * `" "` is carved open space, `p` is the Miner's start.
+ *
+ * Invariants any future edit must preserve:
+ * - No boulder is unsupported at t=0 — nothing may fall before the player acts.
+ * - No boulder sits in or above the exit's column, so the exit cannot be sealed.
+ * - Spikes remain present.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder.
+ * - The bonus gem at (1,9) is walled on every side but (1,8), which holds a boulder — it is
+ *   obtainable only by deliberately undermining it (FR-011).
+ * - The shaft at (3,8)/(4,8) gives the (1,8) boulder a three-tile fall, so the 120 ms cadence is
+ *   observable; the stack at (1,4)/(2,4) produces the FR-009 chain reaction.
+ */
 const LEVEL_ROWS = [
   "############",
-  "#..g....r..#",
-  "#.#....##..#",
-  "#.hp....g..#",
-  "#.....##...#",
-  "#..r...ghe.#",
-  "#..........#",
+  "#...r...rg##",
+  "#...r....#.#",
+  "# p..... #.#",
+  "#.#...#. #.#",
+  "#.#g.h#g...#",
+  "#.........e#",
   "############",
 ] as const;
 
