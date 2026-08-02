@@ -1,6 +1,6 @@
 ---
 change_id: diggable-dirt-corridors
-status: implementing
+status: implemented
 created: 2026-08-02
 updated: 2026-08-02
 roadmap_id: S-01

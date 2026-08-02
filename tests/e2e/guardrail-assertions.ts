@@ -103,6 +103,18 @@ export async function expectHazardAt(page: Page, row: number, col: number): Prom
   ).toBeVisible();
 }
 
+export async function expectOpenSpaceAt(page: Page, row: number, col: number): Promise<void> {
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.openSpace}"][data-row="${row}"][data-col="${col}"]`),
+  ).toBeVisible();
+}
+
+export async function expectDirtAt(page: Page, row: number, col: number): Promise<void> {
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.dirt}"][data-row="${row}"][data-col="${col}"]`),
+  ).toBeVisible();
+}
+
 export async function expectExitAt(page: Page, row: number, col: number): Promise<void> {
   await expect(
     page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.exit}"][data-row="${row}"][data-col="${col}"]`),

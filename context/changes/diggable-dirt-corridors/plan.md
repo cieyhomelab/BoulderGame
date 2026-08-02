@@ -85,6 +85,15 @@ after the dig would see open space and lose the gem/spike branch entirely.
 the outer array but leaves the rows shared, so a dig in attempt 1 would leak into attempt 2 and
 silently break the replay guardrail.
 
+> **Correction (recorded during Phase 3).** The claim above is wrong as implemented. `withTile`
+> is purely immutable — it clones the row it writes rather than mutating in place — so the
+> template's rows are never mutated and a shallow copy would *not* leak between attempts. The
+> row-level copy is kept as cheap defence-in-depth against a future in-place writer, but it is
+> not load-bearing today. Discovered by the Phase 3 deliberate-break check, which passed when it
+> should have failed. The guarantee the replay test actually protects is that
+> `handleReplayClick` installs a *fresh* board rather than carrying the dug one forward; breaking
+> that does fail the spec.
+
 ## Phase 1: Tile vocabulary and open-space artwork
 
 ### Overview
@@ -315,10 +324,10 @@ acknowledgement threshold has three orders of magnitude of headroom.
 
 #### Automated
 
-- [ ] 3.1 New digging spec passes
-- [ ] 3.2 Full suite passes
-- [ ] 3.3 Linting passes
+- [x] 3.1 New digging spec passes
+- [x] 3.2 Full suite passes
+- [x] 3.3 Linting passes
 
 #### Manual
 
-- [ ] 3.4 Deliberate-break check: shallow board copy fails the spec
+- [x] 3.4 Deliberate-break check: replay that carries the dug board forward fails the spec (original shallow-copy break was invalid — see Correction)
