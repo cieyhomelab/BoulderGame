@@ -29,7 +29,7 @@ BoulderGame ma byc webowa gra zrecznosciowa w duchu Boulder Dash dla fanow retro
 | ---- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------- | --------------------------------------------------- | ------------- |
 | F-01 | performance-play-signal-guardrails | (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji | -             | NFR guardrails, Success Criteria Primary            | done          |
 | F-02 | public-playtest-deploy-path        | (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow              | -             | NFR first session, tech-stack.md, infrastructure.md | done          |
-| S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | impl_reviewed |
+| S-01 | immediate-browser-game-entry       | gracz moze otworzyc gre w browserze i zaczac poziom bez konta                                                   | F-01          | US-01, FR-001, FR-002                               | done          |
 | S-02 | controllable-board-collection      | gracz moze poruszac postacia po planszy i zbierac elementy                                                      | S-01          | US-01, FR-003, FR-004                               | impl_reviewed |
 | S-03 | level-end-states                   | gracz moze przegrac na zagrozeniu albo ukonczyc poziom                                                          | S-02          | US-01, FR-005, FR-006                               | impl_reviewed |
 | S-04 | replayable-arcade-loop             | gracz moze zakonczyc probe i natychmiast zagrac ponownie                                                        | S-03, F-02    | US-01, FR-007, Success Criteria Primary             | impl_reviewed |
@@ -96,7 +96,7 @@ What's already in place in the codebase as of `2026-08-01` (auto-researched + us
 - **Unknowns:**
   - Czy starter auth/dashboard ma zostac usuniety od razu czy tylko wyjety ze sciezki gry? - Owner: user. Block: no.
 - **Risk:** Ten slice musi przeciac scaffold auth tak, zeby MVP zaczynalo sie od gry, a nie od ekranu produktowego albo logowania.
-- **Status:** impl_reviewed
+- **Status:** done
 
 ### S-02: Controllable board and collection
 
@@ -179,3 +179,4 @@ None currently identified.
 
 - **F-01: (foundation) minimalne guardraile startu sesji, responsywnosci inputu i powrotu do gry sa gotowe do weryfikacji** — Archived 2026-08-02 → `context/archive/2026-08-01-performance-play-signal-guardrails/`. Lesson: —.
 - **F-02: (foundation) sciezka publicznego playtestu ma poprawna tozsamosc deployu i podstawowy odczyt logow** — Archived 2026-08-02 → `context/archive/2026-08-01-public-playtest-deploy-path/`. Lesson: —.
+- **S-01: gracz moze otworzyc gre w browserze i zaczac poziom bez konta** — Archived 2026-08-02 → `context/archive/2026-08-01-immediate-browser-game-entry/`. Lesson: —.
