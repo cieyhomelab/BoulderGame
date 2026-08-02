@@ -184,13 +184,13 @@ undermining it the player walks in and collects it, taking Bonus to `1/1`.
 
 #### Automated
 
-- [x] 1.1 Type checking passes
-- [x] 1.2 Linting passes
-- [x] 1.3 Build passes
+- [x] 1.1 Type checking passes — fe959a2
+- [x] 1.2 Linting passes — fe959a2
+- [x] 1.3 Build passes — fe959a2
 
 #### Manual
 
-- [x] 1.4 Nothing moves on load — no boulder falls at t=0
+- [x] 1.4 Nothing moves on load — no boulder falls at t=0 — fe959a2
 
 ### Phase 2: Re-derive the existing specs
 
@@ -207,10 +207,10 @@ undermining it the player walks in and collects it, taking Bonus to `1/1`.
 
 #### Automated
 
-- [x] 3.1 Full suite passes
-- [x] 3.2 Linting passes
-- [x] 3.3 Build passes
+- [x] 3.1 Full suite passes — b967274
+- [x] 3.2 Linting passes — b967274
+- [x] 3.3 Build passes — b967274
 
 #### Manual
 
-- [x] 3.4 Deliberate-break check: a one-tile shaft fails the cadence test
+- [x] 3.4 Deliberate-break check: a one-tile shaft fails the cadence test — b967274
