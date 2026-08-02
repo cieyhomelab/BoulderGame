@@ -134,12 +134,16 @@ function findDueBoulder(board: Board, boulderMotions: BoulderMotions, nowMs: num
   return null;
 }
 
+interface AppliedMove {
+  board: Board;
+  boulderMotions: BoulderMotions;
+  movedInto: Coordinate;
+  /** When the move actually happened — not when it was noticed. */
+  atMs: number;
+}
+
 /** Moves the bottom-most due boulder one tile down. Returns `null` when nothing is due. */
-function applyNextDueMove(
-  board: Board,
-  boulderMotions: BoulderMotions,
-  nowMs: number,
-): { board: Board; boulderMotions: BoulderMotions; movedInto: Coordinate } | null {
+function applyNextDueMove(board: Board, boulderMotions: BoulderMotions, nowMs: number): AppliedMove | null {
   const due = findDueBoulder(board, boulderMotions, nowMs);
   if (!due) {
     return null;
@@ -157,7 +161,12 @@ function applyNextDueMove(
     dueAtMs: due.motion.dueAtMs + GAME_TIMING.boulderFallIntervalMs,
   });
 
-  return { board: nextBoard, boulderMotions: nextMotions, movedInto: { row: nextRow, col: due.col } };
+  return {
+    board: nextBoard,
+    boulderMotions: nextMotions,
+    movedInto: { row: nextRow, col: due.col },
+    atMs: due.motion.dueAtMs,
+  };
 }
 
 /**
@@ -180,7 +189,10 @@ export function stepSimulation(input: SimulationInput, nowMs: number): Simulatio
 
     board = moved.board;
     landedOn.push(moved.movedInto);
-    boulderMotions = syncMotions(board, moved.boulderMotions, nowMs);
+    // Sync at the time the move happened, not at `nowMs`. A boulder that just lost its support
+    // starts its grace window *then* — otherwise one large clock jump would resolve a chain
+    // reaction differently from the same interval delivered as many small frames.
+    boulderMotions = syncMotions(board, moved.boulderMotions, moved.atMs);
   }
 
   return { board, boulderMotions, landedOn };

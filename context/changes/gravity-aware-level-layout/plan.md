@@ -196,21 +196,21 @@ undermining it the player walks in and collects it, taking Bonus to `1/1`.
 
 #### Automated
 
-- [x] 2.1 Full suite passes
-- [x] 2.2 Linting passes
+- [x] 2.1 Full suite passes — 9190130
+- [x] 2.2 Linting passes — 9190130
 
 #### Manual
 
-- [x] 2.3 The suite still covers the same guardrails
+- [x] 2.3 The suite still covers the same guardrails — 9190130
 
 ### Phase 3: Close the deferred FR-005 and FR-009 coverage
 
 #### Automated
 
-- [ ] 3.1 Full suite passes
-- [ ] 3.2 Linting passes
-- [ ] 3.3 Build passes
+- [x] 3.1 Full suite passes
+- [x] 3.2 Linting passes
+- [x] 3.3 Build passes
 
 #### Manual
 
-- [ ] 3.4 Deliberate-break check: a one-tile shaft fails the cadence test
+- [x] 3.4 Deliberate-break check: a one-tile shaft fails the cadence test
