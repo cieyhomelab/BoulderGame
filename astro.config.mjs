@@ -8,15 +8,19 @@ import cloudflare from "@astrojs/cloudflare";
 
 const publicSiteUrl = process.env.PUBLIC_SITE_URL;
 
+// GitHub Pages hosts static files only, so that build drops the Cloudflare adapter
+// and serves from the repository subpath. Without the flag the config stays SSR.
+const isGitHubPages = process.env.DEPLOY_TARGET === "github-pages";
+
 // https://astro.build/config
 export default defineConfig({
-  ...(publicSiteUrl ? { site: publicSiteUrl } : {}),
-  output: "server",
-  integrations: [react(), ...(publicSiteUrl ? [sitemap()] : [])],
+  ...(isGitHubPages
+    ? { output: "static", site: "https://cieyhomelab.github.io", base: "/BoulderGame" }
+    : { output: "server", adapter: cloudflare(), ...(publicSiteUrl ? { site: publicSiteUrl } : {}) }),
+  integrations: [react(), ...(publicSiteUrl && !isGitHubPages ? [sitemap()] : [])],
   vite: {
     plugins: [tailwindcss()],
   },
-  adapter: cloudflare(),
   env: {
     schema: {
       SUPABASE_URL: envField.string({ context: "server", access: "secret", optional: true }),

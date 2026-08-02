@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:pages": "DEPLOY_TARGET=github-pages astro build",
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint .",
