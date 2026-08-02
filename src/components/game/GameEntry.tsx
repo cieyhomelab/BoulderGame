@@ -265,7 +265,7 @@ export default function GameEntry() {
           <div className="relative border-4 border-[#2f2519] bg-[#171a15] p-3 shadow-[10px_10px_0_#070806] sm:p-5">
             <TileDefs />
             <div
-              aria-label="BoulderGame level board with player start, gems, rocks, and an open exit."
+              aria-label="BoulderGame cave of diggable dirt, with the miner, gems, boulders, spikes and an open exit."
               className="grid grid-cols-12 gap-1 border-4 border-[#6b5540] bg-[#070a06] p-2"
               data-testid={GAME_GUARDRAIL_TEST_IDS.board}
               role="img"
