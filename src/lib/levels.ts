@@ -124,13 +124,147 @@ const CAVE_03: LevelDefinition = {
 };
 
 /**
+ * The fourth cave: short and compact — the quota is a ~10-move loop around the start, easier than
+ * `cave-01`. The right side holds the cave's one set piece: a two-boulder chain guarding a
+ * walled-in bonus gem.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (1,8) rests on the boulder at (2,8), which rests on Dirt at
+ *   (3,8).
+ * - Both boulders sit in column 8; the exit is at (6,2). A falling boulder never leaves its own
+ *   column, so nothing can reach the exit.
+ * - Spikes at (5,6), a dead end against the wall at (5,7).
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (1,4) is two
+ *   steps up-right of the start, (4,3) on the way down, and the route never enters column 8.
+ * - The bonus gem at (1,9) is walled on every side but (1,8), which holds the top boulder — it is
+ *   obtainable only by deliberately undermining the stack (FR-011).
+ * - The chain (FR-009): digging (3,8) from (3,7) drops the (2,8) boulder onto the wall floor at
+ *   (4,8), and (1,8) follows it down one tile. Escape from (3,8) is sideways to (3,7) only. The
+ *   settled stack then leaves (1,8) open, and the bonus gem is taken along row 1.
+ */
+const CAVE_04: LevelDefinition = {
+  id: "cave-04",
+  name: "Level 04",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#...g...rg##",
+    "#.p.....r###",
+    "#..........#",
+    "#..g..#.#..#",
+    "#.....h#...#",
+    "#.e........#",
+    "############",
+  ],
+};
+
+/**
+ * The fifth cave: three horizontal layers. The top corridor is studded with boulders resting on
+ * the dirt of row 2 — the fast lane runs directly beneath them, and stepping into a support tile
+ * is what digs it away, so the boulder falls into the lane behind (or onto) the Miner. Row 3 is
+ * the slow, safe lane. The trip is a loop: right along the top for the first gem, down the far
+ * side, and back along the bottom.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (1,4) rests on Dirt at (2,4), (1,8) on Dirt at (2,8).
+ * - Boulders sit in columns 4 and 8; the exit is at (6,9). A falling boulder never leaves its own
+ *   column, so nothing can reach the exit.
+ * - Spikes at (5,10), the corner past the exit turn-off.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: row 3 bypasses
+ *   both support tiles, (1,10) is reached up column 10, (5,7) down the column-9 gap in row 4.
+ * - The bonus gem at (6,1) is no puzzle, just remote: the full bottom-left trek past the column-1
+ *   gap in row 4, far off the winning route.
+ */
+const CAVE_05: LevelDefinition = {
+  id: "cave-05",
+  name: "Level 05",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#p..r...r.g#",
+    "#..........#",
+    "#..........#",
+    "#.#######.##",
+    "#......g..h#",
+    "#g.......e.#",
+    "############",
+  ],
+};
+
+/**
+ * The sixth cave: a comb labyrinth. Vertical teeth at columns 3, 5-6, 8-9 alternate their gaps
+ * between row 1 and row 6, so the route is one snake — down column 4, along the bottom, up
+ * column 7, out along the top to the exit at (3,10). Unlike `cave-03`, the boulders here are pure
+ * scenery: both rest on wall, wedged in niches, and can never fall.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (2,5) rests on wall at (3,5), (4,2) on wall at (5,2).
+ *   Wall is not diggable, so neither boulder can ever be undermined.
+ * - Boulders sit in columns 5 and 2; the exit is at (3,10). A falling boulder never leaves its own
+ *   column, so nothing can reach the exit.
+ * - Spikes at (6,2), the floor of the start-side pocket.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (2,4) and (1,8)
+ *   both sit on the snake itself, so the winning route costs no detour.
+ * - The bonus gem at (6,1) is no puzzle, just remote: the bottom of the cols-1-2 pocket under the
+ *   start, sealed from the bottom corridor by the wall at (6,3), beside the spikes.
+ */
+const CAVE_06: LevelDefinition = {
+  id: "cave-06",
+  name: "Level 06",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#p...##.g..#",
+    "#..#gr#.##.#",
+    "#..#.##.##e#",
+    "#.r#.##.####",
+    "#.##.##.####",
+    "#gh#....####",
+    "############",
+  ],
+};
+
+/**
+ * The seventh cave: a round trip at `cave-02`'s weight. The Miner starts top-right, the exit is
+ * the opposite corner, and the middle of the map is a solid block pierced by two shafts: the
+ * column-1 shaft, open, and the column-5 shortcut, plugged by a boulder at its mouth. The honest
+ * route runs the full left-down-right loop; the shortcut can be forced open, but the boulder
+ * chases the Miner down the shaft.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (2,5) rests on Dirt at (3,5).
+ * - The boulder sits in column 5; the exit is at (6,1). A falling boulder never leaves its own
+ *   column, so nothing can reach the exit.
+ * - Spikes at (6,4), a pocket under the row-5 corridor.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (1,1) at the end
+ *   of the top corridor, (5,5) along the bottom, descending the boulder-free column-1 shaft.
+ * - The bonus gem at (6,10) is no puzzle, just remote: a corner nook entered from (5,10), walled
+ *   off from the exit side by (6,9).
+ */
+const CAVE_07: LevelDefinition = {
+  id: "cave-07",
+  name: "Level 07",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#g........p#",
+    "#.###r######",
+    "#.###.######",
+    "#.###.######",
+    "#....g.....#",
+    "#e.#h..#.#g#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
  * class in `GameEntry`, and Tailwind 4 cannot generate that class from runtime data. A level of a
  * different width needs an inline `gridTemplateColumns` there first.
  */
-export const LEVELS: readonly LevelDefinition[] = [CAVE_01, CAVE_02, CAVE_03];
+export const LEVELS: readonly LevelDefinition[] = [CAVE_01, CAVE_02, CAVE_03, CAVE_04, CAVE_05, CAVE_06, CAVE_07];
 
 /**
  * The level that follows `current` in play order, or `null` on the last one. Identity is the `id`,
