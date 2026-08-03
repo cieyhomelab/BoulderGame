@@ -51,13 +51,45 @@ const CAVE_01: LevelDefinition = {
 };
 
 /**
+ * The second cave. Wider and more open than `cave-01`, with the exit on the far side of the map
+ * from the Miner so the quota is a round trip rather than a straight line.
+ *
+ * Invariants (the same contract `cave-01` holds):
+ * - No boulder is unsupported at t=0: (1,4) rests on Dirt at (2,4), (1,9) on the gem at (2,9).
+ *   A gem is not open space, so it supports a boulder until it is collected.
+ * - Boulders sit in columns 4 and 9; the exit is in column 1. Since a falling boulder only ever
+ *   moves down its own column, nothing can reach the exit or the corridor above it.
+ * - Spikes at (5,2) and (5,7).
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (2,2) up-left of
+ *   the start, (5,10) through the row-3 corridor, then out along row 6 to the exit.
+ * - The bonus gem at (2,9) is the boulder's own support — collecting it starts that boulder's fall
+ *   onto the tile the Miner is standing in. It is survivable only by stepping aside (not down,
+ *   which the boulder follows) within the grace window.
+ */
+const CAVE_02: LevelDefinition = {
+  id: "cave-02",
+  name: "Level 02",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#...r....r.#",
+    "#.g..##..g.#",
+    "#..p.......#",
+    "#.#...##...#",
+    "#.h....h.#g#",
+    "#e.........#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
  * class in `GameEntry`, and Tailwind 4 cannot generate that class from runtime data. A level of a
  * different width needs an inline `gridTemplateColumns` there first.
  */
-export const LEVELS: readonly LevelDefinition[] = [CAVE_01];
+export const LEVELS: readonly LevelDefinition[] = [CAVE_01, CAVE_02];
 
 /**
  * Parses a level's rows. The `p` start marker is resolved away here — the Miner has by definition
