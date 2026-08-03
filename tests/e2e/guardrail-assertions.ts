@@ -171,6 +171,22 @@ export async function activateReplay(page: Page): Promise<void> {
   await page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton).click();
 }
 
+export async function expectNextLevelButtonVisible(page: Page): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.nextLevelButton)).toBeVisible();
+}
+
+export async function expectNextLevelButtonHidden(page: Page): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.nextLevelButton)).toHaveCount(0);
+}
+
+export async function activateNextLevel(page: Page): Promise<void> {
+  await page.getByTestId(GAME_GUARDRAIL_TEST_IDS.nextLevelButton).click();
+}
+
+export async function expectLevelName(page: Page, expectedName: string): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.readyMarker)).toContainText(expectedName);
+}
+
 export async function expectAttemptCounterAtTarget(page: Page): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.attemptCounter)).toHaveText(
     String(GAME_GUARDRAIL_THRESHOLDS.replayAttemptTarget),
