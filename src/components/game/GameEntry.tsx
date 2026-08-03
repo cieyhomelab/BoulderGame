@@ -1,160 +1,38 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, RotateCcw } from "lucide-react";
 
-import {
-  NO_BOULDER_MOTIONS,
-  motionKey,
-  stepSimulation,
-  tileAt,
-  withTile,
-  type Board,
-  type BoulderMotions,
-  type Coordinate as SimulationCoordinate,
-} from "@/lib/boulder-simulation";
+import { motionKey, type Coordinate } from "@/lib/boulder-simulation";
 import { resolveGameClock, type GameClock } from "@/lib/game-clock";
+import {
+  MOVE_DELTAS,
+  applySimulation,
+  createInitialGameState,
+  isSameCoordinate,
+  resolveMove,
+  type GameState,
+} from "@/lib/game-rules";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
-import { LEVELS, nextLevelAfter, parseLevel, type ParsedLevel } from "@/lib/levels";
+import { LEVELS, nextLevelAfter, parseLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
 
-import { TileArt, TileDefs, type Tile } from "./TileArt";
-
-type LevelStatus = "active" | "lost" | "won";
-/** Why the level was lost. The status set stays `active | lost | won`; being crushed is a new
- * cause of the existing losing status, not a new status value. */
-type LossCause = "spikes" | "crushed";
-type Coordinate = SimulationCoordinate;
-
-interface GameState {
-  /** The level being played. Held in state rather than module scope so the keyboard handler's
-   * functional update reads the active level instead of a stale closure over the first one. */
-  level: ParsedLevel;
-  board: Board;
-  boulderMotions: BoulderMotions;
-  playerPosition: Coordinate;
-  moveCount: number;
-  collectedGemCount: number;
-  status: LevelStatus;
-  lossCause: LossCause | null;
-}
-
-interface MoveResult {
-  state: GameState;
-  accepted: boolean;
-}
+import { TileArt, TileDefs } from "./TileArt";
 
 const GEM_SCORE_VALUE = 100;
+/** Key bindings onto the cave's four moves. The rules own the directions; this owns the keyboard. */
 const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
-  ArrowUp: { row: -1, col: 0 },
-  w: { row: -1, col: 0 },
-  W: { row: -1, col: 0 },
-  ArrowDown: { row: 1, col: 0 },
-  s: { row: 1, col: 0 },
-  S: { row: 1, col: 0 },
-  ArrowLeft: { row: 0, col: -1 },
-  a: { row: 0, col: -1 },
-  A: { row: 0, col: -1 },
-  ArrowRight: { row: 0, col: 1 },
-  d: { row: 0, col: 1 },
-  D: { row: 0, col: 1 },
+  ArrowUp: MOVE_DELTAS.up,
+  w: MOVE_DELTAS.up,
+  W: MOVE_DELTAS.up,
+  ArrowDown: MOVE_DELTAS.down,
+  s: MOVE_DELTAS.down,
+  S: MOVE_DELTAS.down,
+  ArrowLeft: MOVE_DELTAS.left,
+  a: MOVE_DELTAS.left,
+  A: MOVE_DELTAS.left,
+  ArrowRight: MOVE_DELTAS.right,
+  d: MOVE_DELTAS.right,
+  D: MOVE_DELTAS.right,
 };
-
-function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
-  return a.row === b.row && a.col === b.col;
-}
-
-function isWalkable(tile: Tile | undefined): boolean {
-  return tile === "." || tile === " " || tile === "g" || tile === "e" || tile === "h";
-}
-
-function isDiggable(tile: Tile | undefined): boolean {
-  return tile === "." || tile === "g";
-}
-
-/**
- * Runs the cave's gravity rule against the current state. Returns the same state object when the
- * step changed nothing, so the animation-frame subscription cannot re-render an idle board.
- */
-function applySimulation(currentState: GameState, nowMs: number): GameState {
-  if (currentState.status !== "active") {
-    return currentState;
-  }
-
-  const result = stepSimulation({ board: currentState.board, boulderMotions: currentState.boulderMotions }, nowMs);
-
-  if (result.board === currentState.board && result.boulderMotions === currentState.boulderMotions) {
-    return currentState;
-  }
-
-  // A boulder that moved into the Miner's tile crushes them. Compared against the position in the
-  // state the step was applied to, so a boulder dropping into a tile the Miner just left is safe.
-  const crushed = result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
-
-  return {
-    ...currentState,
-    board: result.board,
-    boulderMotions: result.boulderMotions,
-    status: crushed ? "lost" : currentState.status,
-    lossCause: crushed ? "crushed" : currentState.lossCause,
-  };
-}
-
-function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number): MoveResult {
-  if (currentState.status !== "active") {
-    return { state: currentState, accepted: false };
-  }
-
-  const nextPosition = {
-    row: currentState.playerPosition.row + delta.row,
-    col: currentState.playerPosition.col + delta.col,
-  };
-
-  // Read the target before digging it — after the dig it is open space and the gem/spike
-  // branches below would be lost.
-  const nextTile = tileAt(currentState.board, nextPosition.row, nextPosition.col);
-  if (!isWalkable(nextTile)) {
-    return { state: currentState, accepted: false };
-  }
-
-  const collectedGemCount = currentState.collectedGemCount + (nextTile === "g" ? 1 : 0);
-  const board = isDiggable(nextTile)
-    ? withTile(currentState.board, nextPosition.row, nextPosition.col, " ")
-    : currentState.board;
-  const status =
-    nextTile === "h"
-      ? "lost"
-      : nextTile === "e" && collectedGemCount >= currentState.level.definition.requiredGemCount
-        ? "won"
-        : "active";
-
-  const movedState: GameState = {
-    ...currentState,
-    board,
-    playerPosition: nextPosition,
-    moveCount: currentState.moveCount + 1,
-    collectedGemCount,
-    status,
-    lossCause: status === "lost" ? "spikes" : currentState.lossCause,
-  };
-
-  // The cave re-evaluates support after every board change, so digging registers instability in
-  // the same update that produced the hole rather than a frame later.
-  return { accepted: true, state: applySimulation(movedState, nowMs) };
-}
-
-function createInitialGameState(level: ParsedLevel): GameState {
-  return {
-    level,
-    // Row-level copy: a shallow copy of the outer array alone would let a dug corridor leak
-    // from one attempt into the next.
-    board: level.template.map((row) => [...row]),
-    boulderMotions: NO_BOULDER_MOTIONS,
-    playerPosition: level.playerStart,
-    moveCount: 0,
-    collectedGemCount: 0,
-    status: "active",
-    lossCause: null,
-  };
-}
 
 export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
