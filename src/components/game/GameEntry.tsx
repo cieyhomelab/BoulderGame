@@ -13,7 +13,7 @@ import {
 } from "@/lib/boulder-simulation";
 import { resolveGameClock, type GameClock } from "@/lib/game-clock";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
-import { LEVELS, parseLevel } from "@/lib/levels";
+import { LEVELS, parseLevel, type ParsedLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
 
 import { TileArt, TileDefs, type Tile } from "./TileArt";
@@ -25,6 +25,9 @@ type LossCause = "spikes" | "crushed";
 type Coordinate = SimulationCoordinate;
 
 interface GameState {
+  /** The level being played. Held in state rather than module scope so the keyboard handler's
+   * functional update reads the active level instead of a stale closure over the first one. */
+  level: ParsedLevel;
   board: Board;
   boulderMotions: BoulderMotions;
   playerPosition: Coordinate;
@@ -117,7 +120,11 @@ function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number):
     ? withTile(currentState.board, nextPosition.row, nextPosition.col, " ")
     : currentState.board;
   const status =
-    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemCount >= REQUIRED_GEM_COUNT ? "won" : "active";
+    nextTile === "h"
+      ? "lost"
+      : nextTile === "e" && collectedGemCount >= currentState.level.definition.requiredGemCount
+        ? "won"
+        : "active";
 
   const movedState: GameState = {
     ...currentState,
@@ -134,18 +141,14 @@ function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number):
   return { accepted: true, state: applySimulation(movedState, nowMs) };
 }
 
-const LEVEL = parseLevel(LEVELS[0]);
-const REQUIRED_GEM_COUNT = LEVEL.definition.requiredGemCount;
-const INITIAL_GEM_COUNT = LEVEL.gemCount;
-const OPTIONAL_GEM_COUNT = INITIAL_GEM_COUNT - REQUIRED_GEM_COUNT;
-
-function createInitialGameState(): GameState {
+function createInitialGameState(level: ParsedLevel): GameState {
   return {
+    level,
     // Row-level copy: a shallow copy of the outer array alone would let a dug corridor leak
     // from one attempt into the next.
-    board: LEVEL.template.map((row) => [...row]),
+    board: level.template.map((row) => [...row]),
     boulderMotions: NO_BOULDER_MOTIONS,
-    playerPosition: LEVEL.playerStart,
+    playerPosition: level.playerStart,
     moveCount: 0,
     collectedGemCount: 0,
     status: "active",
@@ -155,7 +158,7 @@ function createInitialGameState(): GameState {
 
 export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
-  const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
+  const [gameState, setGameState] = useState<GameState>(() => createInitialGameState(parseLevel(LEVELS[0])));
   const countedAttemptRef = useRef(false);
   const replayButtonRef = useRef<HTMLButtonElement | null>(null);
   const gameClockRef = useRef<GameClock | null>(null);
@@ -209,10 +212,13 @@ export default function GameEntry() {
   }, [gameState.status]);
 
   function handleReplayClick(): void {
-    setGameState(createInitialGameState());
+    setGameState((currentState) => createInitialGameState(currentState.level));
     setAttemptCount(incrementGameAttemptCount());
   }
 
+  const level = gameState.level;
+  const requiredGemCount = level.definition.requiredGemCount;
+  const optionalGemCount = level.gemCount - requiredGemCount;
   const isTerminalState = gameState.status !== "active";
   const outcomeMessage =
     gameState.status === "won"
@@ -222,8 +228,8 @@ export default function GameEntry() {
           ? "Failed — crushed by a falling boulder. Play again?"
           : "Cave-in. Play again?"
         : null;
-  const collectedRequiredGems = Math.min(gameState.collectedGemCount, REQUIRED_GEM_COUNT);
-  const collectedBonusGems = Math.max(gameState.collectedGemCount - REQUIRED_GEM_COUNT, 0);
+  const collectedRequiredGems = Math.min(gameState.collectedGemCount, requiredGemCount);
+  const collectedBonusGems = Math.max(gameState.collectedGemCount - requiredGemCount, 0);
   // A count, not an event: the live region announces once when the cave becomes unsettled and
   // once when it settles, rather than firing on every wobble frame.
   const unstableBoulderCount = gameState.boulderMotions.size;
@@ -249,7 +255,7 @@ export default function GameEntry() {
             className="border-4 border-[#3f3124] bg-[#191d17] px-4 py-3 text-right font-mono shadow-[6px_6px_0_#070806]"
             data-testid={GAME_GUARDRAIL_TEST_IDS.readyMarker}
           >
-            <p className="text-xs tracking-[0.16em] text-[#9fb58f] uppercase">Level 01</p>
+            <p className="text-xs tracking-[0.16em] text-[#9fb58f] uppercase">{level.definition.name}</p>
             <p className="text-2xl font-black text-[#f3b63f]">READY</p>
           </div>
         </header>
@@ -313,7 +319,7 @@ export default function GameEntry() {
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Gems</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemsRemaining}>
-                  {String(INITIAL_GEM_COUNT - gameState.collectedGemCount).padStart(2, "0")}
+                  {String(level.gemCount - gameState.collectedGemCount).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
@@ -327,13 +333,13 @@ export default function GameEntry() {
               <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Quota</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemQuota}>
-                  {String(collectedRequiredGems).padStart(2, "0")}/{String(REQUIRED_GEM_COUNT).padStart(2, "0")}
+                  {String(collectedRequiredGems).padStart(2, "0")}/{String(requiredGemCount).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Bonus</p>
                 <p className="text-2xl font-black text-[#f3b63f]" data-testid={GAME_GUARDRAIL_TEST_IDS.bonusGems}>
-                  {collectedBonusGems}/{OPTIONAL_GEM_COUNT}
+                  {collectedBonusGems}/{optionalGemCount}
                 </p>
               </div>
             </div>
@@ -391,10 +397,9 @@ export default function GameEntry() {
             )}
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
-              {INITIAL_GEM_COUNT - gameState.collectedGemCount} gems remaining. Score{" "}
-              {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {REQUIRED_GEM_COUNT}.
-              Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. {unstableBoulderDescription} Status {gameState.status}
-              .
+              {level.gemCount - gameState.collectedGemCount} gems remaining. Score{" "}
+              {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {requiredGemCount}.
+              Bonus {collectedBonusGems} of {optionalGemCount}. {unstableBoulderDescription} Status {gameState.status}.
             </p>
           </aside>
         </div>
