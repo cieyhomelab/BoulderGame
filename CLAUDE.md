@@ -19,8 +19,12 @@ This file provides guidance to AI Agent when working with code in this repositor
 
 - `npm run test:e2e` — Playwright (`tests/e2e/`, Chromium only; starts its own dev server on port 4321)
 - `npm run test:e2e:ui` — Playwright UI mode for local debugging
+- `npm run level:check` — audit every cave in `LEVELS` (no browser, exits non-zero on failure)
+- `npm run level:routes` — the same audit plus each cave's winning key sequence
 
-29 tests across 6 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
+62 tests across 9 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`, `level-progression`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
+
+`level-invariants` and `level-solver` are the odd ones out: they never open a page, running against the level data directly. Both iterate `LEVELS`, so adding a cave to the registry adds its coverage automatically — a new level that seals its own exit, drops a boulder before the player moves, or cannot be won at all fails there rather than in front of a player.
 
 Run these when a change touches game entry, browser behavior, guardrail selectors, simulation timing, or replay/input readiness. There is no unit-test runner; all automated tests are E2E.
 
@@ -68,9 +72,17 @@ The game is the point of this repository; everything below `src/lib/` is domain 
 | `boulder-simulation.ts` | Board state, boulder support, fall scheduling. Pure — `stepSimulation(input, nowMs)` maps `(state, time)` → state.           |
 | `game-clock.ts`         | Clock abstraction. Real play uses `requestAnimationFrame`; `?clock=manual` installs a clock that only advances when told to. |
 | `game-guardrails.ts`    | MVP thresholds, `data-testid` values, session-local attempt counter.                                                         |
+| `game-rules.ts`         | Move resolution, digging, win/loss, gravity application. Pure and time-injected. Shared by the component and the solver.     |
+| `levels.ts`             | Cave definitions, the `LEVELS` play order, `parseLevel`, and `nextLevelAfter`. All board content lives here.                 |
+| `level-solver.ts`       | Breadth-first search for a winning route, driving `game-rules.ts`. Proves a cave is winnable and emits the key sequence.     |
+| `level-audit.ts`        | The design rules a cave must satisfy, as named checks. The single source for `level:check` and `level-invariants.spec.ts`.   |
 | `config-status.ts`      | Reports which optional integrations are configured.                                                                          |
 
 Rendering is one React island: `src/components/game/GameEntry.tsx`, with tile visuals in `TileArt.tsx`.
+
+**Game rules belong in `game-rules.ts`, never in the component.** `GameEntry` is a driver: keyboard in, board out. It maps keys onto `MOVE_DELTAS` and calls `resolveMove`/`applySimulation`, but owns no rule of its own. The solver drives the same functions from a search, so a rule copied into the component would make the solver's proofs describe a game nobody plays.
+
+**Board content belongs in `levels.ts`, never in the component.** `GameEntry` holds the active `ParsedLevel` in `GameState` — not in module scope or a separate `useState` — because the keyboard handler updates state functionally and would otherwise close over a stale level after advancing. Every cave is 8×12: the board's column count is a literal `grid-cols-12` class, and Tailwind 4 cannot generate that class from runtime data, so a differently sized level needs an inline `gridTemplateColumns` first.
 
 **Keep simulation logic pure and time-injected.** `stepSimulation` takes `nowMs` as a parameter rather than calling `Date.now()` internally, which is what makes the grace window and fall cadence reproducible. Do not introduce `Date.now()`, `setTimeout`, or `performance.now()` into simulation code — take the clock or the timestamp as an argument.
 
@@ -136,8 +148,16 @@ Writes go through `withTile`, which copies only the affected row so unchanged ro
 
 GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main` or `master`, on Node 22 with npm caching:
 
-`npm ci` → `npx astro sync` → `npm run lint` → `npm run build`
+`npm ci` → `npx astro sync` → `npm run lint` → `npm run level:check` → `npm run build`
 
 `SUPABASE_URL` and `SUPABASE_KEY` are passed to the build step from repository secrets (both are declared `optional` in the `astro.config.mjs` env schema).
 
-**No tests run in CI.** Playwright (`npm run test:e2e`) is local-only until the workflow is explicitly updated — a green CI run means lint and build passed, nothing more.
+**No browser tests run in CI.** Playwright (`npm run test:e2e`) is local-only until the workflow is explicitly updated. `npm run level:check` does run — it needs no browser — so a green CI run means lint, level design, and build passed, but no gameplay was exercised.
+
+### Adding a level
+
+The guided path is the `new-level` skill (`.claude/skills/new-level/`): it asks what the cave should be, drafts it, and iterates on the gate. By hand it is the same three steps.
+
+Append a `LevelDefinition` to `LEVELS` in `src/lib/levels.ts` and run `npm run level:check`. Failures name the offending coordinates. Nothing else needs editing: `level-invariants` and `level-solver` iterate the registry, and `level-progression` derives its keystrokes from the solver rather than hard-coded routes, so the browser suite covers the new cave without changes.
+
+The gate checks correctness, never interest. A cave with the quota three steps from the start and boulders that do nothing passes every check — judging whether it is worth playing stays a human call, which is what the skill's opening questions are for.

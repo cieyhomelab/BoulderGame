@@ -1,218 +1,42 @@
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 
-import {
-  NO_BOULDER_MOTIONS,
-  motionKey,
-  stepSimulation,
-  tileAt,
-  withTile,
-  type Board,
-  type BoulderMotions,
-  type Coordinate as SimulationCoordinate,
-} from "@/lib/boulder-simulation";
+import { motionKey, type Coordinate } from "@/lib/boulder-simulation";
 import { resolveGameClock, type GameClock } from "@/lib/game-clock";
+import {
+  MOVE_DELTAS,
+  applySimulation,
+  createInitialGameState,
+  isSameCoordinate,
+  resolveMove,
+  type GameState,
+} from "@/lib/game-rules";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
+import { LEVELS, nextLevelAfter, parseLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
 
-import { TileArt, TileDefs, type Tile } from "./TileArt";
-
-/**
- * The cave, authored against the live simulation. `.` is Dirt (solid, diggable, holds boulders),
- * `" "` is carved open space, `p` is the Miner's start.
- *
- * Invariants any future edit must preserve:
- * - No boulder is unsupported at t=0 — nothing may fall before the player acts.
- * - No boulder sits in or above the exit's column, so the exit cannot be sealed.
- * - Spikes remain present.
- * - The two-gem quota plus the exit is reachable without ever touching a boulder.
- * - The bonus gem at (1,9) is walled on every side but (1,8), which holds a boulder — it is
- *   obtainable only by deliberately undermining it (FR-011).
- * - The shaft at (3,8)/(4,8) gives the (1,8) boulder a three-tile fall, so the 120 ms cadence is
- *   observable; the stack at (1,4)/(2,4) produces the FR-009 chain reaction.
- */
-const LEVEL_ROWS = [
-  "############",
-  "#...r...rg##",
-  "#...r....#.#",
-  "# p..... #.#",
-  "#.#...#. #.#",
-  "#.#g.h#g...#",
-  "#.........e#",
-  "############",
-] as const;
-
-type LevelStatus = "active" | "lost" | "won";
-/** Why the level was lost. The status set stays `active | lost | won`; being crushed is a new
- * cause of the existing losing status, not a new status value. */
-type LossCause = "spikes" | "crushed";
-type Coordinate = SimulationCoordinate;
-
-interface GameState {
-  board: Board;
-  boulderMotions: BoulderMotions;
-  playerPosition: Coordinate;
-  moveCount: number;
-  collectedGemCount: number;
-  status: LevelStatus;
-  lossCause: LossCause | null;
-}
-
-interface MoveResult {
-  state: GameState;
-  accepted: boolean;
-}
+import { TileArt, TileDefs } from "./TileArt";
 
 const GEM_SCORE_VALUE = 100;
-const REQUIRED_GEM_COUNT = 2;
+/** Key bindings onto the cave's four moves. The rules own the directions; this owns the keyboard. */
 const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
-  ArrowUp: { row: -1, col: 0 },
-  w: { row: -1, col: 0 },
-  W: { row: -1, col: 0 },
-  ArrowDown: { row: 1, col: 0 },
-  s: { row: 1, col: 0 },
-  S: { row: 1, col: 0 },
-  ArrowLeft: { row: 0, col: -1 },
-  a: { row: 0, col: -1 },
-  A: { row: 0, col: -1 },
-  ArrowRight: { row: 0, col: 1 },
-  d: { row: 0, col: 1 },
-  D: { row: 0, col: 1 },
+  ArrowUp: MOVE_DELTAS.up,
+  w: MOVE_DELTAS.up,
+  W: MOVE_DELTAS.up,
+  ArrowDown: MOVE_DELTAS.down,
+  s: MOVE_DELTAS.down,
+  S: MOVE_DELTAS.down,
+  ArrowLeft: MOVE_DELTAS.left,
+  a: MOVE_DELTAS.left,
+  A: MOVE_DELTAS.left,
+  ArrowRight: MOVE_DELTAS.right,
+  d: MOVE_DELTAS.right,
+  D: MOVE_DELTAS.right,
 };
-
-interface ParsedLevel {
-  template: Board;
-  playerStart: Coordinate;
-  gemCount: number;
-}
-
-/**
- * Parses the level rows once. The `p` start marker is resolved away here — the Miner has by
- * definition already dug the tile they stand in, so the cell becomes open space and `p` survives
- * only as a render-time overlay.
- */
-function parseLevel(): ParsedLevel {
-  let playerStart: Coordinate = { row: 0, col: 0 };
-  let gemCount = 0;
-
-  const template = LEVEL_ROWS.map((row, rowIndex) =>
-    (row.split("") as Tile[]).map((tile, colIndex) => {
-      if (tile === "g") {
-        gemCount += 1;
-      }
-
-      if (tile !== "p") {
-        return tile;
-      }
-
-      playerStart = { row: rowIndex, col: colIndex };
-      return " ";
-    }),
-  );
-
-  return { template, playerStart, gemCount };
-}
-
-function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
-  return a.row === b.row && a.col === b.col;
-}
-
-function isWalkable(tile: Tile | undefined): boolean {
-  return tile === "." || tile === " " || tile === "g" || tile === "e" || tile === "h";
-}
-
-function isDiggable(tile: Tile | undefined): boolean {
-  return tile === "." || tile === "g";
-}
-
-/**
- * Runs the cave's gravity rule against the current state. Returns the same state object when the
- * step changed nothing, so the animation-frame subscription cannot re-render an idle board.
- */
-function applySimulation(currentState: GameState, nowMs: number): GameState {
-  if (currentState.status !== "active") {
-    return currentState;
-  }
-
-  const result = stepSimulation({ board: currentState.board, boulderMotions: currentState.boulderMotions }, nowMs);
-
-  if (result.board === currentState.board && result.boulderMotions === currentState.boulderMotions) {
-    return currentState;
-  }
-
-  // A boulder that moved into the Miner's tile crushes them. Compared against the position in the
-  // state the step was applied to, so a boulder dropping into a tile the Miner just left is safe.
-  const crushed = result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
-
-  return {
-    ...currentState,
-    board: result.board,
-    boulderMotions: result.boulderMotions,
-    status: crushed ? "lost" : currentState.status,
-    lossCause: crushed ? "crushed" : currentState.lossCause,
-  };
-}
-
-function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number): MoveResult {
-  if (currentState.status !== "active") {
-    return { state: currentState, accepted: false };
-  }
-
-  const nextPosition = {
-    row: currentState.playerPosition.row + delta.row,
-    col: currentState.playerPosition.col + delta.col,
-  };
-
-  // Read the target before digging it — after the dig it is open space and the gem/spike
-  // branches below would be lost.
-  const nextTile = tileAt(currentState.board, nextPosition.row, nextPosition.col);
-  if (!isWalkable(nextTile)) {
-    return { state: currentState, accepted: false };
-  }
-
-  const collectedGemCount = currentState.collectedGemCount + (nextTile === "g" ? 1 : 0);
-  const board = isDiggable(nextTile)
-    ? withTile(currentState.board, nextPosition.row, nextPosition.col, " ")
-    : currentState.board;
-  const status =
-    nextTile === "h" ? "lost" : nextTile === "e" && collectedGemCount >= REQUIRED_GEM_COUNT ? "won" : "active";
-
-  const movedState: GameState = {
-    ...currentState,
-    board,
-    playerPosition: nextPosition,
-    moveCount: currentState.moveCount + 1,
-    collectedGemCount,
-    status,
-    lossCause: status === "lost" ? "spikes" : currentState.lossCause,
-  };
-
-  // The cave re-evaluates support after every board change, so digging registers instability in
-  // the same update that produced the hole rather than a frame later.
-  return { accepted: true, state: applySimulation(movedState, nowMs) };
-}
-
-const LEVEL = parseLevel();
-const INITIAL_GEM_COUNT = LEVEL.gemCount;
-const OPTIONAL_GEM_COUNT = INITIAL_GEM_COUNT - REQUIRED_GEM_COUNT;
-
-function createInitialGameState(): GameState {
-  return {
-    // Row-level copy: a shallow copy of the outer array alone would let a dug corridor leak
-    // from one attempt into the next.
-    board: LEVEL.template.map((row) => [...row]),
-    boulderMotions: NO_BOULDER_MOTIONS,
-    playerPosition: LEVEL.playerStart,
-    moveCount: 0,
-    collectedGemCount: 0,
-    status: "active",
-    lossCause: null,
-  };
-}
 
 export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
-  const [gameState, setGameState] = useState<GameState>(() => createInitialGameState());
+  const [gameState, setGameState] = useState<GameState>(() => createInitialGameState(parseLevel(LEVELS[0])));
   const countedAttemptRef = useRef(false);
   const replayButtonRef = useRef<HTMLButtonElement | null>(null);
   const gameClockRef = useRef<GameClock | null>(null);
@@ -266,21 +90,38 @@ export default function GameEntry() {
   }, [gameState.status]);
 
   function handleReplayClick(): void {
-    setGameState(createInitialGameState());
+    setGameState((currentState) => createInitialGameState(currentState.level));
     setAttemptCount(incrementGameAttemptCount());
   }
 
+  function handleNextLevelClick(): void {
+    setGameState((currentState) => {
+      const next = nextLevelAfter(currentState.level.definition);
+
+      return next ? createInitialGameState(parseLevel(next)) : currentState;
+    });
+    // Advancing is a fresh run of the game, so it counts the same as a replay.
+    setAttemptCount(incrementGameAttemptCount());
+  }
+
+  const level = gameState.level;
+  const requiredGemCount = level.definition.requiredGemCount;
+  const optionalGemCount = level.gemCount - requiredGemCount;
   const isTerminalState = gameState.status !== "active";
+  // Offered on a win only: a lost level is replayed, not skipped.
+  const hasNextLevel = gameState.status === "won" && nextLevelAfter(level.definition) !== null;
   const outcomeMessage =
     gameState.status === "won"
-      ? "Level complete. Play again?"
+      ? hasNextLevel
+        ? "Level complete. A deeper cave is open."
+        : "Level complete. Play again?"
       : gameState.status === "lost"
         ? gameState.lossCause === "crushed"
           ? "Failed — crushed by a falling boulder. Play again?"
           : "Cave-in. Play again?"
         : null;
-  const collectedRequiredGems = Math.min(gameState.collectedGemCount, REQUIRED_GEM_COUNT);
-  const collectedBonusGems = Math.max(gameState.collectedGemCount - REQUIRED_GEM_COUNT, 0);
+  const collectedRequiredGems = Math.min(gameState.collectedGemCount, requiredGemCount);
+  const collectedBonusGems = Math.max(gameState.collectedGemCount - requiredGemCount, 0);
   // A count, not an event: the live region announces once when the cave becomes unsettled and
   // once when it settles, rather than firing on every wobble frame.
   const unstableBoulderCount = gameState.boulderMotions.size;
@@ -306,7 +147,7 @@ export default function GameEntry() {
             className="border-4 border-[#3f3124] bg-[#191d17] px-4 py-3 text-right font-mono shadow-[6px_6px_0_#070806]"
             data-testid={GAME_GUARDRAIL_TEST_IDS.readyMarker}
           >
-            <p className="text-xs tracking-[0.16em] text-[#9fb58f] uppercase">Level 01</p>
+            <p className="text-xs tracking-[0.16em] text-[#9fb58f] uppercase">{level.definition.name}</p>
             <p className="text-2xl font-black text-[#f3b63f]">READY</p>
           </div>
         </header>
@@ -370,7 +211,7 @@ export default function GameEntry() {
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Gems</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemsRemaining}>
-                  {String(INITIAL_GEM_COUNT - gameState.collectedGemCount).padStart(2, "0")}
+                  {String(level.gemCount - gameState.collectedGemCount).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
@@ -384,13 +225,13 @@ export default function GameEntry() {
               <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Quota</p>
                 <p className="text-2xl font-black text-[#79eada]" data-testid={GAME_GUARDRAIL_TEST_IDS.gemQuota}>
-                  {String(collectedRequiredGems).padStart(2, "0")}/{String(REQUIRED_GEM_COUNT).padStart(2, "0")}
+                  {String(collectedRequiredGems).padStart(2, "0")}/{String(requiredGemCount).padStart(2, "0")}
                 </p>
               </div>
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Bonus</p>
                 <p className="text-2xl font-black text-[#f3b63f]" data-testid={GAME_GUARDRAIL_TEST_IDS.bonusGems}>
-                  {collectedBonusGems}/{OPTIONAL_GEM_COUNT}
+                  {collectedBonusGems}/{optionalGemCount}
                 </p>
               </div>
             </div>
@@ -434,6 +275,17 @@ export default function GameEntry() {
                 data-testid={GAME_GUARDRAIL_TEST_IDS.outcomeMessage}
               >
                 <p className="mb-3 text-sm leading-snug font-bold text-[#f5e7c8]">{outcomeMessage}</p>
+                {hasNextLevel && (
+                  <button
+                    className="mb-2 inline-flex w-full items-center justify-center gap-2 border-4 border-[#f3b63f] bg-[#2a2113] px-3 py-2 font-mono text-sm font-black text-[#f3b63f] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79eada]"
+                    data-testid={GAME_GUARDRAIL_TEST_IDS.nextLevelButton}
+                    onClick={handleNextLevelClick}
+                    type="button"
+                  >
+                    <ArrowRight aria-hidden="true" className="size-4" />
+                    Next cave
+                  </button>
+                )}
                 <button
                   className="inline-flex w-full items-center justify-center gap-2 border-4 border-[#79eada] bg-[#142621] px-3 py-2 font-mono text-sm font-black text-[#79eada] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f3b63f]"
                   data-testid={GAME_GUARDRAIL_TEST_IDS.replayButton}
@@ -448,10 +300,9 @@ export default function GameEntry() {
             )}
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
-              {INITIAL_GEM_COUNT - gameState.collectedGemCount} gems remaining. Score{" "}
-              {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {REQUIRED_GEM_COUNT}.
-              Bonus {collectedBonusGems} of {OPTIONAL_GEM_COUNT}. {unstableBoulderDescription} Status {gameState.status}
-              .
+              {level.gemCount - gameState.collectedGemCount} gems remaining. Score{" "}
+              {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {requiredGemCount}.
+              Bonus {collectedBonusGems} of {optionalGemCount}. {unstableBoulderDescription} Status {gameState.status}.
             </p>
           </aside>
         </div>

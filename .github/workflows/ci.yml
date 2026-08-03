@@ -18,6 +18,10 @@ jobs:
       - run: npm ci
       - run: npx astro sync
       - run: npm run lint
+      # Cheap and browser-free: refuses a cave that seals its own exit, drops a boulder before the
+      # player moves, or has no winning route at all. Runs before the build so a broken level fails
+      # in seconds rather than after a full Astro compile.
+      - run: npm run level:check
       - run: npm run build
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

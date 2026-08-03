@@ -18,6 +18,7 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   hazard: "game-hazard",
   exit: "game-exit",
   replayButton: "game-replay-button",
+  nextLevelButton: "game-next-level-button",
   outcomeMessage: "game-outcome-message",
   gemQuota: "game-gem-quota",
   bonusGems: "game-bonus-gems",
