@@ -156,4 +156,8 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and PR t
 
 ### Adding a level
 
+The guided path is the `new-level` skill (`.claude/skills/new-level/`): it asks what the cave should be, drafts it, and iterates on the gate. By hand it is the same three steps.
+
 Append a `LevelDefinition` to `LEVELS` in `src/lib/levels.ts` and run `npm run level:check`. Failures name the offending coordinates. Nothing else needs editing: `level-invariants` and `level-solver` iterate the registry, and `level-progression` derives its keystrokes from the solver rather than hard-coded routes, so the browser suite covers the new cave without changes.
+
+The gate checks correctness, never interest. A cave with the quota three steps from the start and boulders that do nothing passes every check — judging whether it is worth playing stays a human call, which is what the skill's opening questions are for.
