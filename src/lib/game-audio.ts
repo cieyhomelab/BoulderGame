@@ -91,6 +91,60 @@ export function playGemChime(): void {
   playTone(context, { frequency: 1568, delay: 0.07, duration: 0.16, type: "square", peakGain: 0.12 });
 }
 
+/** A sharp descending zap for the Miner stepping onto spikes. */
+export function playSpikesHit(): void {
+  const context = resolveAudioContext();
+  if (!context) {
+    return;
+  }
+
+  const startTime = context.currentTime;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  // A fast sawtooth dive reads as a sting; the softer waveforms sound too harmless for a hazard.
+  oscillator.type = "sawtooth";
+  oscillator.frequency.setValueAtTime(900, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(110, startTime + 0.22);
+
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.25, startTime + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.25);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + 0.25);
+}
+
+/** A deep, drawn-out slam for a boulder crushing the Miner — heavier and longer than the thud. */
+export function playMinerCrush(): void {
+  const context = resolveAudioContext();
+  if (!context) {
+    return;
+  }
+
+  const startTime = context.currentTime;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.type = "triangle";
+  oscillator.frequency.setValueAtTime(90, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(28, startTime + 0.45);
+
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.6, startTime + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.5);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + 0.5);
+
+  // A dissonant low layer under the slam reads as damage rather than a plain landing.
+  playTone(context, { frequency: 62, delay: 0.03, duration: 0.4, type: "sawtooth", peakGain: 0.2 });
+}
+
 /** A short ascending fanfare for completing the level. */
 export function playLevelWin(): void {
   const context = resolveAudioContext();

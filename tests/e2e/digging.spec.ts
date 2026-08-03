@@ -7,6 +7,7 @@ import {
   expectCollectedGems,
   expectDirtAt,
   expectGameHydrated,
+  expectHazardAt,
   expectInputResponseText,
   expectLevelStatus,
   expectOpenSpaceAt,
@@ -85,8 +86,10 @@ test("Play again restores dug Dirt", async ({ page }) => {
   await expectOpenSpaceAt(page, 4, 3);
 
   await pressKeys(page, ["ArrowDown"]);
-  await expectPlayerAt(page, 5, 5);
   await expectLevelStatus(page, "lost");
+  // The dead Miner disappears — the spikes they stepped on show in their place.
+  await expectHazardAt(page, 5, 5);
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.player)).toHaveCount(0);
 
   await activateReplay(page);
 
