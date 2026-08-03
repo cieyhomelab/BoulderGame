@@ -19,8 +19,10 @@ This file provides guidance to AI Agent when working with code in this repositor
 
 - `npm run test:e2e` — Playwright (`tests/e2e/`, Chromium only; starts its own dev server on port 4321)
 - `npm run test:e2e:ui` — Playwright UI mode for local debugging
+- `npm run level:check` — audit every cave in `LEVELS` (no browser, exits non-zero on failure)
+- `npm run level:routes` — the same audit plus each cave's winning key sequence
 
-56 tests across 9 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`, `level-progression`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
+62 tests across 9 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`, `level-progression`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
 
 `level-invariants` and `level-solver` are the odd ones out: they never open a page, running against the level data directly. Both iterate `LEVELS`, so adding a cave to the registry adds its coverage automatically — a new level that seals its own exit, drops a boulder before the player moves, or cannot be won at all fails there rather than in front of a player.
 
@@ -73,6 +75,7 @@ The game is the point of this repository; everything below `src/lib/` is domain 
 | `game-rules.ts`         | Move resolution, digging, win/loss, gravity application. Pure and time-injected. Shared by the component and the solver.     |
 | `levels.ts`             | Cave definitions, the `LEVELS` play order, `parseLevel`, and `nextLevelAfter`. All board content lives here.                 |
 | `level-solver.ts`       | Breadth-first search for a winning route, driving `game-rules.ts`. Proves a cave is winnable and emits the key sequence.     |
+| `level-audit.ts`        | The design rules a cave must satisfy, as named checks. The single source for `level:check` and `level-invariants.spec.ts`.   |
 | `config-status.ts`      | Reports which optional integrations are configured.                                                                          |
 
 Rendering is one React island: `src/components/game/GameEntry.tsx`, with tile visuals in `TileArt.tsx`.
@@ -145,8 +148,12 @@ Writes go through `withTile`, which copies only the affected row so unchanged ro
 
 GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main` or `master`, on Node 22 with npm caching:
 
-`npm ci` → `npx astro sync` → `npm run lint` → `npm run build`
+`npm ci` → `npx astro sync` → `npm run lint` → `npm run level:check` → `npm run build`
 
 `SUPABASE_URL` and `SUPABASE_KEY` are passed to the build step from repository secrets (both are declared `optional` in the `astro.config.mjs` env schema).
 
-**No tests run in CI.** Playwright (`npm run test:e2e`) is local-only until the workflow is explicitly updated — a green CI run means lint and build passed, nothing more.
+**No browser tests run in CI.** Playwright (`npm run test:e2e`) is local-only until the workflow is explicitly updated. `npm run level:check` does run — it needs no browser — so a green CI run means lint, level design, and build passed, but no gameplay was exercised.
+
+### Adding a level
+
+Append a `LevelDefinition` to `LEVELS` in `src/lib/levels.ts` and run `npm run level:check`. Failures name the offending coordinates. Nothing else needs editing: `level-invariants` and `level-solver` iterate the registry, and `level-progression` derives its keystrokes from the solver rather than hard-coded routes, so the browser suite covers the new cave without changes.

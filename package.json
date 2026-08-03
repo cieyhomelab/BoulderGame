@@ -13,6 +13,8 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "level:check": "node --experimental-strip-types ./scripts/level-check.mjs",
+    "level:routes": "node --experimental-strip-types ./scripts/level-check.mjs --routes",
     "deploy:site-check": "node ./scripts/require-public-site-url.mjs",
     "deploy:dry-run": "npm run build && wrangler deploy --dry-run",
     "deploy": "npm run deploy:site-check && npm run build && wrangler deploy --strict",

@@ -1,6 +1,9 @@
 import { test, type Page } from "@playwright/test";
 
 import { GAME_TIMING } from "../../src/lib/game-clock";
+import type { MoveDirection } from "../../src/lib/game-rules";
+import { solveLevel } from "../../src/lib/level-solver";
+import { LEVELS, parseLevel, type LevelDefinition } from "../../src/lib/levels";
 
 import {
   activateNextLevel,
@@ -27,52 +30,33 @@ import {
 
 const MANUAL_CLOCK_ROUTE = "/?clock=manual";
 
-/** Start (3,2) → exit (6,10) on cave-01, collecting both quota gems. Mirrors `guardrails.spec.ts`. */
-const CAVE_01_WINNING_ROUTE = [
-  "ArrowRight",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowUp",
-  "ArrowDown",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-];
+const KEY_BY_DIRECTION: Record<MoveDirection, string> = {
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+};
 
 /**
- * Start (3,3) → gem (2,2) → gem (5,10) → exit (6,1) on cave-02. Runs along row 3 and row 6, which
- * never touch a boulder's support at (2,4) or (2,9), so the cave stays still for the whole route.
+ * The winning keystrokes for a cave, searched rather than hand-derived. Working these out by hand
+ * was the most error-prone step in authoring cave-02 — two of the first attempts walked into a
+ * wall — and the sequences went stale the moment a row changed.
  */
-const CAVE_02_WINNING_ROUTE = [
-  "ArrowUp",
-  "ArrowLeft",
-  "ArrowDown",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowRight",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowDown",
-  "ArrowLeft",
-  "ArrowLeft",
-  "ArrowLeft",
-  "ArrowLeft",
-  "ArrowLeft",
-  "ArrowLeft",
-  "ArrowLeft",
-  "ArrowLeft",
-  "ArrowLeft",
-];
+function winningKeysFor(definition: LevelDefinition): string[] {
+  const solution = solveLevel(parseLevel(definition));
+
+  if (!solution.solved) {
+    throw new Error(`${definition.id} has no winning route; \`npm run level:check\` explains why.`);
+  }
+
+  // A route that never destabilises a boulder produces the same outcome at any press speed, which
+  // is what makes it safe to replay as keystrokes against the real clock.
+  if (solution.disturbsBoulders) {
+    throw new Error(`${definition.id}'s shortest route disturbs a boulder, so it is timing-dependent.`);
+  }
+
+  return solution.route.map((direction) => KEY_BY_DIRECTION[direction]);
+}
 
 /** Start (3,3) → (2,9), the bonus gem that is boulder (1,9)'s only support. Seven accepted moves. */
 const CAVE_02_ROUTE_TO_BONUS_GEM = [
@@ -92,7 +76,7 @@ async function pressKeys(page: Page, keys: string[]): Promise<void> {
 }
 
 async function winCaveOneAndAdvance(page: Page): Promise<void> {
-  await pressKeys(page, CAVE_01_WINNING_ROUTE);
+  await pressKeys(page, winningKeysFor(LEVELS[0]));
   await expectLevelStatus(page, "won");
   await activateNextLevel(page);
   await expectLevelStatus(page, "active");
@@ -102,7 +86,7 @@ test("clearing a cave that has a successor offers the way onward", async ({ page
   await page.goto("/");
   await expectGameHydrated(page);
 
-  await pressKeys(page, CAVE_01_WINNING_ROUTE);
+  await pressKeys(page, winningKeysFor(LEVELS[0]));
 
   await expectLevelStatus(page, "won");
   await expectOutcomeMessage(page, /a deeper cave is open/i);
@@ -174,18 +158,30 @@ test("replaying the second cave restarts it rather than the first", async ({ pag
   await expectExitAt(page, 6, 1);
 });
 
-test("the last cave offers no successor", async ({ page }) => {
+/**
+ * Walks the whole registry rather than naming a cave as the last one. Pinning cave-02 here is what
+ * broke the first time a third level was tried: the level was fine, the test's assumption was not.
+ */
+test("every cave leads to the next, and the final one offers no successor", async ({ page }) => {
   await page.goto("/");
   await expectGameHydrated(page);
-  await winCaveOneAndAdvance(page);
 
-  await pressKeys(page, CAVE_02_WINNING_ROUTE);
+  for (const [index, definition] of LEVELS.entries()) {
+    await expectLevelName(page, definition.name);
+    await pressKeys(page, winningKeysFor(definition));
+    await expectLevelStatus(page, "won");
+    await expectReplayButtonVisible(page);
 
-  await expectPlayerAt(page, 6, 1);
-  await expectLevelStatus(page, "won");
-  await expectOutcomeMessage(page, /play again/i);
-  await expectNextLevelButtonHidden(page);
-  await expectReplayButtonVisible(page);
+    if (index === LEVELS.length - 1) {
+      await expectOutcomeMessage(page, /play again/i);
+      await expectNextLevelButtonHidden(page);
+      break;
+    }
+
+    await expectOutcomeMessage(page, /a deeper cave is open/i);
+    await activateNextLevel(page);
+    await expectLevelStatus(page, "active");
+  }
 });
 
 test("cave-02's bonus gem is the boulder's support, so taking it and standing still is fatal", async ({ page }) => {
