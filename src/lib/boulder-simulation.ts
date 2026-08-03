@@ -72,6 +72,29 @@ export function isSupported(board: Board, row: number, col: number): boolean {
   return tileAt(board, row + 1, col) !== " ";
 }
 
+export type RollDirection = -1 | 1;
+
+/**
+ * A supported boulder still slides sideways when a whole flank is open: the tile beside it AND the
+ * diagonal below that tile. Left wins when both flanks qualify, so the cave stays deterministic
+ * for the solver. Which side rolls is a property of the board alone — outside the cave reads as
+ * `undefined`, never `" "`, so a border boulder cannot roll out of the grid.
+ */
+export function rollDirection(board: Board, row: number, col: number): RollDirection | null {
+  for (const side of [-1, 1] as const) {
+    if (tileAt(board, row, col + side) === " " && tileAt(board, row + 1, col + side) === " ") {
+      return side;
+    }
+  }
+
+  return null;
+}
+
+/** A boulder at rest: supported from below and with no open flank to slide into. */
+export function isSettled(board: Board, row: number, col: number): boolean {
+  return isSupported(board, row, col) && rollDirection(board, row, col) === null;
+}
+
 /** Every boulder on the board, bottom row first. */
 function bouldersBottomUp(board: Board): Coordinate[] {
   const boulders: Coordinate[] = [];
@@ -90,16 +113,17 @@ function bouldersBottomUp(board: Board): Coordinate[] {
 }
 
 /**
- * Rebuilds the motion record from the board: every unsupported boulder has an entry, every
- * supported one has none, and an entry whose boulder has moved on simply is not rebuilt. Returns
- * the same reference when nothing changed, so an idle tick cannot trigger a re-render.
+ * Rebuilds the motion record from the board: every unsettled boulder (falling or about to roll)
+ * has an entry, every settled one has none, and an entry whose boulder has moved on simply is not
+ * rebuilt. Returns the same reference when nothing changed, so an idle tick cannot trigger a
+ * re-render.
  */
 function syncMotions(board: Board, boulderMotions: BoulderMotions, nowMs: number): BoulderMotions {
   const next = new Map<string, BoulderMotion>();
   let changed = false;
 
   for (const { row, col } of bouldersBottomUp(board)) {
-    if (isSupported(board, row, col)) {
+    if (isSettled(board, row, col)) {
       continue;
     }
 
@@ -123,15 +147,25 @@ interface DueBoulder extends Coordinate {
   motion: BoulderMotion;
 }
 
+/**
+ * The earliest-due unsettled boulder, bottom-up on ties. Due-time order, not board order: a roll's
+ * direction depends on what its neighbours have already done, so draining a lower boulder's whole
+ * fall before an earlier-due roll would make one large clock jump resolve differently from the
+ * same interval delivered as many small frames.
+ */
 function findDueBoulder(board: Board, boulderMotions: BoulderMotions, nowMs: number): DueBoulder | null {
+  let earliest: DueBoulder | null = null;
+
   for (const { row, col } of bouldersBottomUp(board)) {
     const motion = boulderMotions.get(motionKey(row, col));
-    if (motion && nowMs >= motion.dueAtMs && !isSupported(board, row, col)) {
-      return { row, col, motion };
+    if (motion && nowMs >= motion.dueAtMs && !isSettled(board, row, col)) {
+      if (!earliest || motion.dueAtMs < earliest.motion.dueAtMs) {
+        earliest = { row, col, motion };
+      }
     }
   }
 
-  return null;
+  return earliest;
 }
 
 interface AppliedMove {
@@ -142,19 +176,25 @@ interface AppliedMove {
   atMs: number;
 }
 
-/** Moves the bottom-most due boulder one tile down. Returns `null` when nothing is due. */
+/**
+ * Moves the bottom-most due boulder one tile: straight down when unsupported, otherwise sideways
+ * into its open flank. Returns `null` when nothing is due.
+ */
 function applyNextDueMove(board: Board, boulderMotions: BoulderMotions, nowMs: number): AppliedMove | null {
   const due = findDueBoulder(board, boulderMotions, nowMs);
   if (!due) {
     return null;
   }
 
-  const nextRow = due.row + 1;
-  const nextBoard = withTile(withTile(board, due.row, due.col, " "), nextRow, due.col, "r");
+  // `findDueBoulder` only returns unsettled boulders, so a supported one must have an open flank.
+  const target: Coordinate = !isSupported(board, due.row, due.col)
+    ? { row: due.row + 1, col: due.col }
+    : { row: due.row, col: due.col + (rollDirection(board, due.row, due.col) ?? 0) };
+  const nextBoard = withTile(withTile(board, due.row, due.col, " "), target.row, target.col, "r");
 
   const nextMotions = new Map(boulderMotions);
   nextMotions.delete(motionKey(due.row, due.col));
-  nextMotions.set(motionKey(nextRow, due.col), {
+  nextMotions.set(motionKey(target.row, target.col), {
     phase: "falling",
     // Advance from the due time, not from `nowMs`, so one large clock jump resolves to the same
     // number of tiles as many small ones would.
@@ -164,13 +204,13 @@ function applyNextDueMove(board: Board, boulderMotions: BoulderMotions, nowMs: n
   return {
     board: nextBoard,
     boulderMotions: nextMotions,
-    movedInto: { row: nextRow, col: due.col },
+    movedInto: target,
     atMs: due.motion.dueAtMs,
   };
 }
 
 /**
- * Resolves the cave's gravity rule up to `nowMs`: registers newly unsupported boulders, then
+ * Resolves the cave's gravity rule up to `nowMs`: registers newly unsettled boulders, then
  * drains every transition already due, re-deriving support after each individual move so chain
  * reactions resolve within the same step.
  *
