@@ -144,7 +144,7 @@ function Wall() {
 function Boulder() {
   return (
     <>
-      <DirtGround />
+      <OpenSpace />
       <ellipse cx="32" cy="52" rx="22" ry="6" fill="#000000" fillOpacity="0.4" />
       <ellipse cx="32" cy="31" rx="24" ry="23" fill="url(#bg-rock)" />
       <ellipse cx="25" cy="20.5" rx="8" ry="5.5" fill="#e6e0d4" fillOpacity="0.45" />
