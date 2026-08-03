@@ -20,9 +20,9 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run test:e2e` — Playwright (`tests/e2e/`, Chromium only; starts its own dev server on port 4321)
 - `npm run test:e2e:ui` — Playwright UI mode for local debugging
 
-49 tests across 8 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`, `level-progression`, `level-invariants`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
+56 tests across 9 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`, `level-progression`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
 
-`level-invariants` is the odd one out: it never opens a page, asserting the design rules of every entry in `LEVELS` directly against the level data. Adding a cave to the registry adds its coverage automatically — a new level that seals its own exit, drops a boulder before the player moves, or cannot be won without touching one fails there.
+`level-invariants` and `level-solver` are the odd ones out: they never open a page, running against the level data directly. Both iterate `LEVELS`, so adding a cave to the registry adds its coverage automatically — a new level that seals its own exit, drops a boulder before the player moves, or cannot be won at all fails there rather than in front of a player.
 
 Run these when a change touches game entry, browser behavior, guardrail selectors, simulation timing, or replay/input readiness. There is no unit-test runner; all automated tests are E2E.
 
@@ -70,10 +70,14 @@ The game is the point of this repository; everything below `src/lib/` is domain 
 | `boulder-simulation.ts` | Board state, boulder support, fall scheduling. Pure — `stepSimulation(input, nowMs)` maps `(state, time)` → state.           |
 | `game-clock.ts`         | Clock abstraction. Real play uses `requestAnimationFrame`; `?clock=manual` installs a clock that only advances when told to. |
 | `game-guardrails.ts`    | MVP thresholds, `data-testid` values, session-local attempt counter.                                                         |
+| `game-rules.ts`         | Move resolution, digging, win/loss, gravity application. Pure and time-injected. Shared by the component and the solver.     |
 | `levels.ts`             | Cave definitions, the `LEVELS` play order, `parseLevel`, and `nextLevelAfter`. All board content lives here.                 |
+| `level-solver.ts`       | Breadth-first search for a winning route, driving `game-rules.ts`. Proves a cave is winnable and emits the key sequence.     |
 | `config-status.ts`      | Reports which optional integrations are configured.                                                                          |
 
 Rendering is one React island: `src/components/game/GameEntry.tsx`, with tile visuals in `TileArt.tsx`.
+
+**Game rules belong in `game-rules.ts`, never in the component.** `GameEntry` is a driver: keyboard in, board out. It maps keys onto `MOVE_DELTAS` and calls `resolveMove`/`applySimulation`, but owns no rule of its own. The solver drives the same functions from a search, so a rule copied into the component would make the solver's proofs describe a game nobody plays.
 
 **Board content belongs in `levels.ts`, never in the component.** `GameEntry` holds the active `ParsedLevel` in `GameState` — not in module scope or a separate `useState` — because the keyboard handler updates state functionally and would otherwise close over a stale level after advancing. Every cave is 8×12: the board's column count is a literal `grid-cols-12` class, and Tailwind 4 cannot generate that class from runtime data, so a differently sized level needs an inline `gridTemplateColumns` first.
 
