@@ -48,6 +48,9 @@ test("a boulder that falls onto the Miner ends the level as Failed", async ({ pa
 
   await expectLevelStatus(page, "lost");
   await expectLossCause(page, "crushed");
+  // The dead Miner disappears — the boulder that crushed them shows in their place.
+  await expectBoulderAt(page, 3, 4);
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.player)).toHaveCount(0);
   await expectOutcomeMessage(page, /failed — crushed by a falling boulder/i);
   await expectReplayButtonVisible(page);
 });

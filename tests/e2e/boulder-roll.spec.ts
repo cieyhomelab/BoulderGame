@@ -186,8 +186,9 @@ test("a boulder that rolls onto the Miner crushes them", async ({ page }) => {
   await expectLevelStatus(page, "lost");
   await expectLossCause(page, "crushed");
   await expectOutcomeMessage(page, /failed — crushed by a falling boulder/i);
-  // The Miner's tile renders the Miner, not the boulder that rolled onto it — the proof the roll
-  // happened is the vacated shaft mouth.
-  await expectPlayerAt(page, 1, 7);
+  // The dead Miner disappears — the boulder that rolled onto their tile shows in their place,
+  // and the vacated shaft mouth proves the roll happened.
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.player)).toHaveCount(0);
+  await expectBoulderAt(page, 1, 7);
   await expectNoBoulderAt(page, 1, 8);
 });

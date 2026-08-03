@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { GAME_GUARDRAIL_TEST_IDS } from "../../src/lib/game-guardrails";
+
 import {
   activateReplay,
   expectAttemptCounter,
@@ -125,11 +127,13 @@ test("player loses on a hazard and movement freezes", async ({ page }) => {
   await expectHazardAt(page, 5, 5);
 
   await pressKeys(page, ROUTE_TO_SPIKES);
-  await expectPlayerAt(page, 5, 5);
   await expectInputResponseText(page, "5:5,5");
   await expectLevelStatus(page, "lost");
+  // The dead Miner disappears — the spikes they stepped on show in their place.
+  await expectHazardAt(page, 5, 5);
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.player)).toHaveCount(0);
 
-  await expectPlayerRemainsAtAfterInput(page, "ArrowLeft", 5, 5);
+  await page.keyboard.press("ArrowLeft");
   await expectInputResponseText(page, "5:5,5");
   await expectOutcomeMessage(page, /cave-in/i);
   await expectReplayButtonVisible(page);
@@ -195,8 +199,8 @@ test("a collected gem's score survives losing on the way onward", async ({ page 
 
   // (5,3) → (5,4) → the spikes at (5,5).
   await pressKeys(page, ["ArrowRight", "ArrowRight"]);
-  await expectPlayerAt(page, 5, 5);
   await expectLevelStatus(page, "lost");
+  await expectHazardAt(page, 5, 5);
   await expectScore(page, 100);
   await expectCollectedGems(page, 1);
   await expectReplayButtonVisible(page);

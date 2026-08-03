@@ -11,7 +11,7 @@ import {
   resolveMove,
   type GameState,
 } from "@/lib/game-rules";
-import { playBoulderThud, playGemChime, playLevelWin } from "@/lib/game-audio";
+import { playBoulderThud, playGemChime, playLevelWin, playMinerCrush, playSpikesHit } from "@/lib/game-audio";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { LEVELS, nextLevelAfter, parseLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
@@ -98,9 +98,13 @@ export default function GameEntry() {
   useEffect(() => {
     const previous = soundStateRef.current;
 
+    const justLost = gameState.status === "lost" && previous.status !== "lost";
+    // The crushing boulder settles in the same update, so the crush slam replaces the plain thud.
+    const justCrushed = justLost && gameState.lossCause === "crushed";
+
     // Strictly greater: a replay or level advance resets the counters to zero, which must stay
     // silent rather than read as an event.
-    if (gameState.boulderLandingCount > previous.boulderLandingCount) {
+    if (gameState.boulderLandingCount > previous.boulderLandingCount && !justCrushed) {
       playBoulderThud();
     }
     if (gameState.collectedGemCount > previous.collectedGemCount) {
@@ -109,13 +113,18 @@ export default function GameEntry() {
     if (gameState.status === "won" && previous.status !== "won") {
       playLevelWin();
     }
+    if (justCrushed) {
+      playMinerCrush();
+    } else if (justLost && gameState.lossCause === "spikes") {
+      playSpikesHit();
+    }
 
     soundStateRef.current = {
       boulderLandingCount: gameState.boulderLandingCount,
       collectedGemCount: gameState.collectedGemCount,
       status: gameState.status,
     };
-  }, [gameState.boulderLandingCount, gameState.collectedGemCount, gameState.status]);
+  }, [gameState.boulderLandingCount, gameState.collectedGemCount, gameState.status, gameState.lossCause]);
 
   function handleReplayClick(): void {
     setGameState((currentState) => createInitialGameState(currentState.level));
@@ -191,7 +200,10 @@ export default function GameEntry() {
             >
               {gameState.board.flatMap((boardRow, row) =>
                 boardRow.map((cellTile, col) => {
-                  const hasPlayer = isSameCoordinate({ row, col }, gameState.playerPosition);
+                  // A lost Miner is gone: the tile that killed them — the spikes stepped on or the
+                  // boulder that landed — shows in their place.
+                  const hasPlayer =
+                    gameState.status !== "lost" && isSameCoordinate({ row, col }, gameState.playerPosition);
                   const isUnstableBoulder =
                     cellTile === "r" && gameState.boulderMotions.get(motionKey(row, col))?.phase === "grace";
 
