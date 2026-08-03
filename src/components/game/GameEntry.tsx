@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { RotateCcw } from "lucide-react";
+import { ArrowRight, RotateCcw } from "lucide-react";
 
 import {
   NO_BOULDER_MOTIONS,
@@ -13,7 +13,7 @@ import {
 } from "@/lib/boulder-simulation";
 import { resolveGameClock, type GameClock } from "@/lib/game-clock";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
-import { LEVELS, parseLevel, type ParsedLevel } from "@/lib/levels";
+import { LEVELS, nextLevelAfter, parseLevel, type ParsedLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
 
 import { TileArt, TileDefs, type Tile } from "./TileArt";
@@ -216,13 +216,27 @@ export default function GameEntry() {
     setAttemptCount(incrementGameAttemptCount());
   }
 
+  function handleNextLevelClick(): void {
+    setGameState((currentState) => {
+      const next = nextLevelAfter(currentState.level.definition);
+
+      return next ? createInitialGameState(parseLevel(next)) : currentState;
+    });
+    // Advancing is a fresh run of the game, so it counts the same as a replay.
+    setAttemptCount(incrementGameAttemptCount());
+  }
+
   const level = gameState.level;
   const requiredGemCount = level.definition.requiredGemCount;
   const optionalGemCount = level.gemCount - requiredGemCount;
   const isTerminalState = gameState.status !== "active";
+  // Offered on a win only: a lost level is replayed, not skipped.
+  const hasNextLevel = gameState.status === "won" && nextLevelAfter(level.definition) !== null;
   const outcomeMessage =
     gameState.status === "won"
-      ? "Level complete. Play again?"
+      ? hasNextLevel
+        ? "Level complete. A deeper cave is open."
+        : "Level complete. Play again?"
       : gameState.status === "lost"
         ? gameState.lossCause === "crushed"
           ? "Failed — crushed by a falling boulder. Play again?"
@@ -383,6 +397,17 @@ export default function GameEntry() {
                 data-testid={GAME_GUARDRAIL_TEST_IDS.outcomeMessage}
               >
                 <p className="mb-3 text-sm leading-snug font-bold text-[#f5e7c8]">{outcomeMessage}</p>
+                {hasNextLevel && (
+                  <button
+                    className="mb-2 inline-flex w-full items-center justify-center gap-2 border-4 border-[#f3b63f] bg-[#2a2113] px-3 py-2 font-mono text-sm font-black text-[#f3b63f] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79eada]"
+                    data-testid={GAME_GUARDRAIL_TEST_IDS.nextLevelButton}
+                    onClick={handleNextLevelClick}
+                    type="button"
+                  >
+                    <ArrowRight aria-hidden="true" className="size-4" />
+                    Next cave
+                  </button>
+                )}
                 <button
                   className="inline-flex w-full items-center justify-center gap-2 border-4 border-[#79eada] bg-[#142621] px-3 py-2 font-mono text-sm font-black text-[#79eada] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f3b63f]"
                   data-testid={GAME_GUARDRAIL_TEST_IDS.replayButton}

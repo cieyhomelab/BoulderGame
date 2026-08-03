@@ -92,6 +92,16 @@ const CAVE_02: LevelDefinition = {
 export const LEVELS: readonly LevelDefinition[] = [CAVE_01, CAVE_02];
 
 /**
+ * The level that follows `current` in play order, or `null` on the last one. Identity is the `id`,
+ * not the object, so a re-parsed level still resolves its successor.
+ */
+export function nextLevelAfter(current: LevelDefinition): LevelDefinition | null {
+  const index = LEVELS.findIndex((level) => level.id === current.id);
+
+  return index === -1 ? null : (LEVELS[index + 1] ?? null);
+}
+
+/**
  * Parses a level's rows. The `p` start marker is resolved away here — the Miner has by definition
  * already dug the tile they stand in, so the cell becomes open space and `p` survives only as a
  * render-time overlay.
