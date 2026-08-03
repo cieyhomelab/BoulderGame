@@ -11,6 +11,7 @@ import {
   resolveMove,
   type GameState,
 } from "@/lib/game-rules";
+import { playBoulderThud, playGemChime, playLevelWin } from "@/lib/game-audio";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { LEVELS, nextLevelAfter, parseLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,11 @@ export default function GameEntry() {
   const countedAttemptRef = useRef(false);
   const replayButtonRef = useRef<HTMLButtonElement | null>(null);
   const gameClockRef = useRef<GameClock | null>(null);
+  const soundStateRef = useRef<Pick<GameState, "boulderLandingCount" | "collectedGemCount" | "status">>({
+    boulderLandingCount: 0,
+    collectedGemCount: 0,
+    status: "active",
+  });
 
   useEffect(() => {
     if (countedAttemptRef.current) {
@@ -88,6 +94,28 @@ export default function GameEntry() {
     replayButtonRef.current?.scrollIntoView({ block: "nearest", inline: "nearest" });
     replayButtonRef.current?.focus({ preventScroll: true });
   }, [gameState.status]);
+
+  useEffect(() => {
+    const previous = soundStateRef.current;
+
+    // Strictly greater: a replay or level advance resets the counters to zero, which must stay
+    // silent rather than read as an event.
+    if (gameState.boulderLandingCount > previous.boulderLandingCount) {
+      playBoulderThud();
+    }
+    if (gameState.collectedGemCount > previous.collectedGemCount) {
+      playGemChime();
+    }
+    if (gameState.status === "won" && previous.status !== "won") {
+      playLevelWin();
+    }
+
+    soundStateRef.current = {
+      boulderLandingCount: gameState.boulderLandingCount,
+      collectedGemCount: gameState.collectedGemCount,
+      status: gameState.status,
+    };
+  }, [gameState.boulderLandingCount, gameState.collectedGemCount, gameState.status]);
 
   function handleReplayClick(): void {
     setGameState((currentState) => createInitialGameState(currentState.level));

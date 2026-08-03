@@ -1,5 +1,6 @@
 import {
   NO_BOULDER_MOTIONS,
+  motionKey,
   stepSimulation,
   tileAt,
   withTile,
@@ -35,6 +36,9 @@ export interface GameState {
   playerPosition: Coordinate;
   moveCount: number;
   collectedGemCount: number;
+  /** Cumulative count of boulders that have finished a fall this attempt. A counter rather than a
+   * per-step event list so a driver can detect landings by comparing against the previous state. */
+  boulderLandingCount: number;
   status: LevelStatus;
   lossCause: LossCause | null;
 }
@@ -76,6 +80,7 @@ export function createInitialGameState(level: ParsedLevel): GameState {
     playerPosition: level.playerStart,
     moveCount: 0,
     collectedGemCount: 0,
+    boulderLandingCount: 0,
     status: "active",
     lossCause: null,
   };
@@ -100,10 +105,19 @@ export function applySimulation(currentState: GameState, nowMs: number): GameSta
   // state the step was applied to, so a boulder dropping into a tile the Miner just left is safe.
   const crushed = result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
 
+  // `landedOn` records every one-tile step of a fall; a landing is the step after which the
+  // boulder is still there and no longer in motion.
+  const settledBoulderCount = result.landedOn.filter(
+    (coordinate) =>
+      tileAt(result.board, coordinate.row, coordinate.col) === "r" &&
+      !result.boulderMotions.has(motionKey(coordinate.row, coordinate.col)),
+  ).length;
+
   return {
     ...currentState,
     board: result.board,
     boulderMotions: result.boulderMotions,
+    boulderLandingCount: currentState.boulderLandingCount + settledBoulderCount,
     status: crushed ? "lost" : currentState.status,
     lossCause: crushed ? "crushed" : currentState.lossCause,
   };
