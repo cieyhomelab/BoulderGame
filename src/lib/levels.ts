@@ -83,13 +83,54 @@ const CAVE_02: LevelDefinition = {
 };
 
 /**
+ * The third cave: a labyrinth. Where `cave-01` and `cave-02` are open rooms, this one is corridors —
+ * rows 2 and 4 are near-solid barriers with a single passage each, so the quota route is one forced
+ * snake (row 1 rightwards, down col 8, row 3 leftwards, down col 1, row 6 rightwards) rather than a
+ * choice of lines. The solver puts it at 30 moves against `cave-02`'s 23.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (1,9) rests on the boulder at (2,9), which rests on Dirt at
+ *   (3,9). That pair is the whole point of the cave — see the chain below.
+ * - Both boulders sit in column 9; the exit is at (6,8). A falling boulder never leaves its own
+ *   column, so nothing can reach the exit.
+ * - Spikes at (5,6), a lethal dead end wedged between the row-5 detour and the gem stub. It looks
+ *   like the short way from (5,5) to (6,6); it is not.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (3,1) sits on the
+ *   row-3 leg, (5,7) is a stub off (6,7), and neither the route nor the stub enters column 9.
+ * - The bonus gem at (1,10) is walled by the border on two sides, by (2,10) below, and by the
+ *   boulder at (1,9) — obtainable only by deliberately undermining that boulder (FR-011).
+ * - The chain (FR-009): digging (3,9) from (3,8) drops the (2,9) boulder down the sealed shaft
+ *   (4,9)/(5,9) onto the wall floor at (6,9), and (1,9) follows it to (4,9). Escape from (3,9) is
+ *   sideways to (3,8) only — the shaft below follows the same column.
+ * - Rows 5 and 6 touch only at columns 1, 3, 5 and 7, and (6,4) is wall, so the bottom leg has no
+ *   shortcut: the detour up through (5,3)-(5,5) is forced.
+ *
+ * The e2e suite asserts these coordinates directly — changing a row here breaks tests by design.
+ */
+const CAVE_03: LevelDefinition = {
+  id: "cave-03",
+  name: "Level 03",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#p.......rg#",
+    "########.r##",
+    "#g........##",
+    "#.####### ##",
+    "#.#...hg# ##",
+    "#...#...e###",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
  * class in `GameEntry`, and Tailwind 4 cannot generate that class from runtime data. A level of a
  * different width needs an inline `gridTemplateColumns` there first.
  */
-export const LEVELS: readonly LevelDefinition[] = [CAVE_01, CAVE_02];
+export const LEVELS: readonly LevelDefinition[] = [CAVE_01, CAVE_02, CAVE_03];
 
 /**
  * The level that follows `current` in play order, or `null` on the last one. Identity is the `id`,
