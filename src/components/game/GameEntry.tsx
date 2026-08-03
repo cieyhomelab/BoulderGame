@@ -13,34 +13,10 @@ import {
 } from "@/lib/boulder-simulation";
 import { resolveGameClock, type GameClock } from "@/lib/game-clock";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
+import { LEVELS, parseLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
 
 import { TileArt, TileDefs, type Tile } from "./TileArt";
-
-/**
- * The cave, authored against the live simulation. `.` is Dirt (solid, diggable, holds boulders),
- * `" "` is carved open space, `p` is the Miner's start.
- *
- * Invariants any future edit must preserve:
- * - No boulder is unsupported at t=0 — nothing may fall before the player acts.
- * - No boulder sits in or above the exit's column, so the exit cannot be sealed.
- * - Spikes remain present.
- * - The two-gem quota plus the exit is reachable without ever touching a boulder.
- * - The bonus gem at (1,9) is walled on every side but (1,8), which holds a boulder — it is
- *   obtainable only by deliberately undermining it (FR-011).
- * - The shaft at (3,8)/(4,8) gives the (1,8) boulder a three-tile fall, so the 120 ms cadence is
- *   observable; the stack at (1,4)/(2,4) produces the FR-009 chain reaction.
- */
-const LEVEL_ROWS = [
-  "############",
-  "#...r...rg##",
-  "#...r....#.#",
-  "# p..... #.#",
-  "#.#...#. #.#",
-  "#.#g.h#g...#",
-  "#.........e#",
-  "############",
-] as const;
 
 type LevelStatus = "active" | "lost" | "won";
 /** Why the level was lost. The status set stays `active | lost | won`; being crushed is a new
@@ -64,7 +40,6 @@ interface MoveResult {
 }
 
 const GEM_SCORE_VALUE = 100;
-const REQUIRED_GEM_COUNT = 2;
 const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   ArrowUp: { row: -1, col: 0 },
   w: { row: -1, col: 0 },
@@ -79,39 +54,6 @@ const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   d: { row: 0, col: 1 },
   D: { row: 0, col: 1 },
 };
-
-interface ParsedLevel {
-  template: Board;
-  playerStart: Coordinate;
-  gemCount: number;
-}
-
-/**
- * Parses the level rows once. The `p` start marker is resolved away here — the Miner has by
- * definition already dug the tile they stand in, so the cell becomes open space and `p` survives
- * only as a render-time overlay.
- */
-function parseLevel(): ParsedLevel {
-  let playerStart: Coordinate = { row: 0, col: 0 };
-  let gemCount = 0;
-
-  const template = LEVEL_ROWS.map((row, rowIndex) =>
-    (row.split("") as Tile[]).map((tile, colIndex) => {
-      if (tile === "g") {
-        gemCount += 1;
-      }
-
-      if (tile !== "p") {
-        return tile;
-      }
-
-      playerStart = { row: rowIndex, col: colIndex };
-      return " ";
-    }),
-  );
-
-  return { template, playerStart, gemCount };
-}
 
 function isSameCoordinate(a: Coordinate, b: Coordinate): boolean {
   return a.row === b.row && a.col === b.col;
@@ -192,7 +134,8 @@ function resolveMove(currentState: GameState, delta: Coordinate, nowMs: number):
   return { accepted: true, state: applySimulation(movedState, nowMs) };
 }
 
-const LEVEL = parseLevel();
+const LEVEL = parseLevel(LEVELS[0]);
+const REQUIRED_GEM_COUNT = LEVEL.definition.requiredGemCount;
 const INITIAL_GEM_COUNT = LEVEL.gemCount;
 const OPTIONAL_GEM_COUNT = INITIAL_GEM_COUNT - REQUIRED_GEM_COUNT;
 
