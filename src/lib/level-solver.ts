@@ -1,3 +1,4 @@
+import { tileAt, type Board, type Coordinate } from "@/lib/boulder-simulation";
 import {
   MOVE_DELTAS,
   applySimulation,
@@ -80,26 +81,89 @@ function settle(state: GameState, nowMs: number): { state: GameState; nowMs: num
   return { state: current, nowMs: currentMs, disturbed };
 }
 
+/** Tiles that can never become open space. Dirt and gems are diggable and a boulder can vacate
+ * its cell, so everything else may open up at some point during play. */
+const PERMANENT_BLOCKERS = new Set(["#", "h", "e"]);
+
+/**
+ * Every cell whose dirt/space distinction could ever influence a boulder, over-approximated once
+ * per solve. Boulders fall down and roll sideways into an open flank, so their reachable
+ * positions are the closure of the starting positions under those moves — computed against
+ * "could this cell ever be open" rather than the current board, which makes the set a superset
+ * for every reachable state. A boulder's stability reads its own cell, the cell below, both side
+ * cells, and both lower diagonals, so the sensitive set is the closure dilated by those offsets.
+ */
+function boulderSensitiveCells(board: Board): Set<string> {
+  const canOpen = (row: number, col: number): boolean => {
+    const tile = tileAt(board, row, col);
+    return tile !== undefined && !PERMANENT_BLOCKERS.has(tile);
+  };
+
+  const occupiable = new Set<string>();
+  const queue: Coordinate[] = [];
+
+  for (let rowIndex = 0; rowIndex < board.length; rowIndex += 1) {
+    for (let colIndex = 0; colIndex < board[rowIndex].length; colIndex += 1) {
+      if (board[rowIndex][colIndex] === "r") {
+        occupiable.add(`${rowIndex}:${colIndex}`);
+        queue.push({ row: rowIndex, col: colIndex });
+      }
+    }
+  }
+
+  // Same breadth-first idiom as the audit's reachability walk: the iterator sees appended cells.
+  for (const { row, col } of queue) {
+    const moves: Coordinate[] = [];
+    if (canOpen(row + 1, col)) {
+      moves.push({ row: row + 1, col });
+    }
+    for (const side of [-1, 1]) {
+      if (canOpen(row, col + side) && canOpen(row + 1, col + side)) {
+        moves.push({ row, col: col + side });
+      }
+    }
+
+    for (const next of moves) {
+      const key = `${next.row}:${next.col}`;
+      if (!occupiable.has(key)) {
+        occupiable.add(key);
+        queue.push(next);
+      }
+    }
+  }
+
+  const sensitive = new Set<string>();
+  for (const key of occupiable) {
+    const [row, col] = key.split(":").map(Number);
+    sensitive.add(key);
+    sensitive.add(`${row + 1}:${col}`);
+    // A flank only matters when the whole flank can open: with one cell permanently blocked, the
+    // roll check's answer for that side never depends on the other cell.
+    for (const side of [-1, 1]) {
+      if (canOpen(row, col + side) && canOpen(row + 1, col + side)) {
+        sensitive.add(`${row}:${col + side}`);
+        sensitive.add(`${row + 1}:${col + side}`);
+      }
+    }
+  }
+
+  return sensitive;
+}
+
 /**
  * Identity of a settled state. Two things are deliberately absent.
  *
  * The clock: with nothing in motion, states with the same board have identical futures.
  *
  * Most of the board: Dirt is walkable, so digging never opens a path the Miner did not already
- * have — it only removes a boulder's support. Dirt and open space are therefore indistinguishable
- * except directly under something that can fall, and since boulders only ever move down their own
- * column, that means cells with a boulder somewhere above them in the same column. Every other
- * cell collapses to one symbol.
+ * have — it only matters where a boulder could read it as support or as an open flank. Outside
+ * `boulderSensitive`, dirt and open space collapse to one symbol.
  *
  * Without this, each dug tile doubles the state space and the search drowns in routes that differ
  * only by which corridor the Miner scratched on the way.
  */
-function stateKey(state: GameState): string {
-  const board = state.board;
-  // The topmost boulder in each column. Only cells below one can ever be asked to hold it up.
-  const topBoulderRowByColumn = board[0].map((_, colIndex) => board.findIndex((row) => row[colIndex] === "r"));
-
-  const canonical = board
+function stateKey(state: GameState, boulderSensitive: Set<string>): string {
+  const canonical = state.board
     .map((row, rowIndex) =>
       row
         .map((tile, colIndex) => {
@@ -107,9 +171,7 @@ function stateKey(state: GameState): string {
             return tile;
           }
 
-          const topBoulderRow = topBoulderRowByColumn[colIndex];
-
-          return topBoulderRow !== -1 && rowIndex > topBoulderRow ? tile : "_";
+          return boulderSensitive.has(`${rowIndex}:${colIndex}`) ? tile : "_";
         })
         .join(""),
     )
@@ -118,17 +180,46 @@ function stateKey(state: GameState): string {
   return `${canonical}|${state.playerPosition.row},${state.playerPosition.col}|${state.collectedGemCount}`;
 }
 
-export function solveLevel(level: ParsedLevel, options: SolveOptions = {}): SolveResult {
-  const maxStates = options.maxStates ?? DEFAULT_MAX_STATES;
+/**
+ * With every boulder pinned in place, the only cells whose dirt/space state can matter are the
+ * ones the pinned boulders themselves read: their support and both flanks. Everything else
+ * collapses, which is what keeps the undisturbed search tiny.
+ */
+function pinnedBoulderCells(board: Board): Set<string> {
+  const sensitive = new Set<string>();
 
-  const start = settle(createInitialGameState(level), 0);
+  for (let row = 0; row < board.length; row += 1) {
+    for (let col = 0; col < board[row].length; col += 1) {
+      if (board[row][col] !== "r") {
+        continue;
+      }
+
+      sensitive.add(`${row + 1}:${col}`);
+      for (const side of [-1, 1]) {
+        sensitive.add(`${row}:${col + side}`);
+        sensitive.add(`${row + 1}:${col + side}`);
+      }
+    }
+  }
+
+  return sensitive;
+}
+
+interface SearchOptions {
+  maxStates: number;
+  /** Reject any move that sets a boulder in motion. What makes the small `sensitive` set sound. */
+  undisturbedOnly: boolean;
+  sensitive: Set<string>;
+}
+
+function search(start: { state: GameState; nowMs: number; disturbed: boolean }, options: SearchOptions): SolveResult {
   const queue: SearchNode[] = [{ state: start.state, nowMs: start.nowMs, route: [], disturbed: start.disturbed }];
-  const seen = new Set([stateKey(start.state)]);
+  const seen = new Set([stateKey(start.state, options.sensitive)]);
   let statesExplored = 0;
 
   for (const node of queue) {
     statesExplored += 1;
-    if (statesExplored > maxStates) {
+    if (statesExplored > options.maxStates) {
       return {
         solved: false,
         route: [],
@@ -148,6 +239,10 @@ export function solveLevel(level: ParsedLevel, options: SolveOptions = {}): Solv
       const settled = settle(moved.state, node.nowMs);
       const disturbed = node.disturbed || settled.disturbed;
 
+      if (options.undisturbedOnly && settled.disturbed) {
+        continue;
+      }
+
       if (settled.state.status === "won") {
         return { solved: true, route, statesExplored, exhausted: false, disturbsBoulders: disturbed };
       }
@@ -158,7 +253,7 @@ export function solveLevel(level: ParsedLevel, options: SolveOptions = {}): Solv
         continue;
       }
 
-      const key = stateKey(settled.state);
+      const key = stateKey(settled.state, options.sensitive);
       if (seen.has(key)) {
         continue;
       }
@@ -169,4 +264,34 @@ export function solveLevel(level: ParsedLevel, options: SolveOptions = {}): Solv
   }
 
   return { solved: false, route: [], statesExplored, exhausted: true, disturbsBoulders: false };
+}
+
+/**
+ * Two phases. First a search restricted to routes that never set a boulder in motion — with the
+ * boulders pinned, almost the whole board canonicalizes and the search is cheap; a win here is
+ * also clock-independent by construction. Only when no such route exists does the full search
+ * run, with the closure-derived sensitive set that rolling boulders require. `exhausted` (and so
+ * "no winning route exists") can only ever come from the full phase.
+ */
+export function solveLevel(level: ParsedLevel, options: SolveOptions = {}): SolveResult {
+  const maxStates = options.maxStates ?? DEFAULT_MAX_STATES;
+
+  const initial = createInitialGameState(level);
+  // Derived from the pre-settle board: settling only moves boulders within their own closure, so
+  // this set stays a superset of what any reachable state can need.
+  const boulderSensitive = boulderSensitiveCells(initial.board);
+  const start = settle(initial, 0);
+
+  if (!start.disturbed) {
+    const undisturbed = search(start, {
+      maxStates,
+      undisturbedOnly: true,
+      sensitive: pinnedBoulderCells(start.state.board),
+    });
+    if (undisturbed.solved) {
+      return undisturbed;
+    }
+  }
+
+  return search(start, { maxStates, undisturbedOnly: false, sensitive: boulderSensitive });
 }

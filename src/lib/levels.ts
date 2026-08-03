@@ -57,8 +57,9 @@ const CAVE_01: LevelDefinition = {
  * Invariants (the same contract `cave-01` holds):
  * - No boulder is unsupported at t=0: (1,4) rests on Dirt at (2,4), (1,9) on the gem at (2,9).
  *   A gem is not open space, so it supports a boulder until it is collected.
- * - Boulders sit in columns 4 and 9; the exit is in column 1. Since a falling boulder only ever
- *   moves down its own column, nothing can reach the exit or the corridor above it.
+ * - Boulders sit in columns 4 and 9; the exit is in column 1. A boulder can roll sideways since
+ *   the gravity change, so distance alone is no seal — the solver's winning route, which never
+ *   disturbs a boulder, is what guarantees the exit stays open.
  * - Spikes at (5,2) and (5,7).
  * - The two-gem quota plus the exit is reachable without ever touching a boulder: (2,2) up-left of
  *   the start, (5,10) through the row-3 corridor, then out along row 6 to the exit.
@@ -85,14 +86,16 @@ const CAVE_02: LevelDefinition = {
 /**
  * The third cave: a labyrinth. Where `cave-01` and `cave-02` are open rooms, this one is corridors —
  * rows 2 and 4 are near-solid barriers with a single passage each, so the quota route is one forced
- * snake (row 1 rightwards, down col 8, row 3 leftwards, down col 1, row 6 rightwards) rather than a
- * choice of lines. The solver puts it at 30 moves against `cave-02`'s 23.
+ * snake (row 1 rightwards, down col 7, row 3 leftwards, down col 1, row 6 rightwards) rather than a
+ * choice of lines.
  *
  * Invariants (the same contract the earlier caves hold):
- * - No boulder is unsupported at t=0: (1,9) rests on the boulder at (2,9), which rests on Dirt at
- *   (3,9). That pair is the whole point of the cave — see the chain below.
- * - Both boulders sit in column 9; the exit is at (6,8). A falling boulder never leaves its own
- *   column, so nothing can reach the exit.
+ * - No boulder is unsettled at t=0: (1,9) rests on the boulder at (2,9), which rests on Dirt at
+ *   (3,9). That pair is the whole point of the cave — see the chain below. The wall at (2,8) seals
+ *   the pair's left flank, so the descent beside them at column 7 can never start a roll; their
+ *   right flanks end at the border and the (2,10)/(1,10) walls-and-gem pocket.
+ * - Both boulders sit in column 9; the exit is at (6,8), and the shaft the chain drops them down
+ *   is walled on both sides, so the stack lands wedged at (4,9)/(5,9) with no flank to roll out of.
  * - Spikes at (5,6), a lethal dead end wedged between the row-5 detour and the gem stub. It looks
  *   like the short way from (5,5) to (6,6); it is not.
  * - The two-gem quota plus the exit is reachable without ever touching a boulder: (3,1) sits on the
@@ -114,7 +117,7 @@ const CAVE_03: LevelDefinition = {
   rows: [
     "############",
     "#p.......rg#",
-    "########.r##",
+    "#######.#r##",
     "#g........##",
     "#.####### ##",
     "#.#...hg# ##",
@@ -131,8 +134,9 @@ const CAVE_03: LevelDefinition = {
  * Invariants (the same contract the earlier caves hold):
  * - No boulder is unsupported at t=0: (1,8) rests on the boulder at (2,8), which rests on Dirt at
  *   (3,8).
- * - Both boulders sit in column 8; the exit is at (6,2). A falling boulder never leaves its own
- *   column, so nothing can reach the exit.
+ * - Both boulders sit in column 8; the exit is at (6,2). A boulder can roll sideways since the
+ *   gravity change, so distance alone is no seal — the solver's winning route, which never
+ *   disturbs a boulder, is what guarantees the exit stays open.
  * - Spikes at (5,6), a dead end against the wall at (5,7).
  * - The two-gem quota plus the exit is reachable without ever touching a boulder: (1,4) is two
  *   steps up-right of the start, (4,3) on the way down, and the route never enters column 8.
@@ -167,8 +171,9 @@ const CAVE_04: LevelDefinition = {
  *
  * Invariants (the same contract the earlier caves hold):
  * - No boulder is unsupported at t=0: (1,4) rests on Dirt at (2,4), (1,8) on Dirt at (2,8).
- * - Boulders sit in columns 4 and 8; the exit is at (6,9). A falling boulder never leaves its own
- *   column, so nothing can reach the exit.
+ * - Boulders sit in columns 4 and 8; the exit is at (6,9). A boulder can roll sideways since the
+ *   gravity change, so distance alone is no seal — the solver's winning route, which never
+ *   disturbs a boulder, is what guarantees the exit stays open.
  * - Spikes at (5,10), the corner past the exit turn-off.
  * - The two-gem quota plus the exit is reachable without ever touching a boulder: row 3 bypasses
  *   both support tiles, (1,10) is reached up column 10, (5,7) down the column-9 gap in row 4.
@@ -195,13 +200,16 @@ const CAVE_05: LevelDefinition = {
  * The sixth cave: a comb labyrinth. Vertical teeth at columns 3, 5-6, 8-9 alternate their gaps
  * between row 1 and row 6, so the route is one snake — down column 4, along the bottom, up
  * column 7, out along the top to the exit at (3,10). Unlike `cave-03`, the boulders here are pure
- * scenery: both rest on wall, wedged in niches, and can never fall.
+ * scenery: a stack locked into the col-8/9 tooth beside the exit, sealed so it can never fall nor
+ * roll.
  *
  * Invariants (the same contract the earlier caves hold):
- * - No boulder is unsupported at t=0: (2,5) rests on wall at (3,5), (4,2) on wall at (5,2).
- *   Wall is not diggable, so neither boulder can ever be undermined.
- * - Boulders sit in columns 5 and 2; the exit is at (3,10). A falling boulder never leaves its own
- *   column, so nothing can reach the exit.
+ * - No boulder is unsettled at t=0: (3,9) rests on wall at (4,9) with walls at (3,8) beside it,
+ *   and (2,9) rests on that boulder with wall at (2,8). Neither support is diggable, and every
+ *   flank keeps a permanently closed half — (3,8)/(2,8) are wall, and the right flanks end on the
+ *   exit at (3,10) and its wall roof, which never become open space — so the stack cannot move.
+ * - Boulders sit in column 9; the exit is at (3,10), one column over, and the Miner digging the
+ *   approach at (2,10) only ever opens half of a flank whose other half is the exit itself.
  * - Spikes at (6,2), the floor of the start-side pocket.
  * - The two-gem quota plus the exit is reachable without ever touching a boulder: (2,4) and (1,8)
  *   both sit on the snake itself, so the winning route costs no detour.
@@ -215,9 +223,9 @@ const CAVE_06: LevelDefinition = {
   rows: [
     "############",
     "#p...##.g..#",
-    "#..#gr#.##.#",
-    "#..#.##.##e#",
-    "#.r#.##.####",
+    "#..#g##.#r.#",
+    "#..#.##.#re#",
+    "#..#.##.####",
     "#.##.##.####",
     "#gh#....####",
     "############",
@@ -233,8 +241,9 @@ const CAVE_06: LevelDefinition = {
  *
  * Invariants (the same contract the earlier caves hold):
  * - No boulder is unsupported at t=0: (2,5) rests on Dirt at (3,5).
- * - The boulder sits in column 5; the exit is at (6,1). A falling boulder never leaves its own
- *   column, so nothing can reach the exit.
+ * - The boulder sits in column 5; the exit is at (6,1). A boulder can roll sideways since the
+ *   gravity change, so distance alone is no seal — the solver's winning route, which never
+ *   disturbs a boulder, is what guarantees the exit stays open.
  * - Spikes at (6,4), a pocket under the row-5 corridor.
  * - The two-gem quota plus the exit is reachable without ever touching a boulder: (1,1) at the end
  *   of the top corridor, (5,5) along the bottom, descending the boulder-free column-1 shaft.

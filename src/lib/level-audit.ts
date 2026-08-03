@@ -1,4 +1,4 @@
-import { isSupported, tileAt, type Board, type Coordinate } from "@/lib/boulder-simulation";
+import { isSettled, tileAt, type Board, type Coordinate } from "@/lib/boulder-simulation";
 import { parseLevel, type LevelDefinition } from "@/lib/levels";
 import { solveLevel } from "@/lib/level-solver";
 
@@ -35,15 +35,44 @@ function formatCoordinates(coordinates: Coordinate[]): string {
   return coordinates.map(({ row, col }) => `(${row},${col})`).join(" ");
 }
 
+/** Tiles that can become open space during a walk that never moves a boulder: already open, or
+ * diggable by the Miner passing through. */
+const OPENABLE = new Set([".", "g", " "]);
+
 /**
  * Tiles the Miner can reach without ever disturbing a boulder. A boulder blocks, and so does the
- * tile directly beneath one: stepping into it is what digs the support away.
+ * tile directly beneath one: stepping into it is what digs the support away. A boulder also rolls
+ * once a whole flank (side cell plus the diagonal below it) is open, so when both halves of a
+ * flank could open during the walk, its diggable halves are off-limits too — walking through an
+ * already-open half is safe, since it changes nothing.
  */
 function reachableWithoutDisturbingBoulders(board: Board, start: Coordinate): Set<string> {
   const boulders = board.flatMap((row, rowIndex) =>
     row.flatMap((tile, colIndex) => (tile === "r" ? [{ row: rowIndex, col: colIndex }] : [])),
   );
   const supports = new Set(boulders.map(({ row, col }) => `${row + 1}:${col}`));
+
+  for (const { row, col } of boulders) {
+    for (const side of [-1, 1]) {
+      const flank = [
+        { row, col: col + side },
+        { row: row + 1, col: col + side },
+      ];
+      const wholeFlankCanOpen = flank.every((cell) => {
+        const tile = tileAt(board, cell.row, cell.col);
+        return tile !== undefined && OPENABLE.has(tile);
+      });
+
+      if (wholeFlankCanOpen) {
+        for (const cell of flank) {
+          const tile = tileAt(board, cell.row, cell.col);
+          if (tile === "." || tile === "g") {
+            supports.add(`${cell.row}:${cell.col}`);
+          }
+        }
+      }
+    }
+  }
 
   const seen = new Set([`${start.row}:${start.col}`]);
   const queue = [start];
@@ -122,20 +151,25 @@ export function auditLevel(definition: LevelDefinition): LevelAudit {
     detail: `${level.gemCount} gems, quota ${definition.requiredGemCount}, ${Math.max(level.gemCount - definition.requiredGemCount, 0)} bonus`,
   });
 
-  const unsupported = level.template.flatMap((row, rowIndex) =>
+  // Settled, not just supported: a boulder with an open flank at t=0 rolls before the player has
+  // made a move, which is exactly what this check exists to forbid.
+  const unsettled = level.template.flatMap((row, rowIndex) =>
     row.flatMap((tile, colIndex) =>
-      tile === "r" && !isSupported(level.template, rowIndex, colIndex) ? [{ row: rowIndex, col: colIndex }] : [],
+      tile === "r" && !isSettled(level.template, rowIndex, colIndex) ? [{ row: rowIndex, col: colIndex }] : [],
     ),
   );
   checks.push({
     name: "every boulder rests at t=0",
-    ok: unsupported.length === 0,
+    ok: unsettled.length === 0,
     detail:
-      unsupported.length === 0 ? `${boulders.length} boulders resting` : `falling: ${formatCoordinates(unsupported)}`,
+      unsettled.length === 0
+        ? `${boulders.length} boulders resting`
+        : `falling or rolling: ${formatCoordinates(unsettled)}`,
   });
 
-  // A falling boulder only ever moves down its own column, so sharing a column with the exit is
-  // the whole risk of sealing it.
+  // A boulder starting in the exit column is the obvious way to seal the exit from above. Rolling
+  // means a boulder can wander into the column later too — that residual risk is the solver's to
+  // catch, not this heuristic's.
   // `.at(0)` rather than `[0]`: a cave with no exit is a failure this audit must report, and with
   // `noUncheckedIndexedAccess` off only `.at` admits that the index can miss.
   const exit = exits.at(0);
