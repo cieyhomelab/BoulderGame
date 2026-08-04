@@ -89,12 +89,12 @@ export function createInitialGameState(level: ParsedLevel): GameState {
 /**
  * Runs the cave's gravity rule against the current state. Returns the same state object when the
  * step changed nothing, so the animation-frame subscription cannot re-render an idle board.
+ *
+ * Gravity outlives the level. A boulder left in mid-air when the level ended — the one stacked on
+ * top of the boulder that crushed the Miner, most visibly — still finishes its fall, so the cave
+ * comes to rest rather than freezing mid-collapse.
  */
 export function applySimulation(currentState: GameState, nowMs: number): GameState {
-  if (currentState.status !== "active") {
-    return currentState;
-  }
-
   const result = stepSimulation({ board: currentState.board, boulderMotions: currentState.boulderMotions }, nowMs);
 
   if (result.board === currentState.board && result.boulderMotions === currentState.boulderMotions) {
@@ -103,7 +103,11 @@ export function applySimulation(currentState: GameState, nowMs: number): GameSta
 
   // A boulder that moved into the Miner's tile crushes them. Compared against the position in the
   // state the step was applied to, so a boulder dropping into a tile the Miner just left is safe.
-  const crushed = result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
+  // Only while the level is still running: an outcome is final, so a later boulder must not turn a
+  // win into a loss, nor relabel a spike death as a crush.
+  const crushed =
+    currentState.status === "active" &&
+    result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
 
   // `landedOn` records every one-tile step of a fall; a landing is the step after which the
   // boulder is still there and no longer in motion.

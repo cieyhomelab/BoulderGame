@@ -12,6 +12,7 @@ import {
   expectGameHydrated,
   expectInputResponseText,
   expectLevelStatus,
+  expectNoBoulderAt,
   expectOutcomeMessage,
   expectPlayerAt,
   expectReplayButtonHidden,
@@ -52,6 +53,31 @@ test("a boulder that falls onto the Miner ends the level as Failed", async ({ pa
   await expectBoulderAt(page, 3, 4);
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.player)).toHaveCount(0);
   await expectOutcomeMessage(page, /failed — crushed by a falling boulder/i);
+  await expectReplayButtonVisible(page);
+});
+
+test("the stack finishes collapsing after the crush ends the level", async ({ page }) => {
+  await page.goto(MANUAL_CLOCK_ROUTE);
+  await expectGameHydrated(page);
+
+  await pressKeys(page, UNDERMINE_AND_STAND_UNDER);
+  await advanceGameClock(page, GAME_TIMING.boulderGraceWindowMs);
+
+  await expectLevelStatus(page, "lost");
+  // The boulder that crushed the Miner vacated (2,4), so the one above it is falling in turn.
+  await expectUnstableBoulderAt(page, 1, 4);
+
+  await advanceGameClock(page, GAME_TIMING.boulderGraceWindowMs);
+
+  // Gravity outlives the level: the stack settles instead of freezing mid-collapse.
+  await expectBoulderAt(page, 2, 4);
+  await expectBoulderAt(page, 3, 4);
+  await expectNoBoulderAt(page, 1, 4);
+  await expect(page.getByText("The cave is stable.")).toBeAttached();
+
+  // The outcome is final — a boulder moving after the loss neither revives the level nor relabels it.
+  await expectLevelStatus(page, "lost");
+  await expectLossCause(page, "crushed");
   await expectReplayButtonVisible(page);
 });
 
