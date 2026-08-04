@@ -18,6 +18,7 @@ import {
   expectGemQuota,
   expectGemsRemaining,
   expectHazardAt,
+  expectHighScore,
   expectLevelName,
   expectLevelStatus,
   expectNextLevelButtonHidden,
@@ -190,6 +191,37 @@ test("every cave leads to the next, and the final one offers no successor", asyn
     await activateNextLevel(page);
     await expectLevelStatus(page, "active");
   }
+});
+
+test("replaying after the last cave restarts the run from the first", async ({ page }) => {
+  await page.goto("/");
+  await expectGameHydrated(page);
+
+  for (const [index, definition] of LEVELS.entries()) {
+    await pressKeys(page, winningKeysFor(definition));
+    await expectLevelStatus(page, "won");
+
+    if (index === LEVELS.length - 1) {
+      break;
+    }
+
+    await activateNextLevel(page);
+  }
+
+  const runScore = await readScore(page);
+  expect(runScore).toBeGreaterThan(0);
+
+  await activateReplay(page);
+
+  // The run is over, so the replay is a whole new game: first cave, fresh board, score back to zero.
+  await expectLevelStatus(page, "active");
+  await expectLevelName(page, "Level 01");
+  await expectPlayerAt(page, 3, 2);
+  await expectExitAt(page, 6, 10);
+  await expectScore(page, 0);
+  await expectCollectedGems(page, 0);
+  // The record survives the reset — only the run's own score rewinds.
+  await expectHighScore(page, runScore);
 });
 
 test("cave-02's bonus gem is the boulder's support, so taking it and standing still is fatal", async ({ page }) => {

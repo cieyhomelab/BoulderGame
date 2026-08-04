@@ -146,7 +146,15 @@ export default function GameEntry() {
   }, [gameState.boulderLandingCount, gameState.collectedGemCount, gameState.status, gameState.lossCause]);
 
   function handleReplayClick(): void {
-    setGameState((currentState) => createInitialGameState(currentState.level));
+    // Clearing the last cave ends the run, so a replay there starts the game over from the first
+    // cave with a fresh score. A loss still replays the cave that was lost, wherever it sits.
+    if (hasClearedFinalLevel) {
+      setBankedScore(0);
+      setGameState(createInitialGameState(parseLevel(LEVELS[0])));
+    } else {
+      setGameState((currentState) => createInitialGameState(currentState.level));
+    }
+
     setAttemptCount(incrementGameAttemptCount());
   }
 
@@ -169,11 +177,12 @@ export default function GameEntry() {
   const isTerminalState = gameState.status !== "active";
   // Offered on a win only: a lost level is replayed, not skipped.
   const hasNextLevel = gameState.status === "won" && nextLevelAfter(level.definition) !== null;
+  const hasClearedFinalLevel = gameState.status === "won" && nextLevelAfter(level.definition) === null;
   const outcomeMessage =
     gameState.status === "won"
       ? hasNextLevel
         ? "Level complete. A deeper cave is open."
-        : "Level complete. Play again?"
+        : "Every cave cleared. Play again from the first?"
       : gameState.status === "lost"
         ? gameState.lossCause === "crushed"
           ? "Failed — crushed by a falling boulder. Play again?"
