@@ -98,8 +98,11 @@ function reachableWithoutDisturbingBoulders(board: Board, start: Coordinate): Se
       }
 
       seen.add(key);
-      // Spikes are lethal, so a route may end on them but never continue through them.
-      if (tile !== "h") {
+      // Spikes are lethal and the exit ends the level, so a route may end on either but never
+      // continue through them. The exit is also barred below the quota, which this walk does not
+      // track — treating it as a terminus keeps the heuristic from claiming a path the rules
+      // would refuse.
+      if (tile !== "h" && tile !== "e") {
         queue.push({ row: nextRow, col: nextCol });
       }
     }

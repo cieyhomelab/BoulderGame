@@ -141,6 +141,22 @@ export async function expectExitAt(page: Page, row: number, col: number): Promis
   ).toBeVisible();
 }
 
+/**
+ * The exit's two looks. The difference is entirely inside the tile's SVG, so the assertion reads
+ * the `data-exit-locked` attribute the board publishes rather than the art itself.
+ */
+export async function expectExitSealedAt(page: Page, row: number, col: number): Promise<void> {
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.exit}"][data-row="${row}"][data-col="${col}"]`),
+  ).toHaveAttribute("data-exit-locked", "true");
+}
+
+export async function expectExitOpenAt(page: Page, row: number, col: number): Promise<void> {
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.exit}"][data-row="${row}"][data-col="${col}"]`),
+  ).toHaveAttribute("data-exit-locked", "false");
+}
+
 export async function expectReplayButtonVisible(page: Page): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.replayButton)).toBeVisible();
 }

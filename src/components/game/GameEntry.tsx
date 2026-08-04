@@ -7,6 +7,7 @@ import {
   MOVE_DELTAS,
   applySimulation,
   createInitialGameState,
+  isExitOpen,
   isSameCoordinate,
   resolveMove,
   type GameState,
@@ -174,6 +175,9 @@ export default function GameEntry() {
   const level = gameState.level;
   const requiredGemCount = level.definition.requiredGemCount;
   const optionalGemCount = level.gemCount - requiredGemCount;
+  // The rules' own answer, not a second copy of the threshold: the bars are drawn exactly when
+  // `resolveMove` would refuse the step.
+  const isExitLocked = !isExitOpen(level, gameState.collectedGemCount);
   const isTerminalState = gameState.status !== "active";
   // Offered on a win only: a lost level is replayed, not skipped.
   const hasNextLevel = gameState.status === "won" && nextLevelAfter(level.definition) !== null;
@@ -224,7 +228,7 @@ export default function GameEntry() {
           <div className="relative border-4 border-[#2f2519] bg-[#171a15] p-3 shadow-[10px_10px_0_#070806] sm:p-5">
             <TileDefs />
             <div
-              aria-label="BoulderGame cave of diggable dirt, with the miner, gems, boulders, spikes and an open exit."
+              aria-label="BoulderGame cave of diggable dirt, with the miner, gems, boulders, spikes and an exit that stays barred until the gem quota is met."
               className="grid grid-cols-12 gap-1 border-4 border-[#6b5540] bg-[#070a06] p-2"
               data-testid={GAME_GUARDRAIL_TEST_IDS.board}
               role="img"
@@ -243,6 +247,9 @@ export default function GameEntry() {
                       aria-hidden="true"
                       className="aspect-square min-h-0 overflow-hidden rounded-[2px]"
                       data-col={col}
+                      // Only the exit carries it: the sealed look is otherwise invisible to a
+                      // test, since the difference lives entirely inside the tile's SVG.
+                      data-exit-locked={cellTile === "e" ? String(isExitLocked) : undefined}
                       data-row={row}
                       data-testid={
                         hasPlayer
@@ -263,7 +270,7 @@ export default function GameEntry() {
                       }
                       key={`${row}-${col}`}
                     >
-                      <TileArt tile={hasPlayer ? "p" : cellTile} unstable={isUnstableBoulder} />
+                      <TileArt tile={hasPlayer ? "p" : cellTile} unstable={isUnstableBoulder} locked={isExitLocked} />
                     </div>
                   );
                 }),

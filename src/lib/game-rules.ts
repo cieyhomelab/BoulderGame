@@ -70,6 +70,15 @@ export function isDiggable(tile: Tile | undefined): boolean {
   return tile === "." || tile === "g";
 }
 
+/**
+ * Whether the exit is passable. It is barred until the quota is met, so unlike every other tile
+ * its walkability depends on the run rather than on the board — which is why `isWalkable` cannot
+ * answer for it alone. The renderer asks the same question to decide whether to draw the bars.
+ */
+export function isExitOpen(level: ParsedLevel, collectedGemCount: number): boolean {
+  return collectedGemCount >= level.definition.requiredGemCount;
+}
+
 export function createInitialGameState(level: ParsedLevel): GameState {
   return {
     level,
@@ -144,16 +153,19 @@ export function resolveMove(currentState: GameState, delta: Coordinate, nowMs: n
     return { state: currentState, accepted: false };
   }
 
+  // The bars are not decoration: one gem short of the quota, the exit refuses the Miner the same
+  // way a wall does. Rejected rather than accepted-and-ignored, so the move does not burn a step.
+  if (nextTile === "e" && !isExitOpen(currentState.level, currentState.collectedGemCount)) {
+    return { state: currentState, accepted: false };
+  }
+
   const collectedGemCount = currentState.collectedGemCount + (nextTile === "g" ? 1 : 0);
   const board = isDiggable(nextTile)
     ? withTile(currentState.board, nextPosition.row, nextPosition.col, " ")
     : currentState.board;
-  const status =
-    nextTile === "h"
-      ? "lost"
-      : nextTile === "e" && collectedGemCount >= currentState.level.definition.requiredGemCount
-        ? "won"
-        : "active";
+  // Reaching the exit tile at all now means the quota was already met — the gate above is what
+  // proves it, so the win no longer re-checks the count.
+  const status = nextTile === "h" ? "lost" : nextTile === "e" ? "won" : "active";
 
   const movedState: GameState = {
     ...currentState,
