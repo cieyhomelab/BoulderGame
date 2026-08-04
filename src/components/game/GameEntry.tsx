@@ -350,7 +350,7 @@ export default function GameEntry() {
                 <p className="mb-3 text-sm leading-snug font-bold text-[#f5e7c8]">{outcomeMessage}</p>
                 {hasNextLevel && (
                   <button
-                    className="mb-2 inline-flex w-full items-center justify-center gap-2 border-4 border-[#f3b63f] bg-[#2a2113] px-3 py-2 font-mono text-sm font-black text-[#f3b63f] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79eada]"
+                    className="mb-2 inline-flex w-full cursor-pointer items-center justify-center gap-2 border-4 border-[#f3b63f] bg-[#2a2113] px-3 py-2 font-mono text-sm font-black text-[#f3b63f] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#79eada]"
                     data-testid={GAME_GUARDRAIL_TEST_IDS.nextLevelButton}
                     onClick={handleNextLevelClick}
                     type="button"
@@ -360,7 +360,7 @@ export default function GameEntry() {
                   </button>
                 )}
                 <button
-                  className="inline-flex w-full items-center justify-center gap-2 border-4 border-[#79eada] bg-[#142621] px-3 py-2 font-mono text-sm font-black text-[#79eada] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f3b63f]"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 border-4 border-[#79eada] bg-[#142621] px-3 py-2 font-mono text-sm font-black text-[#79eada] uppercase shadow-[4px_4px_0_#070806] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_#070806] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f3b63f]"
                   data-testid={GAME_GUARDRAIL_TEST_IDS.replayButton}
                   onClick={handleReplayClick}
                   ref={replayButtonRef}
