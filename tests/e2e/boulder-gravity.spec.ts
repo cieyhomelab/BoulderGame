@@ -9,6 +9,7 @@ import {
   expectDirtAt,
   expectGameHydrated,
   expectLevelStatus,
+  expectNextLevelButtonVisible,
   expectNoBoulderAt,
   expectOpenSpaceAt,
   expectPlayerAt,
@@ -39,6 +40,29 @@ const UNDERMINE_SHAFT_AND_STEP_CLEAR = [
   "ArrowUp",
   "ArrowRight",
   "ArrowLeft",
+];
+
+/**
+ * Undermines the stack at (2,4)/(1,4) on the way past, then collects the two-gem quota — (5,3) and
+ * (5,7) — and walks out of the exit at (6,10). The clock never moves during the route, so the
+ * undermined stack is still hanging when the level is won. Fifteen accepted moves.
+ */
+const UNDERMINE_STACK_AND_WIN = [
+  "ArrowRight",
+  "ArrowRight",
+  "ArrowDown",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowDown",
+  "ArrowRight",
+  "ArrowRight",
+  "ArrowRight",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowRight",
+  "ArrowRight",
+  "ArrowRight",
 ];
 
 async function pressKeys(page: Page, keys: string[]): Promise<void> {
@@ -123,6 +147,32 @@ test("a boulder whose support fell away becomes unstable in turn (FR-009)", asyn
   await expectBoulderAt(page, 3, 4);
   await expectNoBoulderAt(page, 1, 4);
   await expect(page.getByText("The cave is stable.")).toBeAttached();
+});
+
+test("a hanging boulder still falls after the level is won", async ({ page }) => {
+  await page.goto(MANUAL_CLOCK_ROUTE);
+  await expectGameHydrated(page);
+
+  await pressKeys(page, UNDERMINE_STACK_AND_WIN);
+  await expectPlayerAt(page, 6, 10);
+  await expectLevelStatus(page, "won");
+  await expectUnstableBoulderAt(page, 2, 4);
+
+  // The route dug column 4 open down to row 6, so both boulders drop the length of that shaft. The
+  // lower one grounds out at (6,4); the upper one lands on it, finds the collected gem's tile and
+  // the corridor below it both open, and rolls off into (6,3).
+  await advanceGameClock(page, GAME_TIMING.boulderGraceWindowMs * 2 + GAME_TIMING.boulderFallIntervalMs * 10);
+
+  await expectBoulderAt(page, 6, 4);
+  await expectBoulderAt(page, 6, 3);
+  await expectNoBoulderAt(page, 1, 4);
+  await expectNoBoulderAt(page, 2, 4);
+  await expectNoBoulderAt(page, 5, 4);
+  await expect(page.getByText("The cave is stable.")).toBeAttached();
+
+  // A boulder moving after the win cannot take the win back.
+  await expectLevelStatus(page, "won");
+  await expectNextLevelButtonVisible(page);
 });
 
 test("the cave reports instability to the live status region", async ({ page }) => {
