@@ -12,6 +12,8 @@ const DIRT_SPECKS = [
   { cx: 32, cy: 27.5, rx: 2, ry: 1.5, fill: "#46583c" },
 ] as const;
 
+const EXIT_BAR_XS = [15, 29.5, 44] as const;
+
 const WALL_SEAMS = [
   { x: 30, y: 5, width: 3, height: 24 },
   { x: 14, y: 32, width: 3, height: 22 },
@@ -44,6 +46,10 @@ export function TileDefs() {
           <stop offset="0.55" stopColor="#847d71" />
           <stop offset="1" stopColor="#3e3a33" />
         </radialGradient>
+        <linearGradient id="bg-alcove" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#1b1712" />
+          <stop offset="1" stopColor="#050604" />
+        </linearGradient>
         <linearGradient id="bg-hazard" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#3a2019" />
           <stop offset="1" stopColor="#1c0f0c" />
@@ -205,6 +211,29 @@ function ExitPortal() {
   );
 }
 
+/**
+ * The exit before the quota is met: the portal is not lit yet, so the tile shows the bare stone
+ * alcove it sits in, sealed behind iron. Deliberately unglowing — the reveal is the whole point.
+ */
+function LockedExit() {
+  return (
+    <>
+      <rect width="64" height="64" fill="#4a3b2b" />
+      <rect width="64" height="5" fill="#6b5540" />
+      <rect y="59" width="64" height="5" fill="#2a2016" />
+      <path d="M8 59 L8 28 A24 24 0 0 1 56 28 L56 59 Z" fill="url(#bg-alcove)" />
+      {EXIT_BAR_XS.map((x) => (
+        <g key={x}>
+          <rect x={x} y="13" width="5" height="46" fill="#7c7568" />
+          <rect x={x + 1} y="13" width="1.5" height="46" fill="#b0a898" fillOpacity="0.55" />
+        </g>
+      ))}
+      <rect x="9" y="32" width="46" height="5" fill="#7c7568" />
+      <rect x="9" y="33" width="46" height="1.5" fill="#b0a898" fillOpacity="0.55" />
+    </>
+  );
+}
+
 function Spikes() {
   return (
     <>
@@ -227,8 +256,17 @@ const TILE_ART: Record<Tile, () => React.JSX.Element> = {
   h: Spikes,
 };
 
-export function TileArt({ tile, unstable = false }: { tile: Tile; unstable?: boolean }) {
-  const Art = TILE_ART[tile];
+export function TileArt({
+  tile,
+  unstable = false,
+  locked = false,
+}: {
+  tile: Tile;
+  unstable?: boolean;
+  /** Only meaningful for the exit: the quota is still short, so the portal stays sealed. */
+  locked?: boolean;
+}) {
+  const Art = tile === "e" && locked ? LockedExit : TILE_ART[tile];
 
   // The wobble sits on the group rather than the <svg>, so the tile's own box never moves and
   // neighbouring cells cannot be nudged by a shaking boulder.
