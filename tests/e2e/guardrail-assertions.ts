@@ -6,6 +6,7 @@ import {
   GAME_GUARDRAIL_TEST_IDS,
   GAME_GUARDRAIL_THRESHOLDS,
 } from "../../src/lib/game-guardrails";
+import { GAME_HIGH_SCORE_KEY } from "../../src/lib/game-score";
 
 /**
  * Waits until the game island has hydrated. The attempt counter renders as `-` on the server and
@@ -219,6 +220,34 @@ export async function expectBonusGems(page: Page, expectedText: string): Promise
 
 export async function expectScore(page: Page, expectedScore: number): Promise<void> {
   await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.score)).toHaveText(String(expectedScore));
+}
+
+/**
+ * The score as the HUD currently shows it. Read rather than asserted, so a test can carry the total
+ * a searched route happens to earn across a cave boundary instead of hard-coding a gem count that
+ * goes stale the moment the route changes.
+ */
+export async function readScore(page: Page): Promise<number> {
+  const scoreText = await page.getByTestId(GAME_GUARDRAIL_TEST_IDS.score).textContent();
+
+  return Number(scoreText);
+}
+
+/** Gems collected in the cave being played, which the running total is built from. */
+export async function readCollectedGems(page: Page): Promise<number> {
+  const collectedText = await page.getByTestId(GAME_GUARDRAIL_TEST_IDS.collectedGems).textContent();
+
+  return Number(collectedText);
+}
+
+export async function expectHighScore(page: Page, expectedHighScore: number): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.highScore)).toHaveText(String(expectedHighScore));
+}
+
+export async function expectStoredHighScore(page: Page, expectedHighScore: number): Promise<void> {
+  await expect
+    .poll(() => page.evaluate((key) => window.localStorage.getItem(key), GAME_HIGH_SCORE_KEY))
+    .toBe(String(expectedHighScore));
 }
 
 export async function expectCollectedGems(page: Page, expectedCount: number): Promise<void> {
