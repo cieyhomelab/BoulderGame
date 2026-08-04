@@ -13,6 +13,7 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   player: "game-player",
   gemsRemaining: "game-gems-remaining",
   score: "game-score",
+  highScore: "game-high-score",
   collectedGems: "game-collected-gems",
   levelStatus: "game-level-status",
   hazard: "game-hazard",

@@ -1,4 +1,4 @@
-import { test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { GAME_TIMING } from "../../src/lib/game-clock";
 import type { MoveDirection } from "../../src/lib/game-rules";
@@ -26,6 +26,7 @@ import {
   expectPlayerAt,
   expectReplayButtonVisible,
   expectScore,
+  readScore,
 } from "./guardrail-assertions";
 
 const MANUAL_CLOCK_ROUTE = "/?clock=manual";
@@ -75,11 +76,15 @@ async function pressKeys(page: Page, keys: string[]): Promise<void> {
   }
 }
 
-async function winCaveOneAndAdvance(page: Page): Promise<void> {
+/** Returns the score banked by clearing cave-01, which the caves after it build on. */
+async function winCaveOneAndAdvance(page: Page): Promise<number> {
   await pressKeys(page, winningKeysFor(LEVELS[0]));
   await expectLevelStatus(page, "won");
+  const bankedScore = await readScore(page);
   await activateNextLevel(page);
   await expectLevelStatus(page, "active");
+
+  return bankedScore;
 }
 
 test("clearing a cave that has a successor offers the way onward", async ({ page }) => {
@@ -112,11 +117,14 @@ test("advancing loads the second cave with a fresh board and HUD", async ({ page
   await page.goto("/");
   await expectGameHydrated(page);
 
-  await winCaveOneAndAdvance(page);
+  const bankedScore = await winCaveOneAndAdvance(page);
 
   await expectLevelName(page, "Level 02");
   await expectPlayerAt(page, 3, 3);
-  await expectScore(page, 0);
+  // The board is fresh; the score deliberately is not. Cave-01's gems stay banked in the total
+  // while the per-cave counters below all restart.
+  expect(bankedScore).toBeGreaterThan(0);
+  await expectScore(page, bankedScore);
   await expectCollectedGems(page, 0);
   await expectGemsRemaining(page, 3);
   await expectGemQuota(page, "00/02");

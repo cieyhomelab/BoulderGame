@@ -13,12 +13,12 @@ import {
 } from "@/lib/game-rules";
 import { playBoulderThud, playGemChime, playLevelWin, playMinerCrush, playSpikesHit } from "@/lib/game-audio";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
+import { GEM_SCORE_VALUE, readHighScore, recordHighScore } from "@/lib/game-score";
 import { LEVELS, nextLevelAfter, parseLevel } from "@/lib/levels";
 import { cn } from "@/lib/utils";
 
 import { TileArt, TileDefs } from "./TileArt";
 
-const GEM_SCORE_VALUE = 100;
 /** Key bindings onto the cave's four moves. The rules own the directions; this owns the keyboard. */
 const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
   ArrowUp: MOVE_DELTAS.up,
@@ -38,6 +38,13 @@ const MOVE_KEYS: Partial<Record<string, Coordinate>> = {
 export default function GameEntry() {
   const [attemptCount, setAttemptCount] = useState<number | null>(null);
   const [gameState, setGameState] = useState<GameState>(() => createInitialGameState(parseLevel(LEVELS[0])));
+  /** Points from caves already cleared this run. The active cave's gems are added on top, so
+   * replaying a cave rewinds only that cave's points. */
+  const [bankedScore, setBankedScore] = useState(0);
+  /** Seeded from storage on the first render, which this island only ever does in the browser, then
+   * raised as the run climbs. State rather than a derived maximum: a replay rewinds the score, and
+   * the record must not rewind with it. */
+  const [highScore, setHighScore] = useState(() => readHighScore());
   const countedAttemptRef = useRef(false);
   const replayButtonRef = useRef<HTMLButtonElement | null>(null);
   const gameClockRef = useRef<GameClock | null>(null);
@@ -47,6 +54,13 @@ export default function GameEntry() {
     status: "active",
   });
 
+  const totalScore = bankedScore + gameState.collectedGemCount * GEM_SCORE_VALUE;
+  // Beating the record shows immediately, without waiting for a reload to read it back. Adjusting
+  // state during render rather than in an effect keeps the HUD from painting the stale record first.
+  if (totalScore > highScore) {
+    setHighScore(totalScore);
+  }
+
   useEffect(() => {
     if (countedAttemptRef.current) {
       return;
@@ -55,6 +69,11 @@ export default function GameEntry() {
     countedAttemptRef.current = true;
     setAttemptCount(incrementGameAttemptCount());
   }, []);
+
+  // Persisted as the run climbs rather than at a win, so a later loss cannot erase the record.
+  useEffect(() => {
+    recordHighScore(totalScore);
+  }, [totalScore]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent): void {
@@ -132,11 +151,14 @@ export default function GameEntry() {
   }
 
   function handleNextLevelClick(): void {
-    setGameState((currentState) => {
-      const next = nextLevelAfter(currentState.level.definition);
+    const next = nextLevelAfter(gameState.level.definition);
+    if (!next) {
+      return;
+    }
 
-      return next ? createInitialGameState(parseLevel(next)) : currentState;
-    });
+    // Clearing a cave banks its gems: the next cave starts from a fresh board but not a fresh score.
+    setBankedScore((currentBankedScore) => currentBankedScore + gameState.collectedGemCount * GEM_SCORE_VALUE);
+    setGameState(createInitialGameState(parseLevel(next)));
     // Advancing is a fresh run of the game, so it counts the same as a replay.
     setAttemptCount(incrementGameAttemptCount());
   }
@@ -257,7 +279,7 @@ export default function GameEntry() {
               <div className="border-4 border-[#3f3124] bg-[#231d16] p-3">
                 <p className="text-xs tracking-[0.12em] text-[#c9b58a] uppercase">Score</p>
                 <p className="text-2xl font-black text-[#c56cff]" data-testid={GAME_GUARDRAIL_TEST_IDS.score}>
-                  {gameState.collectedGemCount * GEM_SCORE_VALUE}
+                  {totalScore}
                 </p>
               </div>
             </div>
@@ -281,13 +303,15 @@ export default function GameEntry() {
             <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.lossCause}>
               {gameState.lossCause ?? "none"}
             </p>
+            {/* Off-screen but still rendered: the input-latency guardrail reads this marker, and the
+                panel it used to fill now shows the record instead. */}
+            <p className="sr-only" data-testid={GAME_GUARDRAIL_TEST_IDS.inputResponseMarker}>
+              {gameState.moveCount}:{gameState.playerPosition.row},{gameState.playerPosition.col}
+            </p>
             <div className="border-4 border-[#374f42] bg-[#18231d] p-3">
-              <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">Input</p>
-              <p
-                className="text-xl font-black text-[#f3b63f]"
-                data-testid={GAME_GUARDRAIL_TEST_IDS.inputResponseMarker}
-              >
-                {gameState.moveCount}:{gameState.playerPosition.row},{gameState.playerPosition.col}
+              <p className="text-xs tracking-[0.12em] text-[#9fb58f] uppercase">High score</p>
+              <p className="text-xl font-black text-[#f3b63f]" data-testid={GAME_GUARDRAIL_TEST_IDS.highScore}>
+                {highScore}
               </p>
             </div>
             <div
@@ -340,9 +364,9 @@ export default function GameEntry() {
             )}
             <p className="sr-only" aria-live="polite">
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
-              {level.gemCount - gameState.collectedGemCount} gems remaining. Score{" "}
-              {gameState.collectedGemCount * GEM_SCORE_VALUE}. Quota {collectedRequiredGems} of {requiredGemCount}.
-              Bonus {collectedBonusGems} of {optionalGemCount}. {unstableBoulderDescription} Status {gameState.status}.
+              {level.gemCount - gameState.collectedGemCount} gems remaining. Score {totalScore}. High score {highScore}.
+              Quota {collectedRequiredGems} of {requiredGemCount}. Bonus {collectedBonusGems} of {optionalGemCount}.{" "}
+              {unstableBoulderDescription} Status {gameState.status}.
             </p>
           </aside>
         </div>

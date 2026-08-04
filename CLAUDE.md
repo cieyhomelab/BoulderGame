@@ -22,7 +22,7 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run level:check` — audit every cave in `LEVELS` (no browser, exits non-zero on failure)
 - `npm run level:routes` — the same audit plus each cave's winning key sequence
 
-62 tests across 9 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`, `level-progression`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
+130 tests across 10 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-crush`, `undermine-gated-gem`, `game-clock`, `level-progression`, `high-score`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
 
 `level-invariants` and `level-solver` are the odd ones out: they never open a page, running against the level data directly. Both iterate `LEVELS`, so adding a cave to the registry adds its coverage automatically — a new level that seals its own exit, drops a boulder before the player moves, or cannot be won at all fails there rather than in front of a player.
 
