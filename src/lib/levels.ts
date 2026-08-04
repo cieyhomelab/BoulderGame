@@ -390,6 +390,49 @@ const CAVE_10: LevelDefinition = {
 };
 
 /**
+ * The eleventh cave, built around the barred exit. The exit at (1,2) is the Miner's next-door
+ * neighbour and the first move east is refused: with an empty bag the bars do not open, so the
+ * whole cave is the price of the one step that would otherwise have ended it. The only way out of
+ * the start pocket is down column 1, and the quota sits at the far end of the map.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - The exit is entered from (1,1) alone: (0,2), (1,3) and (2,2) are wall. There is no way to reach
+ *   it except by coming back up the column-1 shaft, which is what makes the round trip mandatory.
+ * - No boulder is unsupported at t=0: (3,5) rests on Dirt at (4,5), (3,8) on Dirt at (4,8). Neither
+ *   can roll — every flank is Dirt rather than open space.
+ * - Boulders sit in columns 5 and 8; the exit is in column 2.
+ * - Spikes at (5,5), directly under the (3,5) boulder's support and directly over the row-6
+ *   corridor: the Miner walks past them on every lap, and stepping up into them is a choice.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (5,10) and (4,10)
+ *   up the column-10 shaft, out and back along row 6, and the route never enters row 3 or row 4.
+ * - Row 3 is the short way home — column 10 down to column 1 in nine tiles instead of the long lap
+ *   through row 6 — and both plugs in it are boulders. Neither is needed to win; both can be
+ *   undermined by a Miner who wants the shorter return, at the price of a boulder falling on the
+ *   tile they are standing in.
+ * - The bonus gem at (2,8) is walled by (1,8), (2,7) and (2,9), and plugged from below by the (3,8)
+ *   boulder — obtainable only by digging its support at (4,8) from (4,7) and stepping back west
+ *   inside the grace window (FR-009/FR-011). (4,9) is wall, so west is the only escape.
+ * - (5,8) is wall on purpose: the undermined boulder settles at (4,8) and can never fall further.
+ *   With an open (5,8) it would drop through the column-8 pocket into the row-6 corridor once that
+ *   corridor had been dug, sealing the only safe way home.
+ */
+const CAVE_11: LevelDefinition = {
+  id: "cave-11",
+  name: "Level 11",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#pe#########",
+    "#.######g###",
+    "#....r..r..#",
+    "#.##.....#g#",
+    "#.###h#.##g#",
+    "#..........#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
@@ -407,6 +450,7 @@ export const LEVELS: readonly LevelDefinition[] = [
   CAVE_08,
   CAVE_09,
   CAVE_10,
+  CAVE_11,
 ];
 
 /**
