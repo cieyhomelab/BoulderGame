@@ -484,6 +484,103 @@ const CAVE_12: LevelDefinition = {
 };
 
 /**
+ * The thirteenth cave: the longest walk in the registry, and the first one the Miner has to make
+ * twice. The exit at (6,1) is a stub off the column-1 shaft he descends on his ninth move, barred
+ * and useless with an empty bag, and both quota gems are on the far side of the map — so the cave
+ * is one out-and-back lap, not a lap.
+ *
+ * The middle of the map is a sealed column at 4-6 that splits it in two, crossed only along row 6.
+ * The Skarbek is sealed on the right of it, under the row-3 corridor, and the gem that is his lid
+ * is the second quota gem — so he wakes at the turning point, with the whole return trip left to
+ * run down.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (2,5) rests on Dirt at (3,5). Neither flank can ever open —
+ *   (2,4) and (2,6) are wall, and a wall never becomes open space.
+ * - The boulder sits in column 5; the exit is at (6,1).
+ * - Spikes at (6,2), the tile between the exit and the wall at (6,3). It is the only neighbour the
+ *   exit has besides (5,1), so the Miner coming home down the row-5 lane sees his door one step
+ *   below him and a step that kills him beside it.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (4,4) is a stub
+ *   off (5,4) on the outbound leg, (3,8) sits on the row-3 corridor, and the honest route crosses
+ *   the middle column along row 6, which the boulder never reads.
+ * - The Skarbek's niche at (4,8) is sealed at t=0 — wall east, west and below, and the quota gem at
+ *   (3,8) for a lid. Nothing else touches it, so he cannot move and the Miner cannot reach him
+ *   until the gem is prised off, which is the same act that looses him.
+ * - The bonus gem at (1,5) is roofed by the border, walled at (1,4) and (1,6), and plugged from
+ *   below by the boulder — obtainable only by undermining it (FR-011). Digging (3,5) drops the
+ *   boulder through it onto the wall floor at (5,5), and escape from (3,5) is east to (3,6) only,
+ *   since (3,4) is wall. The vacated (2,5) is then the door.
+ * - (4,5) is carved open on purpose: it is the shaft the undermined boulder falls into, and it is
+ *   also a one-way seam between the two halves of the map. A Miner who digs (3,5) from below, from
+ *   (4,5), is thrown east into (3,6) and cannot come back — the boulder has taken the shaft.
+ */
+const CAVE_13: LevelDefinition = {
+  id: "cave-13",
+  name: "Level 13",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#p..#g#...g#",
+    "###.#r#.####",
+    "#...#...g..#",
+    "#.##g ##t#.#",
+    "#....####..#",
+    "#eh#.......#",
+    "############",
+  ],
+};
+
+/**
+ * The fourteenth cave: a spiral. The wall at (1,2) shuts the top corridor one step from the start,
+ * so the Miner's only move is down, and from there the map winds inward — column 1, row 6,
+ * column 10, back west along row 1, then through the single door at (2,7) into the chamber the
+ * exit sits in. Every leg is one tile wide and none of them forks.
+ *
+ * The Skarbek is sealed at the dead end of the top corridor, at the far point of the spiral. His
+ * lid is the first gem the cave offers, so he is loosed at the moment the Miner turns for home and
+ * follows him down the whole inward run.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (2,5) rests on the gem at (3,5). A gem is not open space, so
+ *   it supports a boulder until it is collected. Neither flank can ever open — (2,4) and (2,6) are
+ *   wall.
+ * - The boulder sits in column 5; the exit is at (4,3), reached from (4,4) alone.
+ * - Spikes at (5,2), a stub off the row-6 corridor directly under the wall at (4,2). The exit is
+ *   two tiles diagonally beyond them, which is the whole point: the step up looks like the short
+ *   way in and there is no way in from that side at all.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (1,3) is the dead
+ *   end of the top corridor and (4,8) a stub off the inner chamber, and neither the spiral nor
+ *   either stub enters row 3.
+ * - The Skarbek's niche at (2,3) is sealed at t=0 — wall east, west and below, and the quota gem at
+ *   (1,3) for a lid. It is the last tile of the outward spiral, so he wakes with the Miner standing
+ *   on his ceiling and the entire inward run still to go.
+ * - The bonus gem at (3,5) is the boulder's own support, in a pocket off the inner chamber that the
+ *   honest route never needs. Taking it starts the boulder's fall onto the tile the Miner is
+ *   standing in, survivable only by stepping aside to (3,4) or (3,6) inside the grace window
+ *   (FR-009/FR-011).
+ * - The pocket at (3,4)-(3,6) is what keeps that trick from sealing the cave. With the inner
+ *   chamber already dug, the fallen boulder settles at (4,5) and splits row 4 — and the Miner
+ *   caught east of it walks home over the pocket instead, through the (3,5) the boulder has
+ *   vacated.
+ */
+const CAVE_14: LevelDefinition = {
+  id: "cave-14",
+  name: "Level 14",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#p#g.......#",
+    "#.#t#r#.##.#",
+    "#.##.g..##.#",
+    "#.#e....g#.#",
+    "#.h#######.#",
+    "#..........#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
@@ -503,6 +600,8 @@ export const LEVELS: readonly LevelDefinition[] = [
   CAVE_10,
   CAVE_11,
   CAVE_12,
+  CAVE_13,
+  CAVE_14,
 ];
 
 /**
