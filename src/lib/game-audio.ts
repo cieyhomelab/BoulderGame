@@ -145,6 +145,38 @@ export function playMinerCrush(): void {
   playTone(context, { frequency: 62, delay: 0.03, duration: 0.4, type: "sawtooth", peakGain: 0.2 });
 }
 
+/** A cold rising shriek for the Skarbek reaching the Miner. Deliberately the inverse of the spike
+ * sting's dive: both are sawtooth, and pitch direction is what tells a player which killed them
+ * without waiting to read the status panel. */
+export function playTreasurerCatch(): void {
+  const context = resolveAudioContext();
+  if (!context) {
+    return;
+  }
+
+  const startTime = context.currentTime;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.type = "sawtooth";
+  oscillator.frequency.setValueAtTime(140, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(1200, startTime + 0.34);
+
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.22, startTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.4);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + 0.4);
+
+  // A detuned second voice a semitone off: one clean rising tone reads as a power-up, two beating
+  // against each other read as something being wrong.
+  playTone(context, { frequency: 660, delay: 0.05, duration: 0.32, type: "sawtooth", peakGain: 0.12 });
+  playTone(context, { frequency: 699, delay: 0.05, duration: 0.32, type: "sawtooth", peakGain: 0.12 });
+}
+
 /** A short ascending fanfare for completing the level. */
 export function playLevelWin(): void {
   const context = resolveAudioContext();

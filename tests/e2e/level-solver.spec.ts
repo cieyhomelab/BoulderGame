@@ -27,7 +27,11 @@ for (const definition of LEVELS) {
 
       // Replaying independently of the search is the point: a solver that reports success from a
       // state its own bookkeeping corrupted would pass the test above and fail this one.
-      let state = createInitialGameState(level);
+      //
+      // Without the Skarbek, on the same terms the search itself used: a route proved against a
+      // cave's geometry has to be replayed against that same geometry, or the replay would be
+      // asking a question the route was never an answer to.
+      let state = createInitialGameState(level, { includeTreasurer: false });
       for (const direction of result.route) {
         const moved = resolveMove(state, MOVE_DELTAS[direction], 0);
         expect(moved.accepted).toBe(true);

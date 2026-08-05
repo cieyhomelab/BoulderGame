@@ -119,6 +119,7 @@ export function auditLevel(definition: LevelDefinition): LevelAudit {
   const gems = tilesMatching(definition, "g");
   const boulders = tilesMatching(definition, "r");
   const hazards = tilesMatching(definition, "h");
+  const treasurers = tilesMatching(definition, "t");
 
   const checks: LevelCheck[] = [];
 
@@ -140,6 +141,14 @@ export function auditLevel(definition: LevelDefinition): LevelAudit {
     name: "exactly one start and one exit",
     ok: players.length === 1 && exits.length === 1,
     detail: `${players.length} start, ${exits.length} exit`,
+  });
+
+  // A cave may have no Skarbek at all; what it may not have is two, since `parseLevel` keeps one
+  // start coordinate and would silently drop the others.
+  checks.push({
+    name: "at most one Treasurer",
+    ok: treasurers.length <= 1,
+    detail: treasurers.length === 0 ? "none" : `${treasurers.length} at ${formatCoordinates(treasurers)}`,
   });
 
   checks.push({

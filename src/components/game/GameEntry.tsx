@@ -12,7 +12,14 @@ import {
   resolveMove,
   type GameState,
 } from "@/lib/game-rules";
-import { playBoulderThud, playGemChime, playLevelWin, playMinerCrush, playSpikesHit } from "@/lib/game-audio";
+import {
+  playBoulderThud,
+  playGemChime,
+  playLevelWin,
+  playMinerCrush,
+  playSpikesHit,
+  playTreasurerCatch,
+} from "@/lib/game-audio";
 import { GAME_GUARDRAIL_TEST_IDS, incrementGameAttemptCount } from "@/lib/game-guardrails";
 import { GEM_SCORE_VALUE, readHighScore, recordHighScore } from "@/lib/game-score";
 import { LEVELS, nextLevelAfter, parseLevel } from "@/lib/levels";
@@ -135,6 +142,8 @@ export default function GameEntry() {
     }
     if (justCrushed) {
       playMinerCrush();
+    } else if (justLost && gameState.lossCause === "treasurer") {
+      playTreasurerCatch();
     } else if (justLost && gameState.lossCause === "spikes") {
       playSpikesHit();
     }
@@ -190,7 +199,9 @@ export default function GameEntry() {
       : gameState.status === "lost"
         ? gameState.lossCause === "crushed"
           ? "Failed — crushed by a falling boulder. Play again?"
-          : "Cave-in. Play again?"
+          : gameState.lossCause === "treasurer"
+            ? "Failed — the Treasurer caught you in his tunnels. Play again?"
+            : "Cave-in. Play again?"
         : null;
   const collectedRequiredGems = Math.min(gameState.collectedGemCount, requiredGemCount);
   const collectedBonusGems = Math.max(gameState.collectedGemCount - requiredGemCount, 0);
@@ -201,6 +212,15 @@ export default function GameEntry() {
     unstableBoulderCount === 0
       ? "The cave is stable."
       : `${unstableBoulderCount} boulder${unstableBoulderCount === 1 ? "" : "s"} losing support.`;
+  // Read once here rather than per cell: 96 tiles ask where he is, and only one of them is right.
+  const treasurerPosition = gameState.treasurer?.position ?? null;
+  const isTreasurerDormant = gameState.treasurer !== null && !gameState.treasurer.released;
+  const treasurerDescription =
+    gameState.treasurer === null
+      ? null
+      : isTreasurerDormant
+        ? "The Treasurer is sealed in the rock."
+        : `The Treasurer walks the tunnels at row ${gameState.treasurer.position.row}, column ${gameState.treasurer.position.col}.`;
 
   return (
     <main
@@ -239,6 +259,10 @@ export default function GameEntry() {
                   // boulder that landed — shows in their place.
                   const hasPlayer =
                     gameState.status !== "lost" && isSameCoordinate({ row, col }, gameState.playerPosition);
+                  // Drawn under the Miner, which only matters at the moment of a catch — and there
+                  // the Miner is already gone, so the tile shows what took them, like the spikes
+                  // and the boulder before it.
+                  const hasTreasurer = treasurerPosition !== null && isSameCoordinate({ row, col }, treasurerPosition);
                   const isUnstableBoulder =
                     cellTile === "r" && gameState.boulderMotions.get(motionKey(row, col))?.phase === "grace";
 
@@ -254,23 +278,33 @@ export default function GameEntry() {
                       data-testid={
                         hasPlayer
                           ? GAME_GUARDRAIL_TEST_IDS.player
-                          : cellTile === "h"
-                            ? GAME_GUARDRAIL_TEST_IDS.hazard
-                            : cellTile === "e"
-                              ? GAME_GUARDRAIL_TEST_IDS.exit
-                              : cellTile === "r"
-                                ? isUnstableBoulder
-                                  ? GAME_GUARDRAIL_TEST_IDS.unstableBoulder
-                                  : GAME_GUARDRAIL_TEST_IDS.boulder
-                                : cellTile === "."
-                                  ? GAME_GUARDRAIL_TEST_IDS.dirt
-                                  : cellTile === " "
-                                    ? GAME_GUARDRAIL_TEST_IDS.openSpace
-                                    : undefined
+                          : hasTreasurer
+                            ? GAME_GUARDRAIL_TEST_IDS.treasurer
+                            : cellTile === "h"
+                              ? GAME_GUARDRAIL_TEST_IDS.hazard
+                              : cellTile === "e"
+                                ? GAME_GUARDRAIL_TEST_IDS.exit
+                                : cellTile === "r"
+                                  ? isUnstableBoulder
+                                    ? GAME_GUARDRAIL_TEST_IDS.unstableBoulder
+                                    : GAME_GUARDRAIL_TEST_IDS.boulder
+                                  : cellTile === "."
+                                    ? GAME_GUARDRAIL_TEST_IDS.dirt
+                                    : cellTile === " "
+                                      ? GAME_GUARDRAIL_TEST_IDS.openSpace
+                                      : undefined
                       }
+                      // A test can only see whether he has woken through the tile's SVG otherwise,
+                      // the same problem the exit's bars have.
+                      data-treasurer-dormant={hasTreasurer ? String(isTreasurerDormant) : undefined}
                       key={`${row}-${col}`}
                     >
-                      <TileArt tile={hasPlayer ? "p" : cellTile} unstable={isUnstableBoulder} locked={isExitLocked} />
+                      <TileArt
+                        dormant={isTreasurerDormant}
+                        locked={isExitLocked}
+                        tile={hasPlayer ? "p" : hasTreasurer ? "t" : cellTile}
+                        unstable={isUnstableBoulder}
+                      />
                     </div>
                   );
                 }),
@@ -382,7 +416,7 @@ export default function GameEntry() {
               Player at row {gameState.playerPosition.row}, column {gameState.playerPosition.col}.{" "}
               {level.gemCount - gameState.collectedGemCount} gems remaining. Score {totalScore}. High score {highScore}.
               Quota {collectedRequiredGems} of {requiredGemCount}. Bonus {collectedBonusGems} of {optionalGemCount}.{" "}
-              {unstableBoulderDescription} Status {gameState.status}.
+              {unstableBoulderDescription} {treasurerDescription} Status {gameState.status}.
             </p>
           </aside>
         </div>

@@ -8,6 +8,7 @@ import {
   type BoulderMotions,
   type Coordinate,
 } from "@/lib/boulder-simulation";
+import { createTreasurerState, releaseTreasurer, stepTreasurer, type TreasurerState } from "@/lib/treasurer";
 import type { ParsedLevel } from "@/lib/levels";
 
 import type { Tile } from "@/components/game/TileArt";
@@ -23,9 +24,9 @@ import type { Tile } from "@/components/game/TileArt";
 
 export type LevelStatus = "active" | "lost" | "won";
 
-/** Why the level was lost. The status set stays `active | lost | won`; being crushed is a new
- * cause of the existing losing status, not a new status value. */
-export type LossCause = "spikes" | "crushed";
+/** Why the level was lost. The status set stays `active | lost | won`; being crushed or caught is
+ * a new cause of the existing losing status, not a new status value. */
+export type LossCause = "spikes" | "crushed" | "treasurer";
 
 export interface GameState {
   /** The level being played. Held in state rather than module scope so the keyboard handler's
@@ -34,6 +35,9 @@ export interface GameState {
   board: Board;
   boulderMotions: BoulderMotions;
   playerPosition: Coordinate;
+  /** The Skarbek, or `null` in a cave that has none — and in the solver, which searches without
+   * him on purpose. See `level-solver.ts`. */
+  treasurer: TreasurerState | null;
   moveCount: number;
   collectedGemCount: number;
   /** Cumulative count of boulders that have finished a fall this attempt. A counter rather than a
@@ -79,7 +83,17 @@ export function isExitOpen(level: ParsedLevel, collectedGemCount: number): boole
   return collectedGemCount >= level.definition.requiredGemCount;
 }
 
-export function createInitialGameState(level: ParsedLevel): GameState {
+export interface InitialStateOptions {
+  /**
+   * Whether the cave's Skarbek is present. Only the solver passes `false`, and only because a
+   * walker with a step always pending has no settled state to search — see `level-solver.ts`.
+   */
+  includeTreasurer?: boolean;
+}
+
+export function createInitialGameState(level: ParsedLevel, options: InitialStateOptions = {}): GameState {
+  const includeTreasurer = options.includeTreasurer ?? true;
+
   return {
     level,
     // Row-level copy: a shallow copy of the outer array alone would let a dug corridor leak
@@ -87,6 +101,7 @@ export function createInitialGameState(level: ParsedLevel): GameState {
     board: level.template.map((row) => [...row]),
     boulderMotions: NO_BOULDER_MOTIONS,
     playerPosition: level.playerStart,
+    treasurer: includeTreasurer && level.treasurerStart !== null ? createTreasurerState(level.treasurerStart) : null,
     moveCount: 0,
     collectedGemCount: 0,
     boulderLandingCount: 0,
@@ -96,8 +111,9 @@ export function createInitialGameState(level: ParsedLevel): GameState {
 }
 
 /**
- * Runs the cave's gravity rule against the current state. Returns the same state object when the
- * step changed nothing, so the animation-frame subscription cannot re-render an idle board.
+ * Runs everything the cave does on its own against the current state — gravity, then the Skarbek's
+ * walk. Returns the same state object when the step changed nothing, so the animation-frame
+ * subscription cannot re-render an idle board.
  *
  * Gravity outlives the level. A boulder left in mid-air when the level ended — the one stacked on
  * top of the boulder that crushed the Miner, most visibly — still finishes its fall, so the cave
@@ -106,7 +122,21 @@ export function createInitialGameState(level: ParsedLevel): GameState {
 export function applySimulation(currentState: GameState, nowMs: number): GameState {
   const result = stepSimulation({ board: currentState.board, boulderMotions: currentState.boulderMotions }, nowMs);
 
-  if (result.board === currentState.board && result.boulderMotions === currentState.boulderMotions) {
+  // He walks the board the boulders have just left behind, not the one they started on — a tunnel
+  // a falling boulder plugged this very step is closed to him.
+  //
+  // Unlike gravity, the hunt does not outlive the level. A fall already under way finishes because
+  // the cave must come to rest; a spirit stalking a cave with nobody left in it is only noise.
+  const treasurer =
+    currentState.treasurer && currentState.status === "active"
+      ? stepTreasurer(result.board, currentState.treasurer, currentState.playerPosition, nowMs)
+      : currentState.treasurer;
+
+  if (
+    result.board === currentState.board &&
+    result.boulderMotions === currentState.boulderMotions &&
+    treasurer === currentState.treasurer
+  ) {
     return currentState;
   }
 
@@ -117,6 +147,15 @@ export function applySimulation(currentState: GameState, nowMs: number): GameSta
   const crushed =
     currentState.status === "active" &&
     result.landedOn.some((coordinate) => isSameCoordinate(coordinate, currentState.playerPosition));
+
+  // The Skarbek kills by touch, so reaching the Miner's tile is the whole of it. A boulder in the
+  // same step takes the attribution: gravity resolved first, and a cause is never relabelled.
+  const caught =
+    currentState.status === "active" &&
+    !crushed &&
+    treasurer !== null &&
+    treasurer.released &&
+    isSameCoordinate(treasurer.position, currentState.playerPosition);
 
   // `landedOn` records every one-tile step of a fall; a landing is the step after which the
   // boulder is still there and no longer in motion.
@@ -130,9 +169,10 @@ export function applySimulation(currentState: GameState, nowMs: number): GameSta
     ...currentState,
     board: result.board,
     boulderMotions: result.boulderMotions,
+    treasurer,
     boulderLandingCount: currentState.boulderLandingCount + settledBoulderCount,
-    status: crushed ? "lost" : currentState.status,
-    lossCause: crushed ? "crushed" : currentState.lossCause,
+    status: crushed || caught ? "lost" : currentState.status,
+    lossCause: crushed ? "crushed" : caught ? "treasurer" : currentState.lossCause,
   };
 }
 
@@ -159,22 +199,38 @@ export function resolveMove(currentState: GameState, delta: Coordinate, nowMs: n
     return { state: currentState, accepted: false };
   }
 
+  // Walking into the Skarbek is as fatal as being walked into: he is drawn on open space, so the
+  // tile itself never refuses the step. A dormant one is just a hollow in the rock — the legend
+  // only turns on the miner who has already taken a gem out of his cave.
+  const walkedIntoTreasurer =
+    currentState.treasurer !== null &&
+    currentState.treasurer.released &&
+    isSameCoordinate(currentState.treasurer.position, nextPosition);
+
   const collectedGemCount = currentState.collectedGemCount + (nextTile === "g" ? 1 : 0);
   const board = isDiggable(nextTile)
     ? withTile(currentState.board, nextPosition.row, nextPosition.col, " ")
     : currentState.board;
   // Reaching the exit tile at all now means the quota was already met — the gate above is what
   // proves it, so the win no longer re-checks the count.
-  const status = nextTile === "h" ? "lost" : nextTile === "e" ? "won" : "active";
+  const status = walkedIntoTreasurer || nextTile === "h" ? "lost" : nextTile === "e" ? "won" : "active";
+
+  // The first gem out of the cave is what looses him. Read from the count before this move, so a
+  // Miner who takes a second gem does not release a second time and reset his cadence.
+  const treasurer =
+    currentState.treasurer !== null && nextTile === "g" && currentState.collectedGemCount === 0
+      ? releaseTreasurer(currentState.treasurer, nowMs)
+      : currentState.treasurer;
 
   const movedState: GameState = {
     ...currentState,
     board,
     playerPosition: nextPosition,
+    treasurer,
     moveCount: currentState.moveCount + 1,
     collectedGemCount,
     status,
-    lossCause: status === "lost" ? "spikes" : currentState.lossCause,
+    lossCause: walkedIntoTreasurer ? "treasurer" : status === "lost" ? "spikes" : currentState.lossCause,
   };
 
   // The cave re-evaluates support after every board change, so digging registers instability in
