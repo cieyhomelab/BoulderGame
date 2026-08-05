@@ -1,12 +1,49 @@
 import { expect, type Page } from "@playwright/test";
 
 import { MANUAL_CLOCK_WINDOW_KEY } from "../../src/lib/game-clock";
+import type { MoveDirection } from "../../src/lib/game-rules";
 import {
   GAME_ATTEMPT_SESSION_KEY,
   GAME_GUARDRAIL_TEST_IDS,
   GAME_GUARDRAIL_THRESHOLDS,
 } from "../../src/lib/game-guardrails";
 import { GAME_HIGH_SCORE_KEY } from "../../src/lib/game-score";
+import { parseLevel, type LevelDefinition } from "../../src/lib/levels";
+import { solveLevel } from "../../src/lib/level-solver";
+
+const KEY_BY_DIRECTION: Record<MoveDirection, string> = {
+  up: "ArrowUp",
+  down: "ArrowDown",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+};
+
+/**
+ * The winning keystrokes for a cave, searched rather than hand-derived. Working these out by hand
+ * was the most error-prone step in authoring cave-02 — two of the first attempts walked into a
+ * wall — and the sequences went stale the moment a row changed.
+ */
+export function winningKeysFor(definition: LevelDefinition): string[] {
+  const solution = solveLevel(parseLevel(definition));
+
+  if (!solution.solved) {
+    throw new Error(`${definition.id} has no winning route; \`npm run level:check\` explains why.`);
+  }
+
+  // A route that never destabilises a boulder produces the same outcome at any press speed, which
+  // is what makes it safe to replay as keystrokes against the real clock.
+  if (solution.disturbsBoulders) {
+    throw new Error(`${definition.id}'s shortest route disturbs a boulder, so it is timing-dependent.`);
+  }
+
+  return solution.route.map((direction) => KEY_BY_DIRECTION[direction]);
+}
+
+export async function pressKeys(page: Page, keys: string[]): Promise<void> {
+  for (const key of keys) {
+    await page.keyboard.press(key);
+  }
+}
 
 /**
  * Waits until the game island has hydrated. The attempt counter renders as `-` on the server and
@@ -155,6 +192,33 @@ export async function expectExitOpenAt(page: Page, row: number, col: number): Pr
   await expect(
     page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.exit}"][data-row="${row}"][data-col="${col}"]`),
   ).toHaveAttribute("data-exit-locked", "false");
+}
+
+export async function expectTreasurerAt(page: Page, row: number, col: number): Promise<void> {
+  await expect(
+    page.locator(`[data-testid="${GAME_GUARDRAIL_TEST_IDS.treasurer}"][data-row="${row}"][data-col="${col}"]`),
+  ).toBeVisible();
+}
+
+/**
+ * The Skarbek's two looks. Like the exit's bars, the difference between sealed in and loosed lives
+ * entirely inside the tile's SVG, so the assertion reads the attribute the board publishes.
+ */
+export async function expectTreasurerDormant(page: Page, dormant: boolean): Promise<void> {
+  await expect(page.getByTestId(GAME_GUARDRAIL_TEST_IDS.treasurer)).toHaveAttribute(
+    "data-treasurer-dormant",
+    String(dormant),
+  );
+}
+
+/** Where the board currently draws him, for a test that follows a walk rather than pinning it. */
+export async function readTreasurerPosition(page: Page): Promise<{ row: number; col: number }> {
+  const treasurer = page.getByTestId(GAME_GUARDRAIL_TEST_IDS.treasurer);
+
+  return {
+    row: Number(await treasurer.getAttribute("data-row")),
+    col: Number(await treasurer.getAttribute("data-col")),
+  };
 }
 
 export async function expectReplayButtonVisible(page: Page): Promise<void> {

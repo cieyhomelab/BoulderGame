@@ -6,10 +6,13 @@
  * `now()` is milliseconds since the clock was created, not a wall-clock epoch.
  */
 
-/** The two tunable gravity constants. Declared here and nowhere else. */
+/** The tunable cadences of the cave: two for gravity, one for the Skarbek's walk. Declared here
+ * and nowhere else. */
 export const GAME_TIMING = {
   boulderGraceWindowMs: 400,
   boulderFallIntervalMs: 120,
+  /** One tunnel tile per step. Slower than a Miner in a hurry, faster than a hesitant one. */
+  treasurerStepIntervalMs: 700,
 } as const;
 
 export type GameClockTickHandler = (nowMs: number) => void;

@@ -22,6 +22,13 @@ import type { ParsedLevel } from "@/lib/levels";
  * what this can find. cave-02's bonus gem is exactly such a trick — stepping aside inside the
  * grace window. `solveLevel` is an oracle for "can this cave be won", not for "is every trick in
  * it possible". The latter stays an e2e concern.
+ *
+ * The Skarbek is excluded for the same reason, one step further on. He always has a step pending,
+ * so a cave holding one never settles and the search would have no state to compare — and since he
+ * walks at his own cadence, the answer would in any case be "winnable if you are quick enough",
+ * which is not a property of the cave. What is searched here is therefore the cave's *geometry*:
+ * a solved level means the quota and the exit are reachable, not that no spirit will catch you on
+ * the way. Outrunning him is an e2e concern, like the grace window.
  */
 
 /** A settle pass cannot legitimately need more rounds than this; the cap turns a logic error into
@@ -276,7 +283,7 @@ function search(start: { state: GameState; nowMs: number; disturbed: boolean }, 
 export function solveLevel(level: ParsedLevel, options: SolveOptions = {}): SolveResult {
   const maxStates = options.maxStates ?? DEFAULT_MAX_STATES;
 
-  const initial = createInitialGameState(level);
+  const initial = createInitialGameState(level, { includeTreasurer: false });
   // Derived from the pre-settle board: settling only moves boulders within their own closure, so
   // this set stays a superset of what any reachable state can need.
   const boulderSensitive = boulderSensitiveCells(initial.board);

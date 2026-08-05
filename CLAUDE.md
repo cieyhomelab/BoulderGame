@@ -22,9 +22,13 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run level:check` — audit every cave in `LEVELS` (no browser, exits non-zero on failure)
 - `npm run level:routes` — the same audit plus each cave's winning key sequence
 
-183 tests across 12 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-roll`, `boulder-crush`, `undermine-gated-gem`, `exit-switch`, `game-clock`, `level-progression`, `high-score`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec.)
+213 tests across 13 spec files: `guardrails`, `digging`, `boulder-gravity`, `boulder-roll`, `boulder-crush`, `undermine-gated-gem`, `exit-switch`, `game-clock`, `level-progression`, `high-score`, `treasurer`, `level-invariants`, `level-solver`. (`guardrail-assertions.ts` is a shared helper, not a spec — it also owns `winningKeysFor` and `pressKeys`, which two specs replay searched routes with.)
 
 `level-invariants` and `level-solver` are the odd ones out: they never open a page, running against the level data directly. Both iterate `LEVELS`, so adding a cave to the registry adds its coverage automatically — a new level that seals its own exit, drops a boulder before the player moves, or cannot be won at all fails there rather than in front of a player.
+
+`treasurer` is split across both worlds for a reason worth copying: the rule that the Skarbek only ever stands in a dug tunnel is a property, so it is tested with no page at all, over hundreds of steps against a fixture board that cages the Miner where the walk cannot end early. Only the narrower question — that the shipped cave wires that simulation to the clock, the board and the loss it reports — is asked of a browser.
+
+**Anything that walks the whole `LEVELS` registry belongs on `?clock=manual`.** The two progression tests that clear every cave in order do, and it is load-bearing rather than tidiness: `winningKeysFor` only returns routes proved to leave every boulder alone, so a frozen clock is the environment those routes were proved in, and a registry holding a cave with a Skarbek would otherwise put a randomly walking spirit on the board mid-replay.
 
 Run these when a change touches game entry, browser behavior, guardrail selectors, simulation timing, or replay/input readiness. There is no unit-test runner; all automated tests are E2E.
 
@@ -67,16 +71,17 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 
 The game is the point of this repository; everything below `src/lib/` is domain code, not scaffolding.
 
-| Module                  | Responsibility                                                                                                               |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `boulder-simulation.ts` | Board state, boulder support, fall scheduling. Pure — `stepSimulation(input, nowMs)` maps `(state, time)` → state.           |
-| `game-clock.ts`         | Clock abstraction. Real play uses `requestAnimationFrame`; `?clock=manual` installs a clock that only advances when told to. |
-| `game-guardrails.ts`    | MVP thresholds, `data-testid` values, session-local attempt counter.                                                         |
-| `game-rules.ts`         | Move resolution, digging, win/loss, gravity application. Pure and time-injected. Shared by the component and the solver.     |
-| `levels.ts`             | Cave definitions, the `LEVELS` play order, `parseLevel`, and `nextLevelAfter`. All board content lives here.                 |
-| `level-solver.ts`       | Breadth-first search for a winning route, driving `game-rules.ts`. Proves a cave is winnable and emits the key sequence.     |
-| `level-audit.ts`        | The design rules a cave must satisfy, as named checks. The single source for `level:check` and `level-invariants.spec.ts`.   |
-| `config-status.ts`      | Reports which optional integrations are configured.                                                                          |
+| Module                  | Responsibility                                                                                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `boulder-simulation.ts` | Board state, boulder support, fall scheduling. Pure — `stepSimulation(input, nowMs)` maps `(state, time)` → state.                |
+| `game-clock.ts`         | Clock abstraction. Real play uses `requestAnimationFrame`; `?clock=manual` installs a clock that only advances when told to.      |
+| `game-guardrails.ts`    | MVP thresholds, `data-testid` values, session-local attempt counter.                                                              |
+| `game-rules.ts`         | Move resolution, digging, win/loss, gravity and the Skarbek. Pure and time-injected. Shared by the component and the solver.      |
+| `levels.ts`             | Cave definitions, the `LEVELS` play order, `parseLevel`, and `nextLevelAfter`. All board content lives here.                      |
+| `treasurer.ts`          | The Skarbek: seeded random walk over dug tunnels, released by the first gem. Pure — `stepTreasurer(board, state, player, nowMs)`. |
+| `level-solver.ts`       | Breadth-first search for a winning route, driving `game-rules.ts`. Proves a cave is winnable and emits the key sequence.          |
+| `level-audit.ts`        | The design rules a cave must satisfy, as named checks. The single source for `level:check` and `level-invariants.spec.ts`.        |
+| `config-status.ts`      | Reports which optional integrations are configured.                                                                               |
 
 Rendering is one React island: `src/components/game/GameEntry.tsx`, with tile visuals in `TileArt.tsx`.
 
@@ -84,7 +89,9 @@ Rendering is one React island: `src/components/game/GameEntry.tsx`, with tile vi
 
 **Board content belongs in `levels.ts`, never in the component.** `GameEntry` holds the active `ParsedLevel` in `GameState` — not in module scope or a separate `useState` — because the keyboard handler updates state functionally and would otherwise close over a stale level after advancing. Every cave is 8×12: the board's column count is a literal `grid-cols-12` class, and Tailwind 4 cannot generate that class from runtime data, so a differently sized level needs an inline `gridTemplateColumns` first.
 
-**Keep simulation logic pure and time-injected.** `stepSimulation` takes `nowMs` as a parameter rather than calling `Date.now()` internally, which is what makes the grace window and fall cadence reproducible. Do not introduce `Date.now()`, `setTimeout`, or `performance.now()` into simulation code — take the clock or the timestamp as an argument.
+**Keep simulation logic pure and time-injected.** `stepSimulation` takes `nowMs` as a parameter rather than calling `Date.now()` internally, which is what makes the grace window and fall cadence reproducible. Do not introduce `Date.now()`, `setTimeout`, or `performance.now()` into simulation code — take the clock or the timestamp as an argument. Randomness follows the same rule: `treasurer.ts` advances a seed carried in the state, and a `Math.random()` anywhere in the domain would make every chase unreplayable and every assertion about one a coin flip.
+
+**What `solveLevel` proves is the cave's geometry, not that it is survivable.** The search runs with `createInitialGameState(level, { includeTreasurer: false })`, because a walker with a step always pending never settles and so has no state to compare — and an answer of "winnable if you are quick enough" is not a property of a cave. A green `winnable` check means the quota and the exit are reachable. Outrunning the Skarbek, like acting inside the boulder grace window, is an e2e concern. Anything replaying a solver route through the real rules must build its state the same way, or it is asking a question the route was never an answer to.
 
 **Never assert a timing window through a real clock.** Timing assertions go through the manual clock (`?clock=manual`, published at `window.__boulderGameClock`), which advances by an exact number of milliseconds. Real-clock browser assertions on sub-second windows are flaky by construction.
 
@@ -161,3 +168,7 @@ The guided path is the `new-level` skill (`.claude/skills/new-level/`): it asks 
 Append a `LevelDefinition` to `LEVELS` in `src/lib/levels.ts` and run `npm run level:check`. Failures name the offending coordinates. Nothing else needs editing: `level-invariants` and `level-solver` iterate the registry, and `level-progression` derives its keystrokes from the solver rather than hard-coded routes, so the browser suite covers the new cave without changes.
 
 The gate checks correctness, never interest. A cave with the quota three steps from the start and boulders that do nothing passes every check — judging whether it is worth playing stays a human call, which is what the skill's opening questions are for.
+
+Tile markers in `rows`: `#` wall, `.` Dirt, `" "` carved open space, `g` gem, `r` boulder, `h` spikes, `e` exit. Two are render-time overlays that `parseLevel` resolves away to open space and hands back as coordinates — `p`, the Miner's start, and `t`, the niche a Skarbek is sealed into. A cave may have no `t`; it may not have two.
+
+**A cave with a `t` in it is not covered by the winnability proof the way the others are** — see `solveLevel` above. Place him so the danger is opt-in and the Miner can never share a tile with him while he sleeps: in `cave-12` his niche is opened by the very gem that wakes him, which gets both for free. A `t` sitting on the solver's route would put the Miner and a dormant spirit in one cell and force the renderer to pick a winner.

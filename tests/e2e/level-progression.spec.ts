@@ -1,9 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { GAME_TIMING } from "../../src/lib/game-clock";
-import type { MoveDirection } from "../../src/lib/game-rules";
-import { solveLevel } from "../../src/lib/level-solver";
-import { LEVELS, parseLevel, type LevelDefinition } from "../../src/lib/levels";
+import { LEVELS } from "../../src/lib/levels";
 
 import {
   activateNextLevel,
@@ -27,38 +25,12 @@ import {
   expectPlayerAt,
   expectReplayButtonVisible,
   expectScore,
+  pressKeys,
   readScore,
+  winningKeysFor,
 } from "./guardrail-assertions";
 
 const MANUAL_CLOCK_ROUTE = "/?clock=manual";
-
-const KEY_BY_DIRECTION: Record<MoveDirection, string> = {
-  up: "ArrowUp",
-  down: "ArrowDown",
-  left: "ArrowLeft",
-  right: "ArrowRight",
-};
-
-/**
- * The winning keystrokes for a cave, searched rather than hand-derived. Working these out by hand
- * was the most error-prone step in authoring cave-02 — two of the first attempts walked into a
- * wall — and the sequences went stale the moment a row changed.
- */
-function winningKeysFor(definition: LevelDefinition): string[] {
-  const solution = solveLevel(parseLevel(definition));
-
-  if (!solution.solved) {
-    throw new Error(`${definition.id} has no winning route; \`npm run level:check\` explains why.`);
-  }
-
-  // A route that never destabilises a boulder produces the same outcome at any press speed, which
-  // is what makes it safe to replay as keystrokes against the real clock.
-  if (solution.disturbsBoulders) {
-    throw new Error(`${definition.id}'s shortest route disturbs a boulder, so it is timing-dependent.`);
-  }
-
-  return solution.route.map((direction) => KEY_BY_DIRECTION[direction]);
-}
 
 /** Start (3,3) → (2,9), the bonus gem that is boulder (1,9)'s only support. Seven accepted moves. */
 const CAVE_02_ROUTE_TO_BONUS_GEM = [
@@ -70,12 +42,6 @@ const CAVE_02_ROUTE_TO_BONUS_GEM = [
   "ArrowRight",
   "ArrowUp",
 ];
-
-async function pressKeys(page: Page, keys: string[]): Promise<void> {
-  for (const key of keys) {
-    await page.keyboard.press(key);
-  }
-}
 
 /** Returns the score banked by clearing cave-01, which the caves after it build on. */
 async function winCaveOneAndAdvance(page: Page): Promise<number> {
@@ -170,9 +136,15 @@ test("replaying the second cave restarts it rather than the first", async ({ pag
 /**
  * Walks the whole registry rather than naming a cave as the last one. Pinning cave-02 here is what
  * broke the first time a third level was tried: the level was fine, the test's assumption was not.
+ *
+ * On the manual clock, and this is load-bearing rather than incidental. `winningKeysFor` only
+ * returns routes it has proved leave every boulder alone, so a frozen clock is exactly the
+ * environment those routes were proved in — and a registry that now holds a cave with a Skarbek in
+ * it would otherwise put a randomly walking spirit on the board while the keys replay, which is
+ * not something a progression test can be asked to survive.
  */
 test("every cave leads to the next, and the final one offers no successor", async ({ page }) => {
-  await page.goto("/");
+  await page.goto(MANUAL_CLOCK_ROUTE);
   await expectGameHydrated(page);
 
   for (const [index, definition] of LEVELS.entries()) {
@@ -193,8 +165,9 @@ test("every cave leads to the next, and the final one offers no successor", asyn
   }
 });
 
+// Frozen clock for the same reason as the walk above: it runs the whole registry.
 test("replaying after the last cave restarts the run from the first", async ({ page }) => {
-  await page.goto("/");
+  await page.goto(MANUAL_CLOCK_ROUTE);
   await expectGameHydrated(page);
 
   for (const [index, definition] of LEVELS.entries()) {

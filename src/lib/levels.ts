@@ -15,12 +15,14 @@ export interface ParsedLevel {
   definition: LevelDefinition;
   template: Board;
   playerStart: Coordinate;
+  /** Where the Skarbek is sealed into the rock, or `null` in a cave that has none. */
+  treasurerStart: Coordinate | null;
   gemCount: number;
 }
 
 /**
  * The cave, authored against the live simulation. `.` is Dirt (solid, diggable, holds boulders),
- * `" "` is carved open space, `p` is the Miner's start.
+ * `" "` is carved open space, `p` is the Miner's start, `t` the chamber a Skarbek is sealed in.
  *
  * Invariants any future edit must preserve:
  * - No boulder is unsupported at t=0 — nothing may fall before the player acts.
@@ -433,6 +435,55 @@ const CAVE_11: LevelDefinition = {
 };
 
 /**
+ * The twelfth cave, and the first with a Skarbek in it — the spirit of the Polish mining legends,
+ * sealed in the rock and loosed the moment the first gem leaves his cave.
+ *
+ * The map is three corridors stacked between two shafts. The top one is plugged for good by the
+ * boulder at (1,5), so the only way across from the column-1 shaft to the column-10 one is row 3,
+ * and the quota gem sitting on it is the lid of the Skarbek's niche. That is the whole design: he
+ * walks dug tunnels and nothing else, so at t=0, walled into a pocket nobody has opened, he cannot
+ * move at all. The Miner taking his gem is what hands him a corridor to walk.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (1,5) rests on the wall at (2,5), (4,1) on the gem at (5,1).
+ *   A gem is not open space, so it supports a boulder until it is collected.
+ * - Neither boulder can ever roll: every flank of both has a wall half, at (2,4)/(2,6) for the
+ *   first and (4,0)/(4,2) for the second, and a wall never becomes open space.
+ * - Boulders sit in columns 5 and 1; the exit is at (6,10).
+ * - Spikes at (5,5), mid-way along the row-5 lane, where the bottom of the map narrows.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: (3,7) sits on
+ *   the row-3 shortcut and (1,10) at the top of the column-10 climb, and neither needs column 1
+ *   below row 3.
+ * - The bonus gem at (5,1) is the (4,1) boulder's own support, at the dead end of the bottom-left
+ *   leg: taking it starts that boulder's fall onto the tile the Miner is standing in, survivable
+ *   only by stepping east to (5,2) inside the grace window (FR-009/FR-011).
+ * - The Skarbek's niche at (4,7) is sealed at t=0 — wall east and west, Dirt below, and the gem at
+ *   (3,7) for a lid. It is walled off from every route, so a Miner who never takes that gem never
+ *   meets him: the shortcut is opt-in, and so is the danger.
+ * - The gem is his lid, which is the cave's one lesson. Prising it off is what looses him, and the
+ *   tile it leaves behind is the only way out of his niche, so the Miner who lingers where he took
+ *   it is standing on the spot the Skarbek is walking to. One interval of grace, then he is there.
+ * - The niche is never entered by mistake. It can only be reached through (3,7), and opening (3,7)
+ *   is the same act that wakes him — so the Miner never shares a tile with a dormant Skarbek, and
+ *   stepping into an awake one is a death the player chose.
+ */
+const CAVE_12: LevelDefinition = {
+  id: "cave-12",
+  name: "Level 12",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#p...r....g#",
+    "#.########.#",
+    "#......g...#",
+    "#r#####t##.#",
+    "#g...h.....#",
+    "#.........e#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
@@ -451,6 +502,7 @@ export const LEVELS: readonly LevelDefinition[] = [
   CAVE_09,
   CAVE_10,
   CAVE_11,
+  CAVE_12,
 ];
 
 /**
@@ -464,18 +516,28 @@ export function nextLevelAfter(current: LevelDefinition): LevelDefinition | null
 }
 
 /**
- * Parses a level's rows. The `p` start marker is resolved away here — the Miner has by definition
- * already dug the tile they stand in, so the cell becomes open space and `p` survives only as a
- * render-time overlay.
+ * Parses a level's rows. The `p` and `t` markers are resolved away here — the Miner has by
+ * definition already dug the tile they stand in, and the Skarbek's chamber is a hollow in the
+ * rock — so both cells become open space and both markers survive only as render-time overlays.
+ *
+ * That the Skarbek's cell is open matters to more than the picture: the cave's other rules read
+ * the parsed template, so a boulder over his chamber is correctly unsupported at t=0 and the
+ * audit says so.
  */
 export function parseLevel(definition: LevelDefinition): ParsedLevel {
   let playerStart: Coordinate = { row: 0, col: 0 };
+  let treasurerStart: Coordinate | null = null;
   let gemCount = 0;
 
   const template = definition.rows.map((row, rowIndex) =>
     (row.split("") as Tile[]).map((tile, colIndex) => {
       if (tile === "g") {
         gemCount += 1;
+      }
+
+      if (tile === "t") {
+        treasurerStart = { row: rowIndex, col: colIndex };
+        return " ";
       }
 
       if (tile !== "p") {
@@ -487,5 +549,5 @@ export function parseLevel(definition: LevelDefinition): ParsedLevel {
     }),
   );
 
-  return { definition, template, playerStart, gemCount };
+  return { definition, template, playerStart, treasurerStart, gemCount };
 }

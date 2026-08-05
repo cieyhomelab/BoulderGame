@@ -27,6 +27,7 @@ export const GAME_GUARDRAIL_TEST_IDS = {
   openSpace: "game-open-space",
   boulder: "game-boulder",
   unstableBoulder: "game-unstable-boulder",
+  treasurer: "game-treasurer",
   lossCause: "game-loss-cause",
 } as const;
 

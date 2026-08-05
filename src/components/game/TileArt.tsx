@@ -1,8 +1,11 @@
 /**
  * `.` is Dirt — solid, diggable, and a support for boulders.
  * `" "` is open space — walkable, supports nothing. It is what digging leaves behind.
+ *
+ * `p` and `t` are the two render-time overlays: `parseLevel` resolves both away to open space and
+ * the Miner and the Skarbek are drawn from their positions in state, not from the board.
  */
-export type Tile = "." | " " | "#" | "g" | "p" | "r" | "e" | "h";
+export type Tile = "." | " " | "#" | "g" | "p" | "r" | "e" | "h" | "t";
 
 const DIRT_SPECKS = [
   { cx: 13.5, cy: 16.5, rx: 3.5, ry: 2.5, fill: "#1f2a19" },
@@ -84,6 +87,15 @@ export function TileDefs() {
           <stop offset="0" stopColor="#ff705b" stopOpacity="0.4" />
           <stop offset="1" stopColor="#ff705b" stopOpacity="0" />
         </radialGradient>
+        <linearGradient id="bg-wraith" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stopColor="#cfe6ff" />
+          <stop offset="0.55" stopColor="#5f86b8" />
+          <stop offset="1" stopColor="#1d2d45" />
+        </linearGradient>
+        <radialGradient id="glow-wraith">
+          <stop offset="0" stopColor="#8fd7ff" stopOpacity="0.42" />
+          <stop offset="1" stopColor="#8fd7ff" stopOpacity="0" />
+        </radialGradient>
         <filter id="fx-gem" x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#79eada" floodOpacity="0.63" />
         </filter>
@@ -95,6 +107,9 @@ export function TileDefs() {
         </filter>
         <filter id="fx-lava" x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#ff705b" floodOpacity="0.67" />
+        </filter>
+        <filter id="fx-wraith" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#8fd7ff" floodOpacity="0.72" />
         </filter>
       </defs>
     </svg>
@@ -199,6 +214,53 @@ function Miner() {
   );
 }
 
+/** Shared by both Skarbek states, so the sleeping shape and the waking one read as one figure. */
+const WRAITH_COWL = "M32 5 C20 5 14 15 16 28 L13 46 C19 43 24 47 32 47 C40 47 45 43 51 46 L48 28 C50 15 44 5 32 5 Z";
+/** A spirit has no face, only the dark under the hood. */
+const WRAITH_HOLLOW = "M32 12 C24 12 21 19 22 27 L25 34 C27 38 37 38 39 34 L42 27 C43 19 40 12 32 12 Z";
+/** Trailing off where legs would be. */
+const WRAITH_WISPS = "M17 46 L15 60 M32 47 L32 62 M47 46 L49 60";
+
+/**
+ * The Skarbek loosed: a cold hooded wisp carrying a lamp, drifting where his legs would be.
+ * Deliberately the Miner's opposite in colour — amber and solid against blue-white and legless —
+ * so one glance at a crowded corridor says which figure is which.
+ */
+function Treasurer() {
+  return (
+    <>
+      {/* He walks dug tunnels only, so the backdrop is always open space. */}
+      <OpenSpace />
+      <circle cx="32" cy="30" r="29" fill="url(#glow-wraith)" />
+      <path d={WRAITH_COWL} fill="url(#bg-wraith)" filter="url(#fx-wraith)" />
+      <path d={WRAITH_HOLLOW} fill="#101a2b" />
+      <ellipse cx="27" cy="25" rx="3" ry="3.5" fill="#e8fbff" />
+      <ellipse cx="37" cy="25" rx="3" ry="3.5" fill="#e8fbff" />
+      <path d={WRAITH_WISPS} stroke="#9dc4ee" strokeLinecap="round" strokeOpacity="0.55" strokeWidth="4" />
+      <circle cx="32" cy="40" r="4.5" fill="#fffbe8" filter="url(#fx-lamp)" />
+    </>
+  );
+}
+
+/**
+ * The Skarbek still sealed in: the same figure with the light out of it. Unglowing on purpose —
+ * a player must be able to tell at a glance whether the thing in the niche has woken, and the
+ * difference cannot rest on the lamp alone, which a single tile is too small to sell.
+ */
+function DormantTreasurer() {
+  return (
+    <>
+      <OpenSpace />
+      <path d={WRAITH_COWL} fill="#2b3b52" />
+      <path d={WRAITH_HOLLOW} fill="#0c1219" />
+      {/* Eyes shut to slits: asleep rather than absent. */}
+      <rect x="24" y="24" width="6" height="2" rx="1" fill="#5f7592" />
+      <rect x="34" y="24" width="6" height="2" rx="1" fill="#5f7592" />
+      <path d={WRAITH_WISPS} stroke="#2b3b52" strokeLinecap="round" strokeOpacity="0.45" strokeWidth="4" />
+    </>
+  );
+}
+
 function ExitPortal() {
   return (
     <>
@@ -254,19 +316,23 @@ const TILE_ART: Record<Tile, () => React.JSX.Element> = {
   r: Boulder,
   e: ExitPortal,
   h: Spikes,
+  t: Treasurer,
 };
 
 export function TileArt({
   tile,
   unstable = false,
   locked = false,
+  dormant = false,
 }: {
   tile: Tile;
   unstable?: boolean;
   /** Only meaningful for the exit: the quota is still short, so the portal stays sealed. */
   locked?: boolean;
+  /** Only meaningful for the Skarbek: no gem has left the cave yet, so he is still sealed in. */
+  dormant?: boolean;
 }) {
-  const Art = tile === "e" && locked ? LockedExit : TILE_ART[tile];
+  const Art = tile === "e" && locked ? LockedExit : tile === "t" && dormant ? DormantTreasurer : TILE_ART[tile];
 
   // The wobble sits on the group rather than the <svg>, so the tile's own box never moves and
   // neighbouring cells cannot be nudged by a shaking boulder.
