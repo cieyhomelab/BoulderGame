@@ -581,6 +581,57 @@ const CAVE_14: LevelDefinition = {
 };
 
 /**
+ * The fifteenth cave, and the longest route in the registry: a four-lane comb (columns 1, 3, 5, 7,
+ * separated by teeth at columns 2, 4, 6) forces one unbroken snake — down column 1, right through
+ * the row-6 gap, up column 3, right through the row-1 gap, down column 5, right through the row-6
+ * gap, up column 7 — before the far gem even comes into view. Every tooth is solid but for its one
+ * gap, alternating top and bottom, so there is no shortcut across it: reaching column 7 costs the
+ * whole snake, and coming home costs it again. The exit at (1,2) is the Miner's next-door neighbour,
+ * barred until the quota is met, exactly `cave-11`'s trick, but here the lap it prices is this one.
+ *
+ * The far quota gem, (1,10), is the Skarbek's lid, reached only after the whole snake — so he wakes
+ * at the farthest possible point and the entire snake is still there to run home through, the
+ * longest chase in the registry. A boulder beside the column-7 climb hides a bonus the same way
+ * `cave-01`'s does: walled on every side but the one the boulder itself blocks.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: (4,9) rests on Dirt at (5,9). Neither flank can ever open —
+ *   (4,8) is Dirt and (4,10) is a gem, never open space, so `rollDirection` never qualifies either
+ *   side.
+ * - The boulder sits in column 9; the exit is in column 2.
+ * - Spikes at (3,8), a one-step lure off the column-7 climb: it looks like a peek into the bonus
+ *   pocket one row early and is instead the whole trick.
+ * - The two-gem quota plus the exit is reachable without ever touching a boulder: the snake itself
+ *   carries the Miner through (5,5) on the column-5 leg, and (1,10) is three steps east of the
+ *   column-7 exit along row 1 — neither needs columns 8 or 9, which is what the boulder's support
+ *   and flank cost the heuristic.
+ * - The bonus gem at (4,10) is walled north by (3,10), south by (5,10), east by the border, and west
+ *   by the boulder at (4,9) — the only door. Undermining it from (5,9), approached from (5,8) off
+ *   the column-7 climb, drops it one tile down; escape is west to (5,8) alone. The vacated (4,9)
+ *   then lets the Miner in from (4,8).
+ * - The Skarbek's niche at (2,10) is sealed at t=0 — wall south at (3,10), border east, Dirt west at
+ *   (2,9) not yet dug, and the quota gem at (1,10) for a lid. Prising it off looses him standing on
+ *   his ceiling with the whole snake still to cross going home.
+ *
+ * The e2e suite asserts these coordinates directly — changing a row here breaks tests by design.
+ */
+const CAVE_15: LevelDefinition = {
+  id: "cave-15",
+  name: "Level 15",
+  requiredGemCount: 2,
+  rows: [
+    "############",
+    "#pe...#...g#",
+    "#.#.#.#.#.t#",
+    "#.#.#.#.h.##",
+    "#.#.#.#..rg#",
+    "#.#.#g#...##",
+    "#...#...#..#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
@@ -602,6 +653,7 @@ export const LEVELS: readonly LevelDefinition[] = [
   CAVE_12,
   CAVE_13,
   CAVE_14,
+  CAVE_15,
 ];
 
 /**
