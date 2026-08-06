@@ -637,9 +637,9 @@ const CAVE_15: LevelDefinition = {
  * without walking into a gallery that has no other way out.
  *
  * Row 3 is the nail field: spikes from wall to wall but for the single gap at (3,6). The whole
- * middle of the map is lethal floor, the gap is the cave's only crossing, and both descents that
+ * middle of the map is lethal floor, the gap is the cave's only crossing, and the two descents that
  * look like the way down are spiked — (2,1) under the start, which is the column-1 shaft every
- * earlier cave has trained the player to take, and (2,8) in the top-right nook.
+ * earlier cave has trained the player to take, and the floor of the row-2 nook at (3,7)-(3,9).
  *
  * Below the field, row 4 is the one corridor and row 6 is a sump: a ten-tile gallery hanging off
  * (5,1), because row 5 is solid everywhere else. The far gem sits at the blind end of it, so the
@@ -663,18 +663,26 @@ const CAVE_15: LevelDefinition = {
  *   the sump therefore means the full length of row 4, twice — out west to (4,1) to get into the
  *   sump at all, and back east to the far corner once the quota is full.
  * - The bonus gem at (1,10) is roofed by the border, walled east by the border and below by (2,10)
- *   — the boulder at (1,9) is its only door (FR-011). The nook has exactly one solution, and the
- *   board forces the order: (2,9) is reachable only through (2,8), and (2,8) only from (1,8), so by
- *   the time the Miner could dig the support they have already opened the whole west flank. Walking
- *   (1,8) and then digging down into (2,8) is what does it — the boulder rolls into the vacated
- *   (1,8) and falls onto the Miner standing in (2,8). Escape is east into (2,9), since (2,7) is
- *   wall and (3,8) is a spike, and that same tile is how the vacated (1,9) is entered.
- * - The boulder settles at (2,8), on the spike at (3,8), in the tile the Miner just left, and it
- *   stays put: its east flank is then the Miner's own tile over a spike, which `rollDirection`
- *   never reads as open. Row 1 west of the nook is open space by then, so the Miner is not trapped.
- * - (2,7) is wall and (3,8)/(3,9) are spikes on purpose. They leave the nook exactly one escape
- *   tile, which is what makes the drop a grace-window dodge rather than a coin flip, and they stop
- *   the nook from becoming a second crossing that would make the gap at (3,6) pointless.
+ *   — the boulder at (1,9) is its only door (FR-011), and prising it open costs a grace-window dodge
+ *   whichever way the Miner comes in. Down from row 1: walking (1,8) has already cleared half the
+ *   boulder's west flank, so digging (2,8) rolls it into the tile just vacated and it drops from
+ *   there onto the Miner's head; the dodge is west to (2,7) and it settles at (2,8). Along row 2
+ *   from the crossing, leaving (1,8) alone: the west flank stays shut, so digging the support at
+ *   (2,9) drops the boulder straight down instead; the dodge is back west to (2,8) and it settles
+ *   at (2,9). Either way the vacated (1,9) is the door and row 1 is the way back out.
+ * - **The escape must never be the support.** (2,7) is open for exactly this reason. With (2,7)
+ *   walled the only way out of (2,8) is east into (2,9) — which is the boulder's own support, so
+ *   stepping there turns the roll into a fall onto the escape tile and the nook becomes a
+ *   guaranteed death with an unobtainable gem behind it. That was the first draft of this cave, and
+ *   the gate passed it: `level:check` proves the quota is winnable, never that a bonus is reachable
+ *   or that a dodge exists.
+ * - (3,7)/(3,8)/(3,9) being spikes is what pins the boulder once it lands. A roll needs open space
+ *   beside it and under that, and a spike is never open space, so (2,8) and (2,9) are both terminal
+ *   — searched exhaustively, the boulder comes to rest only at (1,9), (2,8) or (2,9), and never on
+ *   a quota gem, the crossing at (3,6), the sump mouth at (5,1) or the exit's approach at (4,9).
+ *   The cave has no state that is still alive but no longer winnable.
+ * - The spikes also stop the nook from becoming a second crossing, which would make the gap at
+ *   (3,6) pointless and cut the route roughly in half.
  */
 const CAVE_16: LevelDefinition = {
   id: "cave-16",
@@ -683,7 +691,7 @@ const CAVE_16: LevelDefinition = {
   rows: [
     "############",
     "#p.......rg#",
-    "#.####.#..##",
+    "#.####....##",
     "#hhhhh.hhhh#",
     "#..g......e#",
     "#.##########",
