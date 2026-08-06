@@ -632,6 +632,75 @@ const CAVE_15: LevelDefinition = {
 };
 
 /**
+ * The sixteenth cave: the nail field, and the first cave in the registry that asks for three gems.
+ * Where `cave-15` prices one long snake, this one prices a dead end — the quota cannot be filled
+ * without walking into a gallery that has no other way out.
+ *
+ * Row 3 is the nail field: spikes from wall to wall but for the single gap at (3,6). The whole
+ * middle of the map is lethal floor, the gap is the cave's only crossing, and the two descents that
+ * look like the way down are spiked — (2,1) under the start, which is the column-1 shaft every
+ * earlier cave has trained the player to take, and the floor of the row-2 nook at (3,7)-(3,9).
+ *
+ * Below the field, row 4 is the one corridor and row 6 is a sump: a ten-tile gallery hanging off
+ * (5,1), because row 5 is solid everywhere else. The far gem sits at the blind end of it, so the
+ * sump has to be walked in and walked back out, and the exit is at the opposite corner from where
+ * that walk ends. That is where the route's length comes from — 44 moves, second only to `cave-15`.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: the cave's one boulder, (1,9), rests on Dirt at (2,9). It
+ *   cannot roll either — a roll needs open space beside it and under that, and its west flank is
+ *   Dirt at (1,8)/(2,8) while its east flank is the bonus gem and the wall at (2,10).
+ * - The boulder sits in column 9; the exit is at (4,10). It can never reach that column, because
+ *   east is the flank that never opens: it either drops in place onto the spike at (3,9), or rolls
+ *   one tile west and drops onto the spike at (3,8). The exit cannot be sealed.
+ * - Spikes: the row-3 field, nine tiles at (3,1)-(3,5) and (3,7)-(3,10). (3,6) must stay open space
+ *   in rows 2, 3 and 4 together or the cave is cut in half and unwinnable.
+ * - The three-gem quota plus the exit is reachable without ever touching a boulder: (4,3) on the
+ *   row-4 leg, (6,2) just inside the sump, (6,10) at its blind end, and the exit at (4,10) along
+ *   row 4. None of them needs row 1 east of (1,7), which is what the boulder's support and west
+ *   flank cost the heuristic.
+ * - The exit is entered from (4,9) alone: (3,10) is a spike and (5,10) is wall. Coming home from
+ *   the sump therefore means the full length of row 4, twice — out west to (4,1) to get into the
+ *   sump at all, and back east to the far corner once the quota is full.
+ * - The bonus gem at (1,10) is roofed by the border, walled east by the border and below by (2,10)
+ *   — the boulder at (1,9) is its only door (FR-011), and prising it open costs a grace-window dodge
+ *   whichever way the Miner comes in. Down from row 1: walking (1,8) has already cleared half the
+ *   boulder's west flank, so digging (2,8) rolls it into the tile just vacated and it drops from
+ *   there onto the Miner's head; the dodge is west to (2,7) and it settles at (2,8). Along row 2
+ *   from the crossing, leaving (1,8) alone: the west flank stays shut, so digging the support at
+ *   (2,9) drops the boulder straight down instead; the dodge is back west to (2,8) and it settles
+ *   at (2,9). Either way the vacated (1,9) is the door and row 1 is the way back out.
+ * - **The escape must never be the support.** (2,7) is open for exactly this reason. With (2,7)
+ *   walled the only way out of (2,8) is east into (2,9) — which is the boulder's own support, so
+ *   stepping there turns the roll into a fall onto the escape tile and the nook becomes a
+ *   guaranteed death with an unobtainable gem behind it. That was the first draft of this cave, and
+ *   the gate passed it: `level:check` proves the quota is winnable, never that a bonus is reachable
+ *   or that a dodge exists.
+ * - (3,7)/(3,8)/(3,9) being spikes is what pins the boulder once it lands. A roll needs open space
+ *   beside it and under that, and a spike is never open space, so (2,8) and (2,9) are both terminal
+ *   — searched exhaustively, the boulder comes to rest only at (1,9), (2,8) or (2,9), and never on
+ *   a quota gem, the crossing at (3,6), the sump mouth at (5,1) or the exit's approach at (4,9).
+ *   The cave has no state that is still alive but no longer winnable.
+ * - The spikes also stop the nook from becoming a second crossing, which would make the gap at
+ *   (3,6) pointless and cut the route roughly in half.
+ */
+const CAVE_16: LevelDefinition = {
+  id: "cave-16",
+  name: "Level 16",
+  requiredGemCount: 3,
+  rows: [
+    "############",
+    "#p.......rg#",
+    "#.####....##",
+    "#hhhhh.hhhh#",
+    "#..g......e#",
+    "#.##########",
+    "#.g.......g#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
@@ -654,6 +723,7 @@ export const LEVELS: readonly LevelDefinition[] = [
   CAVE_13,
   CAVE_14,
   CAVE_15,
+  CAVE_16,
 ];
 
 /**
