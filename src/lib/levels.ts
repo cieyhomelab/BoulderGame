@@ -650,9 +650,9 @@ const CAVE_15: LevelDefinition = {
  * - No boulder is unsupported at t=0: the cave's one boulder, (1,9), rests on Dirt at (2,9). It
  *   cannot roll either — a roll needs open space beside it and under that, and its west flank is
  *   Dirt at (1,8)/(2,8) while its east flank is the bonus gem and the wall at (2,10).
- * - The boulder sits in column 9; the exit is at (4,10). It can never reach that column: east is
- *   the flank that never opens, so its only motion is west into the nook and then down column 9
- *   onto the spike at (3,9). The exit cannot be sealed.
+ * - The boulder sits in column 9; the exit is at (4,10). It can never reach that column, because
+ *   east is the flank that never opens: it either drops in place onto the spike at (3,9), or rolls
+ *   one tile west and drops onto the spike at (3,8). The exit cannot be sealed.
  * - Spikes: the row-3 field, nine tiles at (3,1)-(3,5) and (3,7)-(3,10). (3,6) must stay open space
  *   in rows 2, 3 and 4 together or the cave is cut in half and unwinnable.
  * - The three-gem quota plus the exit is reachable without ever touching a boulder: (4,3) on the
