@@ -632,6 +632,67 @@ const CAVE_15: LevelDefinition = {
 };
 
 /**
+ * The sixteenth cave: the nail field, and the first cave in the registry that asks for three gems.
+ * Where `cave-15` prices one long snake, this one prices a dead end — the quota cannot be filled
+ * without walking into a gallery that has no other way out.
+ *
+ * Row 3 is the nail field: spikes from wall to wall but for the single gap at (3,6). The whole
+ * middle of the map is lethal floor, the gap is the cave's only crossing, and both descents that
+ * look like the way down are spiked — (2,1) under the start, which is the column-1 shaft every
+ * earlier cave has trained the player to take, and (2,8) in the top-right nook.
+ *
+ * Below the field, row 4 is the one corridor and row 6 is a sump: a ten-tile gallery hanging off
+ * (5,1), because row 5 is solid everywhere else. The far gem sits at the blind end of it, so the
+ * sump has to be walked in and walked back out, and the exit is at the opposite corner from where
+ * that walk ends. That is where the route's length comes from — 44 moves, second only to `cave-15`.
+ *
+ * Invariants (the same contract the earlier caves hold):
+ * - No boulder is unsupported at t=0: the cave's one boulder, (1,9), rests on Dirt at (2,9). It
+ *   cannot roll either — a roll needs open space beside it and under that, and its west flank is
+ *   Dirt at (1,8)/(2,8) while its east flank is the bonus gem and the wall at (2,10).
+ * - The boulder sits in column 9; the exit is at (4,10). It can never reach that column: east is
+ *   the flank that never opens, so its only motion is west into the nook and then down column 9
+ *   onto the spike at (3,9). The exit cannot be sealed.
+ * - Spikes: the row-3 field, nine tiles at (3,1)-(3,5) and (3,7)-(3,10). (3,6) must stay open space
+ *   in rows 2, 3 and 4 together or the cave is cut in half and unwinnable.
+ * - The three-gem quota plus the exit is reachable without ever touching a boulder: (4,3) on the
+ *   row-4 leg, (6,2) just inside the sump, (6,10) at its blind end, and the exit at (4,10) along
+ *   row 4. None of them needs row 1 east of (1,7), which is what the boulder's support and west
+ *   flank cost the heuristic.
+ * - The exit is entered from (4,9) alone: (3,10) is a spike and (5,10) is wall. Coming home from
+ *   the sump therefore means the full length of row 4, twice — out west to (4,1) to get into the
+ *   sump at all, and back east to the far corner once the quota is full.
+ * - The bonus gem at (1,10) is roofed by the border, walled east by the border and below by (2,10)
+ *   — the boulder at (1,9) is its only door (FR-011). The nook has exactly one solution, and the
+ *   board forces the order: (2,9) is reachable only through (2,8), and (2,8) only from (1,8), so by
+ *   the time the Miner could dig the support they have already opened the whole west flank. Walking
+ *   (1,8) and then digging down into (2,8) is what does it — the boulder rolls into the vacated
+ *   (1,8) and falls onto the Miner standing in (2,8). Escape is east into (2,9), since (2,7) is
+ *   wall and (3,8) is a spike, and that same tile is how the vacated (1,9) is entered.
+ * - The boulder settles at (2,8), on the spike at (3,8), in the tile the Miner just left, and it
+ *   stays put: its east flank is then the Miner's own tile over a spike, which `rollDirection`
+ *   never reads as open. Row 1 west of the nook is open space by then, so the Miner is not trapped.
+ * - (2,7) is wall and (3,8)/(3,9) are spikes on purpose. They leave the nook exactly one escape
+ *   tile, which is what makes the drop a grace-window dodge rather than a coin flip, and they stop
+ *   the nook from becoming a second crossing that would make the gap at (3,6) pointless.
+ */
+const CAVE_16: LevelDefinition = {
+  id: "cave-16",
+  name: "Level 16",
+  requiredGemCount: 3,
+  rows: [
+    "############",
+    "#p.......rg#",
+    "#.####.#..##",
+    "#hhhhh.hhhh#",
+    "#..g......e#",
+    "#.##########",
+    "#.g.......g#",
+    "############",
+  ],
+};
+
+/**
  * Play order. Levels advance by index, so the array order is the progression.
  *
  * Every level is 8 rows by 12 columns: the board's column count is a fixed `grid-cols-12` Tailwind
@@ -654,6 +715,7 @@ export const LEVELS: readonly LevelDefinition[] = [
   CAVE_13,
   CAVE_14,
   CAVE_15,
+  CAVE_16,
 ];
 
 /**
